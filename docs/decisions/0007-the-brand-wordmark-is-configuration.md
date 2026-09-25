@@ -7,6 +7,12 @@ Date: 2026-09-21
 Supersedes: None
 
 
+Amended: 2026-09-25, by
+[ADR 0010](0010-the-truelux-visual-direction.md): the header shows the name again,
+as a text wordmark in the display serif. The 2026-09-24 amendment below, by
+[ADR 0008](0008-the-storefront-follows-the-supplied-home-design.md), is itself
+superseded.
+
 Amended: 2026-09-24, by
 [ADR 0008](0008-the-storefront-follows-the-supplied-home-design.md). The name is
 still configuration and everything below about `NEXT_PUBLIC_BRAND_NAME` holds.
@@ -156,7 +162,7 @@ deliver a string that changes once a year.
   the chosen typeface — which is a constraint on choosing the typeface, not only on
   using it.
 - Copy is written so the name can be substituted: "your order" rather than "your
-  Threadline order", unless the name is being used deliberately as a brand
+  TrueLux order", unless the name is being used deliberately as a brand
   statement and is interpolated.
 - The design must be checked against a short name and a long one. A visual
   regression that only appears with a three-word brand is not caught by looking at

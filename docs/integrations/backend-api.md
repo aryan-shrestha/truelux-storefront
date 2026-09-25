@@ -2,14 +2,14 @@
 
 Status: Reference
 
-Last updated: 2026-09-21
+Last updated: 2026-09-25
 
 ---
 
 ## About this document
 
 This is a transcription of the contract published by the **backend repository**
-(`clothing-store/backend`), so that storefront code is written against a fixed
+(`truelux/back-end`), so that storefront code is written against a fixed
 document rather than a recollection of one.
 
 **The backend repository is authoritative.** If this file and `backend/docs/`
@@ -25,15 +25,13 @@ into a design document.
 Transcribed from, and verified against:
 
 ```text
-backend/config/urls.py
-backend/config/settings/base.py
-backend/apps/catalog/{urls,views,filters,serializers}.py
-backend/apps/orders/{urls,views,serializers,constants}.py
-backend/apps/payments/{urls,views}.py
-backend/apps/core/{pagination,exceptions}.py
-backend/apps/catalog/exceptions.py
-backend/apps/orders/exceptions.py
-backend/apps/payments/exceptions.py
+back-end/docs/features/{brands,shades-and-sizes,admin-api}.md
+back-end/docs/decisions/0011-cash-on-delivery-only.md
+back-end/config/urls.py
+back-end/config/settings/base.py
+back-end/apps/catalog/{urls,views,filters,serializers,exceptions}.py
+back-end/apps/orders/{urls,views,serializers,constants,exceptions}.py
+back-end/apps/core/{pagination,exceptions}.py
 ```
 
 ---
@@ -82,8 +80,8 @@ Two things stand in for authentication:
 - **`order_number` + `email`** — the throttled fallback for a customer who lost
   the token.
 
-Staff authenticate to Django's admin with a session. There are no staff API
-endpoints.
+Staff authenticate to the separate admin app and the Django admin. The staff API
+(`/api/v1/admin/…`) is not used by the storefront.
 
 ---
 
@@ -105,8 +103,8 @@ request's own host, so a server-side call and a browser call receive different
 hosts in them. Do not follow them blindly from the other side; recompute
 `limit`/`offset` instead.
 
-**`GET /api/v1/categories/` is the exception** and returns a bare array with no
-envelope. See below.
+**The reference lists are the exception**: `categories/`, `brands/`, `shades/`
+and `sizes/` return bare arrays with no envelope. See below.
 
 There is no cursor pagination.
 
@@ -159,18 +157,14 @@ storefront will see them.
 | --- | --- | --- |
 | `variant_unavailable` | checkout | `{"variant_ids": ["<uuid>", ...]}` — **a list, plural key** |
 | `insufficient_stock` | checkout | `{"variant_id": "<uuid>", "requested": 3}` |
-| `payment_gateway_unavailable` | checkout | `{"order_number": "TL-2026-000142"}` |
-| `payment_not_completed` | Khalti return | `{}` |
-| `payment_amount_mismatch` | Khalti return | `{}` |
-| `payment_already_processed` | admin actions only | `{}` |
 | `invalid_status_transition` | admin actions only | `{}` |
 | `order_already_shipped` | admin actions only | `{}` |
 | `order_not_cancellable` | admin actions only | `{}` |
 | `empty_cart` | unreachable over HTTP | `{}` |
 
-The last five reach no storefront call path. `empty_cart` is unreachable because
+The last four reach no storefront call path. `empty_cart` is unreachable because
 the checkout serializer rejects an empty `items` list as a 400 first; the other
-four are raised by services the merchant's admin calls, not by any endpoint.
+three are raised by the staff API's order transitions.
 
 **`insufficient_stock` does not report the available quantity, and this is
 deliberate.** Checkout is public, so an error carrying the remaining count would
@@ -194,8 +188,7 @@ column is a `DecimalField(max_digits=10, decimal_places=2)`.
 The currency is **NPR** and is implicit — no amount is ever accompanied by a
 currency field. There is no `Money` object on either side.
 
-Khalti's own API speaks integer paisa, but that conversion lives entirely inside
-the backend's gateway client. **No paisa value ever crosses this API.**
+No paisa value crosses this API.
 
 ---
 
@@ -209,9 +202,10 @@ Query parameters:
 
 | Parameter | Value | Notes |
 | --- | --- | --- |
-| `category` | category slug | Exact match. **Does not descend into children** |
+| `category` | category slug | Exact match. **Does not descend into children**. An unknown slug is an empty page |
+| `brand` | brand slug, **repeatable** | `?brand=a&brand=b` is the union. **An unknown slug is `400 validation_error`**; an inactive brand's slug is accepted and matches nothing |
 | `size` | size slug | Joins variants |
-| `color` | colour slug | Joins variants |
+| `shade` | shade slug | Joins variants; shadeless products never match |
 | `min_price` | number | Against `base_price`, not the resolved variant price |
 | `max_price` | number | Against `base_price` |
 | `in_stock` | boolean | True when *any* variant has stock |
@@ -231,16 +225,20 @@ error.
   "results": [
     {
       "id": "9f0c2e4a-...",
-      "name": "Linen Shirt",
-      "slug": "linen-shirt",
-      "base_price": "4500.00",
-      "category": { "name": "Shirts", "slug": "shirts" },
+      "name": "Silk Foundation",
+      "slug": "silk-foundation",
+      "base_price": "3200.00",
+      "brand": { "name": "Lumière", "slug": "lumiere" },
+      "category": { "name": "Face", "slug": "face" },
       "primary_image": { "url": "https://res.cloudinary.com/...", "alt_text": "..." },
       "in_stock": true
     }
   ]
 }
 ```
+
+`brand` is on every item and is never null: `Product.brand` is required, and a
+product of an inactive brand is hidden from every public endpoint.
 
 `primary_image` is `null` when the product has no images at all. When the merchant
 never ticked "primary", the backend falls back to the first image by sort order, so
@@ -260,9 +258,9 @@ Everything from the list item, plus:
   "variants": [
     {
       "id": "1b7d...",
-      "size": { "name": "M", "slug": "m" },
-      "color": { "name": "Black", "slug": "black" },
-      "price": "4500.00",
+      "size": { "name": "30 ml", "slug": "30-ml" },
+      "shade": { "name": "Warm Beige", "slug": "warm-beige", "hex_code": "#D8A47F" },
+      "price": "3200.00",
       "in_stock": true
     }
   ]
@@ -276,8 +274,11 @@ sort order.
 otherwise the product's `base_price`. It can therefore differ from `base_price` on
 the same payload, and the variant's figure is the one the customer pays.
 
-`size.slug` and `color.slug` are exactly the values `?size=` and `?color=` take, so
-a rendered picker already holds what it must send back.
+`shade` is `null` for a shadeless product (a serum, a perfume). `hex_code` is always
+`#RRGGBB`; the database enforces the format. `size` is never null and holds a
+volume or weight (`15 ml`, `100 g`, `One size`). The API never sends a colour.
+
+`size.slug` and `shade.slug` are exactly the values `?size=` and `?shade=` take.
 
 `variant.id` is the only identifier checkout accepts.
 
@@ -285,8 +286,8 @@ a rendered picker already holds what it must send back.
 `in_stock` on the product and on each variant, and nothing more. There is no way to
 show "only 2 left"; do not try to derive it.
 
-A slug that is unknown, and a slug that exists but is unpublished, return the
-**same** 404 with the same body. The API does not confirm that a hidden product
+A slug that is unknown, and a slug that exists but is unpublished or belongs to an
+inactive brand, return the **same** 404 with the same body. The API does not confirm that a hidden product
 exists.
 
 Only `GET` is routed. Any other verb is 405 `method_not_allowed`.
@@ -301,8 +302,8 @@ list's envelope will not read it unchanged.
 
 ```json
 [
-  { "name": "Shirts", "slug": "shirts", "children": [{ "name": "Linen", "slug": "linen" }] },
-  { "name": "Trousers", "slug": "trousers", "children": [] }
+  { "name": "Skincare", "slug": "skincare", "children": [{ "name": "Serums", "slug": "serums" }] },
+  { "name": "Fragrance", "slug": "fragrance", "children": [] }
 ]
 ```
 
@@ -312,6 +313,47 @@ level deep** — a child never has a `children` key.
 The nesting is presentational only. Filtering the product list by a parent's slug
 returns products attached directly to that parent and **not** products in its
 children. A navigation menu that implies otherwise will show an empty category.
+
+### `GET /api/v1/brands/`
+
+Public. Throttle scope `catalog`. A bare array of **active** brands, in the
+merchant's `sort_order`, then name.
+
+```json
+[
+  {
+    "name": "Lumière",
+    "slug": "lumiere",
+    "description": "French-inspired complexion care.",
+    "logo_url": "https://res.cloudinary.com/.../brands/lumiere.png",
+    "product_count": 6
+  }
+]
+```
+
+`logo_url` is `null` when no logo was uploaded, and a relative `/media/…` path
+in local development, like product images. `description` may be `""`.
+`product_count` counts published products and ignores stock.
+
+### `GET /api/v1/brands/{slug}/`
+
+Public. Throttle scope `catalog`. The same object as a list item. An unknown **or
+inactive** slug returns the same 404 `not_found`.
+
+### `GET /api/v1/shades/` and `GET /api/v1/sizes/`
+
+Public. Throttle scope `catalog`. Bare arrays in `sort_order`.
+
+```json
+[{ "name": "Warm Beige", "slug": "warm-beige", "hex_code": "#D8A47F" }]
+```
+
+```json
+[{ "name": "50 ml", "slug": "50-ml" }]
+```
+
+**These are facets, not the lookup tables.** Only values used by at least one
+variant of a visible product (published, active brand) are listed.
 
 ---
 
@@ -331,7 +373,7 @@ Public. Throttle scope `checkout`, default **30/hour per IP**. Returns 201.
   "city": "...",
   "district": "...",
   "note": "",
-  "payment_method": "khalti"
+  "payment_method": "cod"
 }
 ```
 
@@ -347,7 +389,7 @@ Public. Throttle scope `checkout`, default **30/hour per IP**. Returns 201.
 | `city` | string, max 100 |
 | `district` | string, max 100, free text |
 | `note` | string, max 1000, optional, defaults to `""` |
-| `payment_method` | `"cod"` or `"khalti"` |
+| `payment_method` | `"cod"`, the only member. Anything else is `400 validation_error` |
 
 **No price field is accepted.** Sending `unit_price`, `subtotal` or `total` is not
 an error; the fields are ignored and the server's own figures are used. Prices and
@@ -366,37 +408,28 @@ Response:
   "status": "pending",
   "subtotal": "4500.00",
   "shipping_fee": "150.00",
-  "total": "4650.00",
-  "payment_url": "https://test-pay.khalti.com/?pidx=..."
+  "total": "4650.00"
 }
 ```
 
-`payment_url` is present **only** when `payment_method` is `khalti`. A cash-on-
-delivery response **omits the key entirely** rather than sending `null`.
-
 **`access_token` is not in this response, and there is no way to obtain it from
-checkout.** It reaches the customer by **confirmation email**, which the backend
-sends from inside `place_order` for both payment methods, linking to
+checkout.** It reaches the customer by **confirmation email**, which links to
 `{STOREFRONT_URL}/orders/{access_token}`.
 
-The order's `status` is `pending` regardless of payment method. Stock is already
-decremented at this point, before any payment.
+The order is `pending` and stock is already decremented. The merchant confirms it,
+usually by phone, before it ships; cash is collected on delivery.
 
 Errors:
 
 | Status | Code | When |
 | --- | --- | --- |
-| 400 | `validation_error` | malformed body, empty cart, `quantity` below 1, unknown `payment_method` |
-| 422 | `variant_unavailable` | a variant id is unknown or its product is unpublished |
+| 400 | `validation_error` | malformed body, empty cart, `quantity` below 1, a `payment_method` other than `cod` |
+| 422 | `variant_unavailable` | a variant id is unknown, its product is unpublished, or its brand is inactive |
 | 422 | `insufficient_stock` | a line exceeds available stock |
-| 422 | `payment_gateway_unavailable` | Khalti could not be reached; **the order was still placed** |
 | 429 | `throttled` | over 30/hour from this IP |
 
-**A failed checkout is all or nothing** — no partial order is ever created, and no
-stock moves. The one exception is `payment_gateway_unavailable`, where the order
-exists, holds stock, and is named in `details.order_number`. There is no
-retry-payment endpoint: the customer must place a new order or pay cash on
-delivery.
+**A failed checkout is all or nothing**: no partial order is ever created, and no
+stock moves.
 
 ---
 
@@ -424,10 +457,10 @@ of **60/hour per IP** — much lower than the catalogue's.
   },
   "items": [
     {
-      "product_name": "Linen Shirt",
-      "variant_size": "M",
-      "variant_color": "Black",
-      "sku": "LIN-SHT-M-BLK",
+      "product_name": "Silk Foundation",
+      "variant_size": "30 ml",
+      "variant_shade": "Warm Beige",
+      "sku": "LUM-SF-30-WB",
       "quantity": 1,
       "unit_price": "4500.00"
     }
@@ -435,18 +468,20 @@ of **60/hour per IP** — much lower than the catalogue's.
   "subtotal": "4500.00",
   "shipping_fee": "150.00",
   "total": "4650.00",
-  "payment_method": "khalti"
+  "payment_method": "cod"
 }
 ```
 
-`status` is one of `pending`, `paid`, `shipped`, `delivered`, `cancelled`.
-`pending` means placed and awaiting payment, and it holds stock.
+`status` is one of `pending`, `confirmed`, `shipped`, `delivered`, `cancelled`.
+The flow is `pending → confirmed → shipped → delivered`; `cancelled` is reachable
+from `pending` and `confirmed`. `pending` means placed and not yet confirmed by the
+merchant, and it holds stock. There is no `paid` status.
 
-`payment_method` is `cod` or `khalti`.
+`payment_method` is always `cod`.
 
 Line items carry **snapshots**, not references: `product_name`, `variant_size`,
-`variant_color` and `sku` are text copied at purchase time, and `unit_price` is the
-price then. They do not change when the catalogue does, and there is no variant id
+`variant_shade` and `sku` are text copied at purchase time. `unit_price` is the price
+then. **`variant_shade` is `""` for a shadeless variant**, not `null`. They do not change when the catalogue does, and there is no variant id
 to link back to a product page.
 
 `access_token` is **never** echoed in the body.
@@ -482,55 +517,6 @@ infer anything from the digits.
 
 ---
 
-## The Khalti payment return
-
-The storefront never calls Khalti. It does exactly two things: it sends the browser
-to `payment_url`, and it serves the two routes Khalti's return redirects to.
-
-```text
-storefront            POST /api/v1/checkout/          →  { payment_url }
-browser               location = payment_url          →  Khalti hosted page
-customer pays on Khalti's domain
-Khalti                redirect                        →  backend /api/v1/payments/khalti/return/?pidx=...
-backend               server-to-server lookup, then 302
-                        success  →  {storefront}/orders/{access_token}
-                        failure  →  {storefront}/orders/failed?reason=<code>
-```
-
-**This is a contract between the two repositories, and nothing in the backend
-enforces it.** Both routes must exist on the storefront or a customer who has
-already paid lands on a 404.
-
-`reason` is a domain error code, so the storefront branches on the same vocabulary
-as every other call. The values it can carry are `payment_not_completed`,
-`payment_amount_mismatch` and `payment_gateway_unavailable`.
-
-The redirect base is the backend's `STOREFRONT_URL` setting, which is also what
-confirmation emails link to. If the storefront's
-origin changes, that setting changes with it.
-
-Facts about Khalti's own hosted page that affect storefront copy:
-
-- **Only `Completed` is success.** `Pending`, `Initiated`, `Expired`,
-  `User canceled`, `Refunded` and `Partially Refunded` all leave the order unpaid.
-- **A payment link expires 60 minutes after initiation.** An abandoned tab returned
-  to the next morning fails.
-- **There is no webhook.** A customer who pays and closes the tab before the
-  redirect leaves an order the system believes is unpaid, and nothing detects it.
-- The sandbox is **wallet only** — no cards, no e-banking — and sandbox and live use
-  different hosts and different keys.
-- Live accounts carry an initial **NPR 200 per-transaction ceiling** until KYC is
-  completed, which most orders exceed.
-- The return round trip includes a synchronous server-to-server call to Khalti, so
-  the redirect back to the storefront is **not instant**. The landing route must
-  tolerate arriving mid-verification and should not look broken while it loads.
-
-The backend reads **only `pidx`** from Khalti's redirect and distrusts every other
-query parameter. The storefront should distrust them too: nothing on a URL returning
-from a payment is evidence of anything.
-
----
-
 ## Throttle rates
 
 All per IP. Every one is **required** in the backend's environment — it has no
@@ -539,19 +525,17 @@ rather than fallbacks the code would use:
 
 | Scope | Default | Applies to |
 | --- | --- | --- |
-| `catalog` | 600/hour | products list, product detail, categories |
+| `catalog` | 600/hour | products list and detail, categories, brands, shades, sizes |
 | `anon` | 60/hour | order detail by access token, and anything with no scope of its own |
 | `checkout` | 30/hour | `POST /checkout/` |
 | `order_lookup` | 20/hour | `POST /orders/lookup/` |
-| `payment_return` | 60/hour | the backend's own return endpoint |
 
 The catalogue scope is counted **separately** from `anon`, so browsing does not
 spend the budget that protects the order lookup.
 
-Exceeding a rate returns 429 with code `throttled`. Throttling still applies when
-the backend's Redis is unavailable — it degrades to per-process counting rather
-than letting requests through — so the effective limit can be *higher* than the
-number above, never lower.
+Exceeding a rate returns 429 with code `throttled`. The counters live in the
+backend's database cache (its ADR 0014), so they are shared by every backend
+process.
 
 **These are per IP, which is why the storefront does not render customer-scoped
 calls on the server.** See [ADR 0001](../decisions/0001-the-browser-makes-every-customer-scoped-call.md).
@@ -641,6 +625,6 @@ first.
   sane one anyway.
 - **No refunds** and no cancellation endpoint. Both are merchant actions performed
   outside the API.
-- **No write access to the catalogue.** Products, sizes and colours are
-  admin-only.
+- **No write access to the catalogue.** Products, brands, shades and sizes
+  are written only through the staff API.
 - **No multi-currency.** NPR is implicit everywhere.

@@ -1,6 +1,11 @@
 # ADR 0008: The storefront follows the supplied home design
 
-Status: Accepted
+> **Superseded** on 2026-09-25 by
+> [ADR 0010](0010-the-truelux-visual-direction.md). The clothing mockup this ADR
+> followed is no longer in the repository; TrueLux has its own direction, built on
+> shadcn/ui (ADR 0009). Kept for history.
+
+Status: Superseded by [ADR 0010](0010-the-truelux-visual-direction.md)
 
 Date: 2026-09-24
 
@@ -17,7 +22,7 @@ any mockup existed. It paired Archivo with Newsreader, set the brand name as a
 large clipped wordmark, used an asymmetric home grid with frameless tiles, and
 spent its one motion moment on the home hero.
 
-A mockup then arrived, at `docs/design/Home.svg` (kept out of git for its size; ask the merchant for it): 1280 wide, with every glyph
+A mockup of the clothing home page then arrived (it is no longer in the repository): 1280 wide, with every glyph
 outlined and 55 MB of embedded photography. It differs from that system almost
 everywhere:
 

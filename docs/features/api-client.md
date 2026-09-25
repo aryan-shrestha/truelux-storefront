@@ -2,7 +2,7 @@
 
 Status: Implemented
 
-Last updated: 2026-09-21
+Last updated: 2026-09-25
 
 ---
 
@@ -155,8 +155,12 @@ type error here, and a generic transformer types as `any` in every direction.
 
 ```ts
 listProducts(query: ProductQuery): Promise<Page<ProductSummary>>   // revalidate 300
-getProduct({ slug }): Promise<Product>                             // revalidate 900
+getProduct({ slug }): Promise<Product>                             // revalidate 1800
 listCategories(): Promise<Category[]>                              // revalidate 3600
+listBrands(): Promise<Brand[]>                                     // revalidate 3600
+getBrand({ slug }): Promise<Brand>                                 // revalidate 3600
+listShades(): Promise<ShadeRef[]>                                  // revalidate 3600
+listSizes(): Promise<SizeRef[]>                                    // revalidate 3600
 ```
 
 `listCategories` returns a bare array — the one endpoint with no pagination
@@ -173,8 +177,8 @@ getOrder({ accessToken }): Promise<Order>                          // no-store
 lookupOrder({ orderNumber, email }): Promise<Order>                // no-store
 ```
 
-`CheckoutResult` models `payment_url` as **optional**, not nullable, because the
-API omits the key for cash on delivery rather than sending null:
+`submitCheckout` always sends `payment_method: "cod"`, the only method the API
+accepts (backend ADR 0011); `CheckoutInput` has no payment field.
 
 ```ts
 type CheckoutResult = {
@@ -183,7 +187,6 @@ type CheckoutResult = {
   subtotal: Money;
   shippingFee: Money;
   total: Money;
-  paymentUrl?: string;
 };
 ```
 
@@ -212,13 +215,15 @@ parse an amount.
   `isApiError` and `hasCode`. A body that is not JSON, or JSON with no `error`
   object, becomes `server_error` rather than being reported as the condition it
   claims
-- `lib/api/types.ts` — every wire type, `Money` as a string alias, `paymentUrl`
-  optional rather than nullable
-- `lib/api/catalog.ts` — `listProducts`, `getProduct`, `listCategories`, with one
-  explicit mapping function per type
+- `lib/api/types.ts` — every wire type, `Money` as a string alias; `brand` on every
+  product, `shade: ShadeRef | null` on every variant, `variantShade: string | null`
+  on order lines, the five order statuses and the single payment method
+- `lib/api/client.ts` — an array query value is appended once per item (`?brand=`)
+- `lib/api/catalog.ts` — `listProducts`, `getProduct`, `listCategories`,
+  `listBrands`, `getBrand`, `listShades`, `listSizes`, with one explicit mapping
+  function per type
 - `lib/api/orders.ts` — `submitCheckout`, `getOrder`, `lookupOrder`, all
-  `no-store`. `submitCheckout` spreads `paymentUrl` conditionally so the key is
-  absent rather than `undefined`
+  `no-store`; the wire's `""` shade on an order line becomes `null`
 - `lib/format/money.ts` — `formatPrice`
 - `tests/fixtures/catalog.ts` and 23 tests across `client`, `errors`, `catalog`
   and `money`
@@ -340,9 +345,8 @@ customer* chooses, on a screen that has kept their input.
   CORS error and no server-side trace. The split is real even when the values match.
 - **Every path ends in a trailing slash.** Django redirects one that does not, and
   a redirected `POST` can arrive as a `GET`.
-- **`payment_url` is absent, not null.** Modelling it as `string | null` produces a
-  type that is wrong in a way TypeScript will not catch, because the key simply is
-  not there.
+- **An unknown `?brand=` slug is a `400 validation_error`**, unlike an unknown
+  category, size or shade, which is an empty page.
 - **`variant_unavailable` carries `variant_ids`, plural, as a list.**
   `insufficient_stock` carries `variant_id`, singular, as a string. The two details
   shapes are different and the singular one is the easy mistake.
@@ -375,8 +379,12 @@ None.
 
 ```text
 GET  /api/v1/products/            server,  revalidate 300
-GET  /api/v1/products/{slug}/     server,  revalidate 900
+GET  /api/v1/products/{slug}/     server,  revalidate 1800
 GET  /api/v1/categories/          server,  revalidate 3600
+GET  /api/v1/brands/              server,  revalidate 3600
+GET  /api/v1/brands/{slug}/       server,  revalidate 3600
+GET  /api/v1/shades/              server,  revalidate 3600
+GET  /api/v1/sizes/               server,  revalidate 3600
 POST /api/v1/checkout/            browser, no-store
 GET  /api/v1/orders/{token}/      browser, no-store
 POST /api/v1/orders/lookup/       browser, no-store
@@ -414,11 +422,9 @@ None. No user-facing surface.
 - `lib/api/client.test.ts` — base URL selection on both sides, trailing slashes,
   query building with absent and empty values, and that a 2xx returns the payload
   unwrapped
-- `lib/api/catalog.test.ts` — the mapping functions, including a product with
-  `primary_image: null` and a variant whose `price` differs from its product's
-  `base_price`
-- `lib/api/orders.test.ts` — that a cash-on-delivery `CheckoutResult` has no
-  `paymentUrl` key at all
+- `lib/api/catalog.test.ts` — the mapping functions, including `brand`, a shade with
+  its hex code, a null shade, `primary_image: null`, a price override, the brand,
+  shade and size lists, and a repeated `?brand=`
 - `lib/format/money.test.ts` — grouping at four and five digits, a non-zero paisa
   value, and that `formatPrice` never returns `NaN`
 

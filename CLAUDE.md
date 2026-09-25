@@ -9,23 +9,47 @@ architecture knowledge, feature state, and decisions belong in `docs/`.
 
 ## Project
 
-Next.js storefront for a clothing brand. It consumes a Django REST API that lives
-in a sibling repository and owns no data of its own.
+Next.js storefront for TrueLux, a multi-brand cosmetics shop in Nepal (skincare,
+makeup, fragrance; cash on delivery only). It consumes a Django REST API that lives
+in the sibling `../back-end` repository and owns no data of its own.
 
 - Next.js 16, App Router
 - React 19
 - TypeScript, `strict`
 - Tailwind CSS v4, configured in CSS
+- shadcn/ui (Radix base) as the only component library
 - Yarn 4, `nodeLinker: node-modules`
 
-`yarn` is the only package manager. Never use npm, npx, pnpm, or bun.
+`yarn` is the only package manager. Never use npm, pnpm, or bun, and never `npx`
+with one exception: the shadcn CLI, `npx shadcn@latest add <name>` (ADR 0009).
 
 **Do not switch the linker back to Plug'n'Play.** Next 16's Turbopack cannot
 resolve packages under PnP and fails every build with "Could not find the Next.js
 package", and Vite — and therefore Vitest — no longer supports it either.
 
-There is **no component library**, **no client data-fetching library**, and **no
-global state store**. Do not add, stub, or introduce one.
+There is **no client data-fetching library** and **no global state store**. Do not
+add, stub, or introduce one.
+
+---
+
+## Components: shadcn/ui only
+
+[ADR 0009](docs/decisions/0009-shadcn-ui-is-the-component-library.md).
+
+- **Every interactive or UI primitive is a shadcn component**: buttons, inputs,
+  dialogs, sheets, selects, checkboxes, radios, toggles, carousels, badges,
+  skeletons, pagination, alerts, empty states. Never hand-roll one, and never add
+  another UI kit. A primitive shadcn lacks is composed from shadcn parts.
+- Add components with `npx shadcn@latest add <name>`. They land in `components/ui/`
+  under their generated kebab-case names. Check `components/ui/` first; do not
+  re-add one that exists.
+- **Tailor inside `components/ui/*` or the theme variables in `app/globals.css`,
+  not with long class lists at call sites.** A call site passes layout classes.
+- `cn` is imported from the `cn` package. There is no `lib/utils.ts`.
+- Colours are theme variables. No hex values in components; the one exception is a
+  shade swatch filled from the API's `hex_code`.
+- A link that looks like a control stays a link and takes the component's variants
+  (`buttonVariants`, `toggleVariants`, `Button asChild`).
 
 There is **no backend in this repository**. Nothing here has a database, a
 session, a secret, or an API key.
@@ -126,13 +150,13 @@ Typical structure:
 ```text
 app/
     layout.tsx | page.tsx | error.tsx | not-found.tsx
-    products/  cart/  checkout/  orders/
+    products/  brands/  cart/  checkout/  orders/
     sitemap.ts | robots.ts
 
 components/
-    ui/          primitives, no domain knowledge
+    ui/          shadcn/ui components and Price, no domain knowledge
     layout/      header, footer, navigation
-    catalog/  cart/  checkout/  orders/
+    catalog/  brands/  home/  cart/  checkout/  orders/
 
 lib/
     api/         the only module that calls the backend
@@ -187,7 +211,7 @@ component or in `lib/`.
 
 **Primitives** (`components/ui`)
 
-- One interaction or one piece of visual vocabulary, from design tokens.
+- shadcn/ui components, generated and then tailored in place.
 - No domain knowledge. A primitive importing a type from `lib/api` is not a
   primitive.
 
@@ -392,7 +416,7 @@ current task requires.
 
 ## Comments and docstrings
 
-Default to **no comment**.
+Default to **no comment**. This is a hard rule, not a preference.
 
 Code should be made clear through naming, structure, and decomposition.
 
@@ -411,11 +435,17 @@ return ...
 
 Never add:
 
+- comments that narrate what the code does
 - commented-out code
 - banner comments
 - numbered walkthrough comments
 - TODO/FIXME comments for work that should be tracked elsewhere
 - JSDoc that merely repeats a function name or its signature
+- comments that describe history ("was", "used to", "since the fork")
+
+A comment is allowed only for a non-obvious *why*, in one or two lines. When you
+touch a file that carries long explanatory comments, cut them down to the *why* or
+delete them.
 
 Comments are appropriate when they explain information the code cannot express,
 especially:
@@ -538,7 +568,8 @@ Not polish. Both are decided by where components sit.
   commit.
 - Colour never carries meaning alone.
 - Images carry the API's `alt_text`, and `alt=""` when it is empty.
-- 44px touch targets on the size picker, the quantity stepper and add to bag.
+- 44px touch targets on the shade and size pickers, the quantity stepper and add to
+  bag. The generated shadcn sizes are already tailored to this.
 - Explicit `sizes` and aspect ratios on every image — the largest layout-shift
   risk in the store.
 - Server-render everything that can be. Every `"use client"` ships as JavaScript
@@ -574,6 +605,9 @@ Use the repository's available skills when applicable:
 
 | Situation                                                    | Skill                       |
 | ------------------------------------------------------------ | --------------------------- |
+| Adding, composing or customising any UI component            | `shadcn`                    |
+| Shaping component APIs                                       | `vercel-composition-patterns` |
+| React and Next.js performance                                | `vercel-react-best-practices` |
 | Visual direction, typography, layout, palette                | `frontend-design`           |
 | App Router, Server Components, caching, metadata, deployment | `nextjs-developer`          |
 | Types at the API boundary, unions, narrowing                 | `typescript-best-practices` |

@@ -1,7 +1,9 @@
-# Clothing Store — Storefront
+# TrueLux — Storefront
 
-Next.js 16 storefront for the clothing store. It consumes the Django REST API in
-the sibling `backend/` repository and owns no data of its own.
+Next.js 16 storefront for TrueLux, a multi-brand cosmetics shop in Nepal:
+skincare, makeup and fragrance, paid in cash on delivery. It consumes the Django
+REST API in the sibling `back-end/` repository and owns no data of its own. The UI
+is built on [shadcn/ui](https://ui.shadcn.com) (ADR 0009).
 
 Read [`CLAUDE.md`](CLAUDE.md) before your first change, then
 [`docs/architecture.md`](docs/architecture.md),
@@ -44,13 +46,9 @@ fails the build rather than rendering a page that half works.
 
 ### The catalogue will be empty at first
 
-The backend's `size` and `color` lookup tables ship with no rows, and it has no
-merchant admin yet. Until rows exist, no product variant can be created, so a
-fresh local API serves an empty catalogue and the storefront correctly shows its
-"not open yet" state.
-
-Creating them is a backend task, through its Django shell. See that repository's
-`docs/features/index.md`.
+A fresh backend serves an empty catalogue, and the storefront shows its empty
+states. Run the backend's `manage.py seed_demo` for brands, shades, sizes,
+categories and products; the Playwright spec is written against that seed.
 
 ## Commands
 
@@ -60,9 +58,9 @@ Creating them is a backend task, through its Django shell. See that repository's
 | `yarn build` | Production build |
 | `yarn start` | Serve a production build |
 | `yarn lint` | ESLint |
-| `yarn typecheck` | `tsc --noEmit` |
+| `yarn typecheck` | `next typegen && tsc --noEmit` |
 | `yarn test` | Vitest, unit and component |
-| `yarn test:e2e` | Playwright, the buy flow against a stubbed API |
+| `yarn test:e2e` | Playwright, the buy flow; browser calls are stubbed, the catalogue needs a seeded backend |
 | `yarn format` | Prettier, write |
 
 Before calling work complete, run `yarn lint && yarn typecheck && yarn test`.
@@ -77,8 +75,8 @@ connection.
 | `API_BASE_URL` | `http://localhost:8000` | Used by Server Components. Public HTTPS on Vercel; private only when self-hosting beside the API |
 | `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:8000` | Used by the browser for checkout and the order routes. **Public** |
 | `NEXT_PUBLIC_SITE_URL` | `http://localhost:3000` | The storefront's own origin, for canonical URLs and Open Graph |
-| `NEXT_PUBLIC_BRAND_NAME` | `Threadline` | The wordmark and every page title. See ADR 0007 |
-| `NEXT_PUBLIC_SHIPPING_NOTE` | `Rs 150 inside the Kathmandu valley, Rs 250 elsewhere.` | Display copy only. Must be kept in agreement with the backend's shipping settings by hand |
+| `NEXT_PUBLIC_BRAND_NAME` | `TrueLux` | The wordmark and every page title. See ADR 0007 |
+| `NEXT_PUBLIC_SHIPPING_NOTE` | `Rs 150 inside the Kathmandu valley, Rs 250 elsewhere. Cash on delivery.` | Display copy only. Must be kept in agreement with the backend's shipping settings by hand |
 
 Every variable is read in `lib/env.ts` and nowhere else, so that one file lists
 the whole configuration surface.
@@ -138,15 +136,14 @@ analytics").
 
 ### 5. After the first deploy, check
 
-- `/robots.txt` disallows `/products?`, `/cart`, `/checkout` and `/orders`, and
-  names the sitemap on the production origin
-- `/sitemap.xml` lists the published products
+- `/robots.txt` disallows `/products?`, `/brands/*?`, `/cart`, `/checkout` and
+  `/orders`, and names the sitemap on the production origin
+- `/sitemap.xml` lists the brands and the published products
 - A product page shows its images. If they are broken, the API is serving media
   from a host that is not Cloudinary and not the API origin; add it to
   `images.remotePatterns` in `next.config.ts`
 - A cash-on-delivery order goes through and reaches the confirmation page
-- A Khalti test payment returns to `/orders/{token}`, and a cancelled one to
-  `/orders/failed`
+- The confirmation email's link opens `/orders/{token}`
 
 ### 6. Keep the backend awake
 
@@ -194,11 +191,9 @@ customers will hit failures this repository cannot detect:
   Checkout and the order routes are called from the browser, so without it they
   fail in production with a console error and no server-side trace. Local
   development already defaults to `http://localhost:3000`.
-- **`STOREFRONT_URL`** must be this storefront's origin. After a Khalti
-  payment the backend redirects the browser to `{that}/orders/{access_token}`,
-  and to `{that}/orders/failed?reason=<code>` on failure. **Both routes must
-  exist here** — nothing in either repository enforces it, and a mismatch lands a
-  customer who has already paid on a 404.
+- **`STOREFRONT_URL`** must be this storefront's origin. Every confirmation email
+  links to `{that}/orders/{access_token}`. **That route must exist here**; nothing
+  in either repository enforces it.
 
 ## Documentation
 
@@ -206,7 +201,7 @@ customers will hit failures this repository cannot detect:
 docs/
 ├── architecture.md          layers, caching, state, errors, constraints
 ├── convention.md            how the code is written
-├── decisions/               eight ADRs governing this phase
+├── decisions/               the ADRs governing this phase
 ├── features/                one document per feature, plus index.md
 └── integrations/
     └── backend-api.md       the API contract, transcribed
