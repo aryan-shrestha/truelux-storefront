@@ -8,6 +8,7 @@ import { env } from "@/lib/env";
 export const metadata: Metadata = {
   title: "Brands",
   description: `Every brand ${env.brandName} stocks.`,
+  alternates: { canonical: "/brands" },
 };
 
 export default async function BrandsPage() {

@@ -14,6 +14,8 @@ import { env } from "@/lib/env";
 export const metadata: Metadata = {
   title: "Shop",
   description: `Skincare, makeup and fragrance at ${env.brandName}.`,
+  // Filtered views point at the unfiltered listing, for crawlers that ignore robots.txt.
+  alternates: { canonical: "/products" },
 };
 
 export default async function ProductsPage({ searchParams }: PageProps<"/products">) {
