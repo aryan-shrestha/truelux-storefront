@@ -1,0 +1,247 @@
+@import "tailwindcss";
+
+/* Raw token values live here and are mapped through @theme inline below, so
+   every colour is one variable with one owner. There is one scheme: the
+   mockup's light paper (ADR 0008). */
+:root {
+  --ink: #262626;
+  --paper: #f3f3f3;
+  --wash: #d5d5d5;
+  --slate: #5e5e5e;
+  /* Lighter secondary text: inactive tabs, "More". The design's #8a8a8a fails
+     contrast on this paper; this is the lightest grey that holds 4.5:1. */
+  --mute: #6f6f6f;
+  /* The 1px frame around every photograph, and the one rule under the tabs. */
+  --line: #d7d7d7;
+  /* The frame of a square control: carousel arrows. */
+  --edge: #a3a3a3;
+  /* The footer band's base. Multiplied with the grain it lands on the design's
+     #ebebeb, one step darker than the page. */
+  --band: #f8f8f8;
+  --indigo: #000e8a;
+  /* Light only, including native controls — the district select's popup, a
+     textarea's scrollbar — which would otherwise follow a dark OS setting. */
+  color-scheme: light;
+
+  /* How far below the viewport's top a sticky element sits: the header's
+     height while it is showing, nothing while it has slid away. HeaderFrame
+     sets the attribute; the transition matches its slide. */
+  --header-offset: 76px;
+  /* Themed rather than the platform's grey slab, everywhere: Chrome and
+     Firefox both read the standard properties. */
+  scrollbar-color: var(--edge) transparent;
+}
+
+@media (min-width: 48rem) {
+  :root {
+    --header-offset: 90px;
+  }
+}
+
+:root[data-header-hidden] {
+  --header-offset: 0px;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-wash: var(--wash);
+  --color-slate: var(--slate);
+  --color-mute: var(--mute);
+  --color-line: var(--line);
+  --color-edge: var(--edge);
+  --color-band: var(--band);
+  --color-indigo: var(--indigo);
+
+  /* The mockup is set in Beatrice Display, Beatrice and Inter. Beatrice is a
+     commercial face with no licence here, so the closest free cuts stand in:
+     Schibsted Grotesk Black for headlines, Syne for text. Inter is exact. */
+  --font-display: var(--font-schibsted), ui-sans-serif, system-ui, sans-serif;
+  --font-text: var(--font-syne), ui-sans-serif, system-ui, sans-serif;
+  --font-utility: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  /* The design's section headlines: "New collection", "New this week". */
+  --text-poster: clamp(2.25rem, 3.75vw, 3rem);
+  --text-poster--line-height: 0.95;
+  --text-poster--letter-spacing: -0.01em;
+
+  --text-title: 2.25rem;
+  --text-title--line-height: 1.05;
+  --text-title--letter-spacing: -0.02em;
+
+  --text-heading: 1.5rem;
+  --text-heading--line-height: 1.2;
+  --text-heading--letter-spacing: -0.01em;
+
+  --text-body: 1rem;
+  --text-body--line-height: 1.6;
+
+  --text-ui: 0.9375rem;
+  --text-ui--line-height: 1.4;
+
+  --text-detail: 0.8125rem;
+  --text-detail--line-height: 1.4;
+
+  /* Radius carries meaning: square is a surface, rounded can be pressed.
+     Nothing else in the system has a corner. */
+  --radius-control: 2px;
+
+  /* One curve for everything that moves: fast out, long settle. */
+  --ease-settle: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Entrances for above-the-fold content. CSS rather than Motion so they run
+     before hydration and without JavaScript; `both` holds the start state
+     through each element's delay. */
+  --animate-rise: rise 1000ms var(--ease-settle) both;
+  --animate-unveil: unveil 1200ms var(--ease-settle) both;
+  --animate-settle: settle 1600ms var(--ease-settle) both;
+  --animate-fade: fade 900ms var(--ease-settle) both;
+  --animate-draw: draw 450ms var(--ease-settle) both;
+  --animate-sheet-in: sheet-in 500ms var(--ease-settle) both;
+  --animate-sheet-out: sheet-out 300ms cubic-bezier(0.4, 0, 1, 1) both;
+  --animate-fade-in: fade-in 400ms var(--ease-settle) both;
+  --animate-fade-out: fade-out 300ms ease-in both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+
+  @keyframes rise {
+    from {
+      transform: translateY(105%);
+    }
+  }
+  @keyframes unveil {
+    from {
+      clip-path: inset(100% 0 0 0);
+    }
+    to {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+  @keyframes settle {
+    from {
+      transform: scale(1.12);
+    }
+  }
+  /* A stroke with pathLength={1} drawing itself in. */
+  @keyframes draw {
+    from {
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+    }
+    to {
+      stroke-dasharray: 1;
+      stroke-dashoffset: 0;
+    }
+  }
+  /* The sheet leaves faster than it arrives: arriving is information,
+     leaving is getting out of the way. Radix waits for the exit animation
+     before unmounting. */
+  @keyframes sheet-in {
+    from {
+      transform: translateX(100%);
+    }
+  }
+  @keyframes sheet-out {
+    to {
+      transform: translateX(100%);
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes shimmer {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(100%);
+    }
+  }
+  @keyframes fade {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+  }
+}
+
+/* The mockup's own paper, baked from its embedded texture at the blend it uses
+   (20% luminosity over white) into one 25KB tile. */
+@utility grain {
+  background-image: url("/grain.jpg");
+  background-size: 1300px 832px;
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-text);
+  font-size: var(--text-ui);
+  line-height: var(--text-ui--line-height);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* A panel with its own scroll: a hairline thumb on no track, inside the
+   panel's edge rather than beside it. */
+@utility scroll-quiet {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+  scrollbar-gutter: stable;
+
+  &:hover {
+    scrollbar-color: var(--edge) transparent;
+  }
+}
+
+/* Lets `<details>` animate to and from its natural height where the browser
+   can (Chrome 131+); elsewhere it opens instantly, which is also correct. */
+:root {
+  interpolate-size: allow-keywords;
+}
+
+details::details-content {
+  block-size: 0;
+  overflow: hidden;
+  transition:
+    block-size 400ms var(--ease-settle),
+    content-visibility 400ms allow-discrete;
+}
+
+details[open]::details-content {
+  block-size: auto;
+}
+
+/* Prose is opt-in, not the default: most text on this site is interface. */
+.prose-body {
+  font-family: var(--font-text);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+  max-width: 68ch;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-indigo);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Not a slower animation — no animation. Delays go too: an entrance that
+     holds its start state for 300ms and then jumps is still motion. */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
