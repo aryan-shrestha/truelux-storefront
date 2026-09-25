@@ -15,8 +15,8 @@ export default async function ConfirmationPage({
   if (typeof order !== "string" || order === "") notFound();
 
   return (
-    <section className="mx-auto max-w-[1600px] px-4 py-12 sm:px-8">
-      <h1 className="text-title font-display mb-10 font-semibold">Thank you for your order</h1>
+    <section className="mx-auto max-w-7xl px-4 py-10 md:px-8">
+      <h1 className="mb-10 text-title">Thank you for your order</h1>
       <Confirmation orderNumber={order} />
     </section>
   );

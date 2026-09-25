@@ -4,21 +4,19 @@ import { useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import { flushSync } from "react-dom";
 
 import { OrderView } from "@/components/orders/OrderView";
-import { Button } from "@/components/ui/Button";
-import { Field, controlClass } from "@/components/ui/Field";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { Spinner } from "@/components/ui/spinner";
 import { ApiUnreachableError, isApiError } from "@/lib/api/errors";
 import { lookupOrder } from "@/lib/api/orders";
 import type { Order } from "@/lib/api/types";
 import { readOrderRecords, type OrderRecord } from "@/lib/orders/record";
 
-/**
- * The fallback for a customer without their email link, at twenty attempts an
- * hour — the lowest limit in the API.
- *
- * Prefilled from this device's order record, because a customer guessing which
- * address they used spends that budget without ever learning which half was
- * wrong: the API answers a wrong email and an unknown number identically.
- */
+// Prefilled from this device's record: the API answers a wrong email and an
+// unknown number identically, at twenty attempts an hour.
 
 type Problem = "not_found" | "throttled" | "unreachable" | "error";
 
@@ -53,17 +51,14 @@ export function LookupForm() {
   const latest = records[0];
 
   const [submitting, setSubmitting] = useState(false);
-  // Which recent order's "View" started the lookup, so its spinner shows there
-  // rather than on the form's button. Null for a lookup from the form.
+  // Which recent order's "View" started the lookup; null for the form.
   const [viewing, setViewing] = useState<string | null>(null);
   const [problem, setProblem] = useState<Problem | null>(null);
   const [order, setOrder] = useState<Order | null>(null);
   const foundHeadingRef = useRef<HTMLHeadingElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
-  // The form and the order replace each other, so focus would otherwise fall
-  // to <body> and a keyboard or screen-reader user would start again from the
-  // top of the page. Synchronous, so the target exists before it is focused.
+  // The form and the order replace each other; without this, focus falls to <body>.
   function show(next: Order | null) {
     flushSync(() => setOrder(next));
     if (next === null) {
@@ -74,8 +69,7 @@ export function LookupForm() {
   }
 
   async function find(orderNumber: string, email: string, fromRecord = false) {
-    // aria-disabled rather than disabled keeps focus on the button, so the
-    // guard against a second submit lives here.
+    // The button stays focusable while busy, so the guard lives here.
     if (submitting) return;
     setSubmitting(true);
     setViewing(fromRecord ? orderNumber : null);
@@ -102,72 +96,69 @@ export function LookupForm() {
   if (order !== null) {
     return (
       <div className="flex flex-col gap-10">
-        <h2 ref={foundHeadingRef} tabIndex={-1} className="text-heading font-display font-semibold">
+        <h2 ref={foundHeadingRef} tabIndex={-1} className="text-2xl">
           Order found
         </h2>
         <OrderView order={order} />
-        <p>
-          <Button variant="ghost" className="border-ink border" onClick={() => show(null)}>
-            Look up another order
-          </Button>
-        </p>
+        <Button variant="outline" className="self-start" onClick={() => show(null)}>
+          Look up another order
+        </Button>
       </div>
     );
   }
+
+  const formBusy = submitting && viewing === null;
 
   return (
     <div className="flex max-w-xl flex-col gap-12">
       <form
         ref={formRef}
-        // Keyed on the record so the prefill lands once the device's storage
-        // is readable; the server renders the same form, empty.
+        // Keyed so the prefill lands once storage is readable; the server renders it empty.
         key={latest?.orderNumber ?? "empty"}
         onSubmit={handleSubmit}
         aria-describedby={problem === null ? undefined : "lookup-problem"}
-        className="flex flex-col gap-5"
+        className="flex flex-col gap-6"
       >
-        <Field label="Order number" hint="For example, TL-2026-000142.">
-          {(control) => (
-            <input
-              {...control}
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="order_number">Order number</FieldLabel>
+            <Input
+              id="order_number"
               name="order_number"
+              aria-describedby="order_number-hint"
               required
               autoComplete="off"
               spellCheck={false}
               defaultValue={latest?.orderNumber}
-              className={controlClass}
             />
-          )}
-        </Field>
-        <Field label="Email" hint="The one you ordered with.">
-          {(control) => (
-            <input
-              {...control}
+            <FieldDescription id="order_number-hint">For example, TL-2026-000142.</FieldDescription>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="lookup-email">Email</FieldLabel>
+            <Input
+              id="lookup-email"
               name="email"
               type="email"
+              aria-describedby="lookup-email-hint"
               required
               autoComplete="email"
               spellCheck={false}
               defaultValue={latest?.email}
-              className={controlClass}
             />
-          )}
-        </Field>
+            <FieldDescription id="lookup-email-hint">The one you ordered with.</FieldDescription>
+          </Field>
+        </FieldGroup>
 
         {problem !== null && (
-          // Assertive and attached to the form, not to either field: the API
-          // does not say which one was wrong, so neither is marked invalid.
-          <p
-            id="lookup-problem"
-            role="alert"
-            className="border-ink text-ui border-l-2 pl-4 font-medium"
-          >
-            {PROBLEM_COPY[problem]}
-          </p>
+          // Attached to the form, not a field: the API does not say which one was wrong.
+          <Alert id="lookup-problem" variant="destructive">
+            <AlertDescription>{PROBLEM_COPY[problem]}</AlertDescription>
+          </Alert>
         )}
 
-        <Button type="submit" pending={submitting && viewing === null} className="self-start">
-          {submitting ? "Finding your order…" : "Find order"}
+        <Button type="submit" aria-disabled={formBusy || undefined} className="self-start">
+          {formBusy && <Spinner data-icon="inline-start" aria-hidden />}
+          {formBusy ? "Finding your order…" : "Find order"}
         </Button>
       </form>
 
@@ -193,26 +184,31 @@ function RecentOrders({
 }) {
   return (
     <section aria-labelledby="recent-orders-heading" className="flex flex-col gap-4">
-      <h2 id="recent-orders-heading" className="text-heading font-display font-semibold">
+      <h2 id="recent-orders-heading" className="text-2xl">
         Ordered on this device
       </h2>
-      <ul className="border-wash border-t">
-        {records.map((record) => (
-          <li
-            key={record.orderNumber}
-            className="border-wash flex items-center justify-between gap-4 border-b py-2"
-          >
-            <span className="text-ui font-medium tabular-nums">{record.orderNumber}</span>
-            <Button
-              variant="ghost"
-              aria-label={`View order ${record.orderNumber}`}
-              pending={viewing === record.orderNumber}
-              onClick={() => onFind(record.orderNumber, record.email)}
+      <Separator />
+      <ul>
+        {records.map((record) => {
+          const busy = viewing === record.orderNumber;
+          return (
+            <li
+              key={record.orderNumber}
+              className="flex items-center justify-between gap-4 border-b py-2"
             >
-              View
-            </Button>
-          </li>
-        ))}
+              <span className="font-medium tabular-nums">{record.orderNumber}</span>
+              <Button
+                variant="ghost"
+                aria-label={`View order ${record.orderNumber}`}
+                aria-disabled={busy || undefined}
+                onClick={() => onFind(record.orderNumber, record.email)}
+              >
+                {busy && <Spinner data-icon="inline-start" aria-hidden />}
+                View
+              </Button>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );

@@ -1,39 +1,37 @@
 "use client";
 
+import { BanknoteIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState, type FormEvent, type ReactNode, type RefObject } from "react";
+import { useId, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 
-import { DISTRICTS } from "@/components/checkout/districts";
+import { EmptyBag } from "@/components/cart/EmptyBag";
+import { DistrictPicker } from "@/components/checkout/DistrictPicker";
 import { OrderSummary } from "@/components/checkout/OrderSummary";
-import { Button } from "@/components/ui/Button";
-import { Combobox } from "@/components/ui/Combobox";
-import { Field, controlClass } from "@/components/ui/Field";
-import { RadioGroup } from "@/components/ui/Radio";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
+import { Textarea } from "@/components/ui/textarea";
 import { isApiError } from "@/lib/api/errors";
 import { submitCheckout } from "@/lib/api/orders";
-import { PAYMENT_METHODS, type PaymentMethod } from "@/lib/api/types";
 import type { CartLine } from "@/lib/cart/storage";
 import { useCart } from "@/lib/cart/use-cart";
-import { markHandoff } from "@/lib/orders/handoff";
+import { describeVariant } from "@/lib/catalog/variants";
 import { recordOrder } from "@/lib/orders/record";
 
-/**
- * The one write in the storefront, made from the customer's browser (ADR 0001).
- *
- * Five failures reach this submit button and two of them leave a real order
- * behind, so every branch below keys on the API's error `code` (ADR 0005) and
- * none of them retries: a retry against checkout is a second order.
- *
- * The form is never unmounted by a failure that placed nothing — a customer who
- * typed an address and hit a 422 must not type it again. It is replaced only
- * once an order exists, because leaving it there invites placing another.
- */
-
-// Input names are the API's field names, so a 400's `details` maps straight
-// onto the field it is about.
+// Input names are the API's field names, so a 400's `details` maps straight onto them.
 const FIELD_NAMES = [
   "full_name",
   "email",
@@ -42,7 +40,6 @@ const FIELD_NAMES = [
   "city",
   "district",
   "note",
-  "payment_method",
 ] as const;
 
 type FieldName = (typeof FIELD_NAMES)[number];
@@ -54,19 +51,6 @@ type Problem =
   | { kind: "throttled" }
   | { kind: "rejected"; requestId: string | null }
   | { kind: "uncertain"; requestId: string | null };
-
-type Placed = { kind: "cod" } | { kind: "unpaid"; orderNumber: string };
-
-const LEGEND = "font-display mb-4 text-[1.0625rem] font-semibold uppercase tracking-[0.06em]";
-
-const PAYMENT_OPTIONS = [
-  { value: "cod", label: "Cash on delivery" },
-  { value: "khalti", label: "Khalti" },
-];
-
-function isPaymentMethod(value: string): value is PaymentMethod {
-  return (PAYMENT_METHODS as readonly string[]).includes(value);
-}
 
 function toFieldErrors(details: Record<string, unknown>): FieldErrors {
   const errors: FieldErrors = {};
@@ -86,61 +70,42 @@ function stringList(value: unknown): string[] {
 }
 
 function lineLabel(line: CartLine): string {
-  return `${line.productName} (${line.size}, ${line.color})`;
+  return `${line.productName} (${describeVariant(line.size, line.shade)})`;
 }
 
 export function CheckoutForm() {
   const router = useRouter();
   const { lines, ready, remove, clear } = useCart();
 
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [placed, setPlaced] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [problem, setProblem] = useState<Problem | null>(null);
-  const [placed, setPlaced] = useState<Placed | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const placedHeadingRef = useRef<HTMLHeadingElement>(null);
 
   function showFieldErrors(errors: FieldErrors) {
-    // Synchronously, so the invalid fields exist in the DOM before focus moves.
+    // Synchronously, so the invalid fields exist before focus moves to the first.
     flushSync(() => setFieldErrors(errors));
-    const first = formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]');
-    // A radio group is not itself focusable; its first radio is.
-    const target =
-      first?.getAttribute("role") === "radiogroup" ? first.querySelector("input") : first;
-    target?.focus();
-  }
-
-  // The order exists from here on. The form goes, so nothing invites a second
-  // one, and the cart is cleared *after* this renders so the empty-bag state
-  // never flashes in between.
-  function settle(next: Placed) {
-    flushSync(() => setPlaced(next));
-    placedHeadingRef.current?.focus();
-    clear();
+    formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    // aria-disabled rather than disabled keeps focus on the button while the
-    // request is in flight, so the guard lives here. State is enough: React
-    // flushes a discrete event's updates before it handles the next one, and
-    // `submitting` is set before the first await.
+    // The button stays focusable while busy, so the guard against a second order lives here.
     if (submitting) return;
-
-    if (paymentMethod === null) {
-      setProblem(null);
-      showFieldErrors({ payment_method: "Choose how you would like to pay." });
-      return;
-    }
 
     const data = new FormData(event.currentTarget);
     const text = (name: FieldName) => String(data.get(name) ?? "");
-    const email = text("email");
 
+    setProblem(null);
+    if (text("district") === "") {
+      showFieldErrors({ district: "Choose a district from the list." });
+      return;
+    }
+
+    const email = text("email");
     setSubmitting(true);
     setFieldErrors({});
-    setProblem(null);
 
     try {
       const result = await submitCheckout({
@@ -152,16 +117,13 @@ export function CheckoutForm() {
         city: text("city"),
         district: text("district"),
         note: text("note"),
-        paymentMethod,
       });
 
-      // Written before anything navigates: after `location.assign` this page
-      // is gone.
       recordOrder({
         orderNumber: result.orderNumber,
         email,
         recordedAt: new Date().toISOString(),
-        paymentMethod,
+        paymentMethod: "cod",
         amounts: {
           subtotal: result.subtotal,
           shippingFee: result.shippingFee,
@@ -169,56 +131,24 @@ export function CheckoutForm() {
         },
       });
 
-      if (paymentMethod === "cod") {
-        settle({ kind: "cod" });
-        router.push(`/checkout/confirmation?order=${encodeURIComponent(result.orderNumber)}`);
-        return;
-      }
-
-      if (result.paymentUrl !== undefined) {
-        // The bag stays: a customer who abandons Khalti's page comes back to
-        // something they can act on. The marker lets the landing clear it for
-        // this order only, and never from an email link opened later.
-        markHandoff(result.orderNumber);
-        window.location.assign(result.paymentUrl);
-        return;
-      }
-
-      // A Khalti order with no payment URL is a contract violation, and the
-      // order exists all the same — the same position as a gateway failure.
-      settle({ kind: "unpaid", orderNumber: result.orderNumber });
+      // The form goes first, so the empty-bag state never flashes before navigation.
+      flushSync(() => setPlaced(true));
+      clear();
+      router.push(`/checkout/confirmation?order=${encodeURIComponent(result.orderNumber)}`);
     } catch (error) {
       setSubmitting(false);
 
-      // Not an ApiError means it never reached the API, or a 201 came back
-      // with a body that could not be read. In both the order may exist.
+      // Never reached the API, or a 201 could not be read: the order may exist.
       if (!isApiError(error)) {
         setProblem({ kind: "uncertain", requestId: null });
         return;
       }
 
       switch (error.code) {
-        case "payment_gateway_unavailable": {
-          // A failure response describing a success: the order was placed.
-          const orderNumber = String(error.details.order_number ?? "");
-          recordOrder({
-            orderNumber,
-            email,
-            recordedAt: new Date().toISOString(),
-            paymentMethod,
-            amounts: null,
-          });
-          settle({ kind: "unpaid", orderNumber });
-          return;
-        }
         case "validation_error": {
           const errors = toFieldErrors(error.details);
-          if (Object.keys(errors).length > 0) {
-            showFieldErrors(errors);
-          } else {
-            // About the items rather than a field: nothing typed can fix it.
-            setProblem({ kind: "rejected", requestId: error.requestId });
-          }
+          if (Object.keys(errors).length > 0) showFieldErrors(errors);
+          else setProblem({ kind: "rejected", requestId: error.requestId });
           return;
         }
         case "variant_unavailable":
@@ -231,66 +161,20 @@ export function CheckoutForm() {
           setProblem({ kind: "throttled" });
           return;
         default:
-          // A server error may have happened after the order committed, so it
-          // is reported as unknown rather than as a failure.
+          // A server error may have come after the order committed.
           setProblem({ kind: "uncertain", requestId: error.requestId });
       }
     }
   }
 
-  if (placed?.kind === "cod") {
-    return (
-      <p role="status" className="text-ui">
-        Order placed. Taking you to your confirmation…
-      </p>
-    );
+  if (placed) {
+    return <p role="status">Order placed. Taking you to your confirmation…</p>;
   }
 
-  if (placed?.kind === "unpaid") {
-    return <UnpaidOrder orderNumber={placed.orderNumber} headingRef={placedHeadingRef} />;
-  }
-
-  if (!ready) {
-    return (
-      <div className="flex flex-col gap-6" aria-busy>
-        <span className="sr-only" role="status">
-          Loading your bag
-        </span>
-        <div className="flex flex-col gap-10 lg:flex-row lg:gap-16">
-          <div className="grid flex-1 content-start gap-x-5 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">
-            {Array.from({ length: 6 }, (_, field) => (
-              <div key={field} className="flex flex-col gap-2">
-                <Skeleton className="h-3 w-24" />
-                <Skeleton className="h-11 w-full" />
-              </div>
-            ))}
-          </div>
-          <div className="flex flex-col gap-4 lg:w-96 lg:shrink-0">
-            {[0, 1].map((line) => (
-              <div key={line} className="flex justify-between gap-4">
-                <Skeleton className="h-4 w-2/3" />
-                <Skeleton className="h-4 w-16" />
-              </div>
-            ))}
-            <Skeleton className="mt-4 h-11 w-full" />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (!ready) return <CheckoutSkeleton />;
 
   if (lines.length === 0) {
-    return (
-      <div className="border-wash flex flex-col gap-4 border-t py-16">
-        <h2 className="text-heading font-display font-semibold">Your bag is empty</h2>
-        <p className="prose-body text-slate">There is nothing to check out yet.</p>
-        <p>
-          <Link href="/products" className="decoration-indigo underline underline-offset-4">
-            Shop everything
-          </Link>
-        </p>
-      </div>
-    );
+    return <EmptyBag description="There is nothing to check out yet." />;
   }
 
   const invalidCount = Object.keys(fieldErrors).length;
@@ -301,154 +185,93 @@ export function CheckoutForm() {
       onSubmit={handleSubmit}
       className="flex flex-col gap-12 lg:flex-row lg:gap-16"
     >
-      {/* Short fields share a row — three from xl, two from sm — so the form
-          reads as a compact sheet rather than a column of full-width bars.
-          Rows align to the bottom, so a field with a hint above its control
-          (Email, District) still lines its box up with its neighbours. */}
-      <div className="flex min-w-0 flex-1 flex-col gap-9">
-        <fieldset>
-          <legend className={LEGEND}>Contact</legend>
-          <div className="grid items-end gap-x-5 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">
-            <Field label="Full name" error={fieldErrors.full_name}>
+      <div className="flex min-w-0 flex-1 flex-col gap-10">
+        <FieldSet>
+          <FieldLegend>Contact</FieldLegend>
+          <FieldGroup className="grid gap-5 sm:grid-cols-2">
+            <TextField name="full_name" label="Full name" error={fieldErrors.full_name}>
               {(control) => (
-                <input
-                  {...control}
-                  name="full_name"
-                  autoComplete="name"
-                  required
-                  maxLength={200}
-                  className={controlClass}
-                />
+                <Input {...control} autoComplete="name" required maxLength={200} />
               )}
-            </Field>
-            <Field
+            </TextField>
+            <TextField
+              name="email"
               label="Email"
               hint="Your order confirmation is sent here."
               error={fieldErrors.email}
             >
               {(control) => (
-                <input
-                  {...control}
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  spellCheck={false}
-                  required
-                  className={controlClass}
-                />
+                <Input {...control} type="email" autoComplete="email" spellCheck={false} required />
               )}
-            </Field>
-            <Field label="Phone" error={fieldErrors.phone}>
+            </TextField>
+            <TextField
+              name="phone"
+              label="Phone"
+              hint="The shop calls this number to confirm your order."
+              error={fieldErrors.phone}
+            >
               {(control) => (
-                <input
-                  {...control}
-                  name="phone"
-                  type="tel"
-                  autoComplete="tel"
-                  required
-                  maxLength={32}
-                  className={controlClass}
-                />
+                <Input {...control} type="tel" autoComplete="tel" required maxLength={32} />
               )}
-            </Field>
-          </div>
-        </fieldset>
+            </TextField>
+          </FieldGroup>
+        </FieldSet>
 
-        <fieldset>
-          <legend className={LEGEND}>Delivery</legend>
-          <div className="grid items-end gap-x-5 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">
+        <FieldSet>
+          <FieldLegend>Delivery</FieldLegend>
+          <FieldGroup className="grid gap-5 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <Field label="Address" error={fieldErrors.address_line}>
+              <TextField name="address_line" label="Address" error={fieldErrors.address_line}>
                 {(control) => (
-                  <input
-                    {...control}
-                    name="address_line"
-                    autoComplete="street-address"
-                    required
-                    maxLength={255}
-                    className={controlClass}
-                  />
+                  <Input {...control} autoComplete="street-address" required maxLength={255} />
                 )}
-              </Field>
+              </TextField>
             </div>
-            <Field label="City" error={fieldErrors.city}>
+            <TextField name="city" label="City" error={fieldErrors.city}>
               {(control) => (
-                <input
-                  {...control}
-                  name="city"
-                  autoComplete="address-level2"
-                  required
-                  maxLength={100}
-                  className={controlClass}
-                />
+                <Input {...control} autoComplete="address-level2" required maxLength={100} />
               )}
-            </Field>
-            <Field
+            </TextField>
+            <TextField
+              name="district"
               label="District"
               hint="Delivery inside the Kathmandu valley costs less."
               error={fieldErrors.district}
             >
               {(control) => (
-                // Searchable: 77 districts is too long a list to scroll, and
-                // the list still constrains the value, which decides the
-                // shipping band (see districts.ts).
-                <Combobox
-                  {...control}
+                <DistrictPicker
+                  id={control.id}
                   name="district"
-                  options={DISTRICTS}
-                  placeholder="Choose a district"
-                  invalidMessage="Choose a district from the list."
-                  required
+                  invalid={control["aria-invalid"] === true}
+                  describedBy={control["aria-describedby"]}
                 />
               )}
-            </Field>
+            </TextField>
             <div className="sm:col-span-2">
-              <Field label="Note for the shop (optional)" error={fieldErrors.note}>
-                {(control) => (
-                  <textarea
-                    {...control}
-                    name="note"
-                    rows={2}
-                    maxLength={1000}
-                    className={controlClass}
-                  />
-                )}
-              </Field>
+              <TextField name="note" label="Note for the shop (optional)" error={fieldErrors.note}>
+                {(control) => <Textarea {...control} rows={2} maxLength={1000} />}
+              </TextField>
             </div>
-          </div>
-        </fieldset>
+          </FieldGroup>
+        </FieldSet>
 
-        <fieldset className="flex flex-col gap-3">
-          <legend className={LEGEND}>Payment</legend>
-          <RadioGroup
-            label="How would you like to pay?"
-            name="payment_method"
-            options={PAYMENT_OPTIONS}
-            value={paymentMethod}
-            onChange={(value) => {
-              if (isPaymentMethod(value)) setPaymentMethod(value);
-            }}
-            error={fieldErrors.payment_method}
-          />
-          {paymentMethod === "khalti" && (
-            <p className="text-detail text-slate">
-              You will pay on Khalti&rsquo;s page, then come back here. The payment link expires
-              after an hour.
-            </p>
-          )}
-        </fieldset>
+        <FieldSet>
+          <FieldLegend>Payment</FieldLegend>
+          <Alert>
+            <BanknoteIcon />
+            <AlertTitle>Cash on delivery</AlertTitle>
+            <AlertDescription>
+              You pay in cash when your order arrives. Nothing is charged now.
+            </AlertDescription>
+          </Alert>
+        </FieldSet>
       </div>
 
-      {/*
-        Inside the form, after the fields and before the button, so a screen
-        reader meets the lines and the shipping note before the action they
-        describe.
-      */}
-      <aside className="flex flex-col gap-6 transition-[top] duration-450 ease-(--ease-settle) lg:sticky lg:top-[calc(var(--header-offset)+1.5rem)] lg:w-96 lg:shrink-0 lg:self-start">
+      <aside className="flex flex-col gap-6 lg:sticky lg:top-[calc(var(--header-offset)+1.5rem)] lg:w-96 lg:shrink-0 lg:self-start">
         <OrderSummary lines={lines} />
 
         {invalidCount > 0 && (
-          <p role="alert" className="text-ui font-medium">
+          <p role="status" className="font-medium">
             {invalidCount === 1
               ? "One field needs your attention."
               : `${invalidCount} fields need your attention.`}
@@ -465,15 +288,53 @@ export function CheckoutForm() {
           />
         )}
 
-        <Button type="submit" pending={submitting} className="w-full">
-          {submitting
-            ? "Placing your order…"
-            : paymentMethod === "khalti"
-              ? "Place order and pay with Khalti"
-              : "Place order"}
+        <Button type="submit" size="lg" aria-disabled={submitting || undefined} className="w-full">
+          {submitting && <Spinner data-icon="inline-start" aria-hidden />}
+          {submitting ? "Placing your order…" : "Place order"}
         </Button>
       </aside>
     </form>
+  );
+}
+
+type ControlProps = {
+  id: string;
+  name: FieldName;
+  "aria-describedby": string | undefined;
+  "aria-invalid": true | undefined;
+};
+
+function TextField({
+  name,
+  label,
+  hint,
+  error,
+  children,
+}: {
+  name: FieldName;
+  label: string;
+  hint?: string;
+  error?: string;
+  children: (control: ControlProps) => ReactNode;
+}) {
+  const id = useId();
+  const hintId = `${id}-hint`;
+  const errorId = `${id}-error`;
+  const describedBy =
+    [hint && hintId, error && errorId].filter(Boolean).join(" ") || undefined;
+
+  return (
+    <Field data-invalid={error !== undefined || undefined}>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      {children({
+        id,
+        name,
+        "aria-describedby": describedBy,
+        "aria-invalid": error === undefined ? undefined : true,
+      })}
+      {hint !== undefined && <FieldDescription id={hintId}>{hint}</FieldDescription>}
+      {error !== undefined && <FieldError id={errorId}>{error}</FieldError>}
+    </Field>
   );
 }
 
@@ -487,24 +348,23 @@ function ProblemNotice({
   onRemove: (variantIds: string[]) => void;
 }) {
   const bagLink = (
-    <Link href="/cart" className="decoration-indigo underline underline-offset-4">
+    <Link href="/cart" className="underline underline-offset-4">
       Back to your bag
     </Link>
   );
 
+  let title: string;
   let body: ReactNode;
 
   switch (problem.kind) {
     case "unavailable": {
       const affected = lines.filter((line) => problem.variantIds.includes(line.variantId));
+      title =
+        affected.length === 1
+          ? "Something in your bag is no longer available. Nothing was ordered."
+          : "Some things in your bag are no longer available. Nothing was ordered.";
       body = (
         <>
-          <p className="font-medium">
-            {affected.length === 1
-              ? "Something in your bag is no longer available."
-              : "Some things in your bag are no longer available."}{" "}
-            Nothing was ordered.
-          </p>
           {affected.length > 0 && (
             <ul className="list-disc pl-5">
               {affected.map((line) => (
@@ -512,11 +372,11 @@ function ProblemNotice({
               ))}
             </ul>
           )}
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="mt-2 flex flex-wrap items-center gap-4">
             {affected.length > 0 && (
               <Button
-                variant="ghost"
-                className="border-ink border"
+                variant="outline"
+                size="sm"
                 onClick={() => onRemove(affected.map((line) => line.variantId))}
               >
                 {affected.length === 1 ? "Remove it from your bag" : "Remove them from your bag"}
@@ -530,16 +390,13 @@ function ProblemNotice({
     }
     case "insufficient": {
       const line = lines.find((candidate) => candidate.variantId === problem.variantId);
-      // No count, deliberately: the API does not say how many are left, and
-      // a number here would publish what the backend refuses to.
+      // No count: the API does not publish how many are left.
+      title =
+        line === undefined
+          ? "There is not enough stock for one of the things in your bag. Nothing was ordered."
+          : `There is not enough stock of ${lineLabel(line)} for the quantity in your bag. Nothing was ordered.`;
       body = (
         <>
-          <p className="font-medium">
-            {line === undefined
-              ? "There is not enough stock for one of the things in your bag."
-              : `There is not enough stock of ${lineLabel(line)} for the quantity in your bag.`}{" "}
-            Nothing was ordered.
-          </p>
           <p>Lower the quantity or remove it, then place your order again.</p>
           <p>{bagLink}</p>
         </>
@@ -547,86 +404,61 @@ function ProblemNotice({
       break;
     }
     case "throttled":
-      // Per IP, and a phone network can put a whole neighbourhood behind one,
-      // so this does not suggest the customer did anything wrong.
-      body = (
-        <p className="font-medium">
-          The shop is busy right now and your order was not placed. Please wait a few minutes, then
-          place it again.
-        </p>
-      );
+      title = "The shop is busy right now and your order was not placed.";
+      body = <p>Please wait a few minutes, then place it again.</p>;
       break;
     case "rejected":
+      title = "The shop could not accept your bag as it is. Nothing was ordered.";
       body = (
         <>
-          <p className="font-medium">
-            The shop could not accept your bag as it is. Nothing was ordered.
-          </p>
           <p>{bagLink}</p>
-          {problem.requestId !== null && (
-            <p className="text-detail text-slate">Reference: {problem.requestId}</p>
-          )}
+          {problem.requestId !== null && <p>Reference: {problem.requestId}</p>}
         </>
       );
       break;
     case "uncertain":
-      // The one failure where the outcome is unknown: the order may exist.
-      // Nothing here may say that it failed.
+      title = "We could not confirm your order, so it may or may not have been placed.";
       body = (
         <>
-          <p className="font-medium">
-            We could not confirm your order, so it may or may not have been placed.
-          </p>
           <p>
             Check your email for a confirmation before placing it again. If you have one, you can{" "}
-            <Link href="/orders/lookup" className="decoration-indigo underline underline-offset-4">
+            <Link href="/orders/lookup" className="underline underline-offset-4">
               look your order up
             </Link>
             .
           </p>
-          {problem.requestId !== null && (
-            <p className="text-detail text-slate">Reference: {problem.requestId}</p>
-          )}
+          {problem.requestId !== null && <p>Reference: {problem.requestId}</p>}
         </>
       );
       break;
   }
 
   return (
-    <div role="alert" className="border-ink text-ui flex flex-col gap-3 border-l-2 pl-4">
-      {body}
-    </div>
+    <Alert variant="destructive">
+      <AlertTitle>{title}</AlertTitle>
+      <AlertDescription>{body}</AlertDescription>
+    </Alert>
   );
 }
 
-function UnpaidOrder({
-  orderNumber,
-  headingRef,
-}: {
-  orderNumber: string;
-  headingRef: RefObject<HTMLHeadingElement | null>;
-}) {
-  // No retry, and no way to make one: there is no retry-payment endpoint, so
-  // a second attempt could only place a second order for the same goods.
+function CheckoutSkeleton() {
   return (
-    <section className="flex max-w-2xl flex-col gap-6">
-      <h2 ref={headingRef} tabIndex={-1} className="text-heading font-display font-semibold">
-        Your order is placed, but payment could not start
-      </h2>
-      <div className="flex flex-col gap-1">
-        <p className="text-detail text-slate">Order number</p>
-        <p className="text-title font-display font-semibold select-all">{orderNumber}</p>
+    <div aria-busy className="flex flex-col gap-10 lg:flex-row lg:gap-16">
+      <span className="sr-only" role="status">
+        Loading your bag
+      </span>
+      <div className="grid flex-1 content-start gap-5 sm:grid-cols-2">
+        {Array.from({ length: 6 }, (_, field) => (
+          <div key={field} className="flex flex-col gap-2">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-11 w-full" />
+          </div>
+        ))}
       </div>
-      <p className="prose-body">
-        Khalti could not be reached, so nothing was charged. Your items are reserved under this
-        order, and the shop will be in touch to arrange payment. Keep your order number — it is how
-        the shop will find your order.
-      </p>
-      <p>
-        <Link href="/products" className="decoration-indigo underline underline-offset-4">
-          Continue shopping
-        </Link>
-      </p>
-    </section>
+      <div className="flex flex-col gap-4 lg:w-96 lg:shrink-0">
+        <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-12 w-full rounded-full" />
+      </div>
+    </div>
   );
 }
