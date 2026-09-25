@@ -1,6 +1,6 @@
 import type { Money } from "@/lib/api/types";
 
-// Bumped rather than migrated: v2 renamed colour to shade.
+// Bumped on a schema change, never migrated (convention.md).
 export const CART_STORAGE_KEY = "tl.cart.v2";
 
 // The native `storage` event does not fire in the tab that wrote.

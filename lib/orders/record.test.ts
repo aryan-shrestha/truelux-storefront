@@ -35,7 +35,7 @@ describe("parseOrderRecords", () => {
 
   it("drops an entry with a payment method the shop no longer takes, keeping the rest", () => {
     const raw = stored([
-      { ...placed, orderNumber: "TL-2026-000141", paymentMethod: "khalti" },
+      { ...placed, orderNumber: "TL-2026-000141", paymentMethod: "card" },
       placed,
     ]);
 

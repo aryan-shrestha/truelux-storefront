@@ -51,7 +51,6 @@ export function LookupForm() {
   const latest = records[0];
 
   const [submitting, setSubmitting] = useState(false);
-  // Which recent order's "View" started the lookup; null for the form.
   const [viewing, setViewing] = useState<string | null>(null);
   const [problem, setProblem] = useState<Problem | null>(null);
   const [order, setOrder] = useState<Order | null>(null);

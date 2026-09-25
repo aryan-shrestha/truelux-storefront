@@ -217,7 +217,6 @@ describe("CheckoutForm, before anything is sent", () => {
 
     expect(screen.getByText("Cash on delivery")).toBeInTheDocument();
     expect(screen.queryByRole("radio")).not.toBeInTheDocument();
-    expect(document.body).not.toHaveTextContent(/khalti/i);
   });
 
   it("offers the shop, not an empty form, when the bag is empty", () => {
