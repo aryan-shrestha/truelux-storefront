@@ -46,15 +46,27 @@ describe("request", () => {
 
     await request("/api/v1/products/", {
       revalidate: 300,
-      query: { category: "tees", size: undefined, search: "", in_stock: true, limit: 25 },
+      query: { category: "serums", size: undefined, search: "", in_stock: true, limit: 25 },
     });
 
     const url = String(fetchMock.mock.calls[0]?.[0]);
-    expect(url).toContain("category=tees");
+    expect(url).toContain("category=serums");
     expect(url).toContain("in_stock=true");
     expect(url).toContain("limit=25");
     expect(url).not.toContain("size=");
     expect(url).not.toContain("search=");
+  });
+
+  it("repeats a parameter once per value of an array", async () => {
+    const fetchMock = stubFetch(jsonResponse({}));
+
+    await request("/api/v1/products/", {
+      revalidate: 300,
+      query: { brand: ["lumiere", "verde"] },
+    });
+
+    const url = new URL(String(fetchMock.mock.calls[0]?.[0]));
+    expect(url.searchParams.getAll("brand")).toEqual(["lumiere", "verde"]);
   });
 
   it("passes revalidate through to the data cache", async () => {

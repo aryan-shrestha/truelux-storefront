@@ -1,75 +1,83 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getProduct, listCategories, listProducts } from "@/lib/api/catalog";
+import {
+  getBrand,
+  getProduct,
+  listBrands,
+  listCategories,
+  listProducts,
+  listShades,
+  listSizes,
+} from "@/lib/api/catalog";
 
 function stubJson(body: unknown) {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn((_url: string | URL | Request, _init?: RequestInit) =>
-      Promise.resolve(
-        new Response(JSON.stringify(body), { headers: { "Content-Type": "application/json" } }),
-      ),
+  const fetchMock = vi.fn((_url: string | URL | Request, _init?: RequestInit) =>
+    Promise.resolve(
+      new Response(JSON.stringify(body), { headers: { "Content-Type": "application/json" } }),
     ),
   );
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
 }
+
+function requestedUrl(fetchMock: ReturnType<typeof stubJson>): URL {
+  return new URL(String(fetchMock.mock.calls[0]?.[0]));
+}
+
+const rawSummary = {
+  id: "abc",
+  name: "Velvet Lip Tint",
+  slug: "velvet-lip-tint",
+  base_price: "1800.00",
+  brand: { name: "Lumière", slug: "lumiere" },
+  category: { name: "Lips", slug: "lips" },
+  primary_image: { url: "/media/products/tint.jpg", alt_text: "Uncapped" },
+  in_stock: true,
+};
 
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
 describe("listProducts", () => {
-  it("maps the wire's snake_case onto the storefront's camelCase", async () => {
-    stubJson({
-      count: 1,
-      next: null,
-      previous: null,
-      results: [
-        {
-          id: "abc",
-          name: "Boxy Logo Tee",
-          slug: "boxy-logo-tee",
-          base_price: "2400.00",
-          category: { name: "Tees", slug: "tees" },
-          primary_image: { url: "/media/products/tee.jpg", alt_text: "Front" },
-          in_stock: true,
-        },
-      ],
-    });
+  it("maps the wire's snake_case onto the storefront's camelCase, brand included", async () => {
+    stubJson({ count: 1, next: null, previous: null, results: [rawSummary] });
 
-    const page = await listProducts({ category: "tees" });
+    const page = await listProducts({ category: "lips" });
 
-    expect(page.count).toBe(1);
     expect(page.results[0]).toEqual({
       id: "abc",
-      name: "Boxy Logo Tee",
-      slug: "boxy-logo-tee",
-      basePrice: "2400.00",
-      category: { name: "Tees", slug: "tees" },
-      // Resolved against the API: local development serves a relative path.
+      name: "Velvet Lip Tint",
+      slug: "velvet-lip-tint",
+      basePrice: "1800.00",
+      brand: { name: "Lumière", slug: "lumiere" },
+      category: { name: "Lips", slug: "lips" },
       primaryImage: {
-        url: "http://127.0.0.1:8000/media/products/tee.jpg",
-        altText: "Front",
+        url: "http://127.0.0.1:8000/media/products/tint.jpg",
+        altText: "Uncapped",
       },
       inStock: true,
     });
   });
 
-  it("keeps a null primary_image as null rather than inventing an image", async () => {
+  it("repeats ?brand= once per brand and sends shade and size", async () => {
+    const fetchMock = stubJson({ count: 0, next: null, previous: null, results: [] });
+
+    await listProducts({ brand: ["lumiere", "verde"], shade: "warm-beige", size: "30-ml" });
+
+    const params = requestedUrl(fetchMock).searchParams;
+    expect(params.getAll("brand")).toEqual(["lumiere", "verde"]);
+    expect(params.get("shade")).toBe("warm-beige");
+    expect(params.get("size")).toBe("30-ml");
+    expect(params.has("color")).toBe(false);
+  });
+
+  it("keeps a null primary_image as null", async () => {
     stubJson({
       count: 1,
       next: null,
       previous: null,
-      results: [
-        {
-          id: "abc",
-          name: "Pleated Wide Short",
-          slug: "pleated-wide-short",
-          base_price: "3200.00",
-          category: { name: "Shorts", slug: "shorts" },
-          primary_image: null,
-          in_stock: true,
-        },
-      ],
+      results: [{ ...rawSummary, primary_image: null }],
     });
 
     const page = await listProducts();
@@ -79,47 +87,110 @@ describe("listProducts", () => {
 });
 
 describe("getProduct", () => {
-  it("maps variants, keeping a price override distinct from the base price", async () => {
+  it("maps a shade with its hex code, and keeps a price override distinct", async () => {
     stubJson({
-      id: "abc",
-      name: "Washed Pocket Tee",
-      slug: "washed-pocket-tee",
-      base_price: "2650.00",
-      category: { name: "Tees", slug: "tees" },
-      primary_image: null,
-      in_stock: true,
-      description: "Garment-dyed.",
+      ...rawSummary,
+      base_price: "3200.00",
+      description: "Satin finish.",
       images: [],
       variants: [
         {
           id: "v1",
-          size: { name: "XXL", slug: "xxl" },
-          color: { name: "Washed Indigo", slug: "washed-indigo" },
-          price: "2950.00",
+          size: { name: "50 ml", slug: "50-ml" },
+          shade: { name: "Warm Beige", slug: "warm-beige", hex_code: "#D8A47F" },
+          price: "4400.00",
           in_stock: true,
         },
       ],
     });
 
-    const product = await getProduct({ slug: "washed-pocket-tee" });
+    const product = await getProduct({ slug: "silk-skin-foundation" });
 
-    expect(product.basePrice).toBe("2650.00");
-    expect(product.variants[0]?.price).toBe("2950.00");
-    expect(product.variants[0]?.inStock).toBe(true);
+    expect(product.basePrice).toBe("3200.00");
+    expect(product.variants[0]?.price).toBe("4400.00");
+    expect(product.variants[0]?.shade).toEqual({
+      name: "Warm Beige",
+      slug: "warm-beige",
+      hexCode: "#D8A47F",
+    });
+  });
+
+  it("keeps a shadeless variant's shade as null", async () => {
+    stubJson({
+      ...rawSummary,
+      description: "",
+      images: [],
+      variants: [
+        { id: "v1", size: { name: "15 ml", slug: "15-ml" }, shade: null, price: "2900.00", in_stock: true },
+      ],
+    });
+
+    const product = await getProduct({ slug: "hydrating-serum" });
+
+    expect(product.variants[0]?.shade).toBeNull();
   });
 });
 
 describe("listCategories", () => {
   it("reads a bare array, not a pagination envelope", async () => {
     stubJson([
-      { name: "Tops", slug: "tops", children: [{ name: "Tees", slug: "tees" }] },
-      { name: "Bottoms", slug: "bottoms", children: [] },
+      { name: "Skincare", slug: "skincare", children: [{ name: "Serums", slug: "serums" }] },
+      { name: "Fragrance", slug: "fragrance", children: [] },
     ]);
 
     const categories = await listCategories();
 
-    expect(categories).toHaveLength(2);
-    expect(categories[0]?.children[0]?.slug).toBe("tees");
+    expect(categories[0]?.children[0]?.slug).toBe("serums");
     expect(categories[1]?.children).toEqual([]);
+  });
+});
+
+describe("brands", () => {
+  const rawBrand = {
+    name: "Lumière",
+    slug: "lumiere",
+    description: "French-inspired complexion care.",
+    logo_url: "/media/brands/lumiere.png",
+    product_count: 6,
+  };
+
+  it("lists brands from a bare array, resolving a relative logo", async () => {
+    const fetchMock = stubJson([rawBrand, { ...rawBrand, slug: "verde", logo_url: null }]);
+
+    const brands = await listBrands();
+
+    expect(requestedUrl(fetchMock).pathname).toBe("/api/v1/brands/");
+    expect(brands[0]).toMatchObject({
+      slug: "lumiere",
+      logoUrl: "http://127.0.0.1:8000/media/brands/lumiere.png",
+      productCount: 6,
+    });
+    expect(brands[1]?.logoUrl).toBeNull();
+  });
+
+  it("reads one brand by slug", async () => {
+    const fetchMock = stubJson(rawBrand);
+
+    const brand = await getBrand({ slug: "lumiere" });
+
+    expect(requestedUrl(fetchMock).pathname).toBe("/api/v1/brands/lumiere/");
+    expect(brand.description).toBe("French-inspired complexion care.");
+  });
+});
+
+describe("shade and size lists", () => {
+  it("maps shades with their hex codes", async () => {
+    stubJson([{ name: "Warm Beige", slug: "warm-beige", hex_code: "#D8A47F" }]);
+
+    await expect(listShades()).resolves.toEqual([
+      { name: "Warm Beige", slug: "warm-beige", hexCode: "#D8A47F" },
+    ]);
+  });
+
+  it("maps sizes", async () => {
+    const fetchMock = stubJson([{ name: "50 ml", slug: "50-ml" }]);
+
+    await expect(listSizes()).resolves.toEqual([{ name: "50 ml", slug: "50-ml" }]);
+    expect(requestedUrl(fetchMock).pathname).toBe("/api/v1/sizes/");
   });
 });

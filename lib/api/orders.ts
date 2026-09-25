@@ -7,25 +7,19 @@ import type {
   ShippingAddress,
 } from "@/lib/api/types";
 
-/**
- * Customer-scoped calls. Browser-only, uncached, per ADR 0001.
- *
- * These carry the rate limits that are meant to apply to a person: 30 checkouts
- * an hour, 20 order lookups, 60 order reads. Called from a Server Component they
- * would apply to the whole shop instead, and the access token would pass through
- * a server log on its way.
- */
+// Browser-only and uncached (ADR 0001): these rate limits must land on the
+// customer's IP, and the access token must never pass through a server log.
 
 type RawOrderItem = {
   product_name: string;
   variant_size: string;
-  variant_color: string;
+  variant_shade: string | null;
   sku: string;
   quantity: number;
   unit_price: string;
 };
 
-/** Exported for fixtures only, so a stubbed response breaks when the wire shape does. */
+/** Exported for fixtures, so a stubbed response breaks when the wire shape does. */
 export type RawOrder = {
   order_number: string;
   status: Order["status"];
@@ -51,15 +45,14 @@ type RawCheckoutResult = {
   subtotal: string;
   shipping_fee: string;
   total: string;
-  // Absent for cash on delivery. The key is omitted, not set to null.
-  payment_url?: string;
 };
 
 function toItem(raw: RawOrderItem): OrderItem {
   return {
     productName: raw.product_name,
     variantSize: raw.variant_size,
-    variantColor: raw.variant_color,
+    // The backend stores "" for a shadeless variant.
+    variantShade: raw.variant_shade === "" ? null : raw.variant_shade,
     sku: raw.sku,
     quantity: raw.quantity,
     unitPrice: raw.unit_price,
@@ -107,7 +100,7 @@ export async function submitCheckout(input: CheckoutInput): Promise<CheckoutResu
       city: input.city,
       district: input.district,
       note: input.note,
-      payment_method: input.paymentMethod,
+      payment_method: "cod",
     },
   });
 
@@ -117,13 +110,9 @@ export async function submitCheckout(input: CheckoutInput): Promise<CheckoutResu
     subtotal: raw.subtotal,
     shippingFee: raw.shipping_fee,
     total: raw.total,
-    // Spread conditionally so the key is absent rather than undefined, which is
-    // what the API's own shape means and what `"paymentUrl" in result` reads.
-    ...(raw.payment_url === undefined ? {} : { paymentUrl: raw.payment_url }),
   };
 }
 
-/** The access token is the credential. It stays in the URL and goes nowhere else. */
 export async function getOrder({ accessToken }: { accessToken: string }): Promise<Order> {
   const raw = await request<RawOrder>(`/api/v1/orders/${encodeURIComponent(accessToken)}/`, {
     cache: "no-store",
@@ -131,12 +120,7 @@ export async function getOrder({ accessToken }: { accessToken: string }): Promis
   return toOrder(raw);
 }
 
-/**
- * The fallback for a customer with no token, at 20 attempts an hour.
- *
- * A wrong email and an unknown order number return an identical 404, so a caller
- * must never attribute the failure to one field.
- */
+/** A wrong email and an unknown order number return the same 404; never attribute it to one field. */
 export async function lookupOrder({
   orderNumber,
   email,

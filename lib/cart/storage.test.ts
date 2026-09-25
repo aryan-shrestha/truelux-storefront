@@ -1,21 +1,27 @@
 import { describe, expect, it } from "vitest";
 
-import { countLines, parseCart, readCart } from "@/lib/cart/storage";
+import { CART_STORAGE_KEY, countLines, parseCart, readCart } from "@/lib/cart/storage";
 
 const line = {
   variantId: "1b7d",
   quantity: 2,
-  productSlug: "boxy-logo-tee",
-  productName: "Boxy Logo Tee",
-  size: "M",
-  color: "Black",
-  unitPrice: "2400.00",
+  productSlug: "silk-skin-foundation",
+  productName: "Silk Skin Foundation",
+  size: "30 ml",
+  shade: "Warm Beige",
+  unitPrice: "3200.00",
   imageUrl: null,
 };
 
 describe("parseCart", () => {
   it("reads a well-formed cart", () => {
     expect(parseCart(JSON.stringify({ version: 1, lines: [line] }))).toEqual([line]);
+  });
+
+  it("keeps a shadeless line's shade as null", () => {
+    const shadeless = { ...line, shade: null };
+
+    expect(parseCart(JSON.stringify({ version: 2, lines: [shadeless] }))).toEqual([shadeless]);
   });
 
   it("returns empty for an absent key", () => {
@@ -61,11 +67,17 @@ describe("parseCart", () => {
         productSlug: "",
         productName: "",
         size: "",
-        color: "",
+        shade: null,
         unitPrice: "0.00",
         imageUrl: null,
       },
     ]);
+  });
+});
+
+describe("CART_STORAGE_KEY", () => {
+  it("was bumped when colour became shade, so old carts are not read", () => {
+    expect(CART_STORAGE_KEY).toBe("tl.cart.v2");
   });
 });
 

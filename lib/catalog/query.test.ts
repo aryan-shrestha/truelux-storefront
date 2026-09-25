@@ -7,14 +7,16 @@ import {
   toCanonicalSearch,
   toProductQuery,
   toRequestedSearch,
+  withBrandToggled,
 } from "@/lib/catalog/query";
 
 describe("toProductQuery", () => {
   it("reads the parameters it allows", () => {
     const query = toProductQuery({
-      category: "tees",
-      size: "m",
-      color: "washed-indigo",
+      category: "serums",
+      brand: "lumiere",
+      size: "30-ml",
+      shade: "warm-beige",
       min_price: "2000",
       max_price: "6500.50",
       in_stock: "true",
@@ -24,9 +26,10 @@ describe("toProductQuery", () => {
     });
 
     expect(query).toEqual({
-      category: "tees",
-      size: "m",
-      color: "washed-indigo",
+      category: "serums",
+      brand: ["lumiere"],
+      size: "30-ml",
+      shade: "warm-beige",
       minPrice: "2000",
       maxPrice: "6500.50",
       inStock: true,
@@ -88,8 +91,47 @@ describe("toProductQuery", () => {
     expect(toProductQuery({ offset: "0" }).offset).toBeUndefined();
   });
 
-  it("keeps the first value of a repeated parameter", () => {
-    expect(toProductQuery({ size: ["m", "l"] }).size).toBe("m");
+  it("keeps the first value of a repeated single-valued parameter", () => {
+    expect(toProductQuery({ size: ["30-ml", "50-ml"] }).size).toBe("30-ml");
+  });
+
+  it("no longer reads the retired colour parameter", () => {
+    expect(toCanonicalSearch(toProductQuery({ color: "black" }))).toBe("");
+  });
+});
+
+describe("brand filters", () => {
+  it("keeps every valid brand, sorted and deduplicated", () => {
+    expect(toProductQuery({ brand: ["verde", "lumiere", "verde"] }).brand).toEqual([
+      "lumiere",
+      "verde",
+    ]);
+  });
+
+  it("drops a brand that is not a slug, and the whole filter when none is left", () => {
+    expect(toProductQuery({ brand: ["lumiere", "NOT A SLUG!"] }).brand).toEqual(["lumiere"]);
+    expect(toProductQuery({ brand: "../etc" }).brand).toBeUndefined();
+  });
+
+  it("caps the number of brands so a URL cannot mint unbounded cache keys", () => {
+    const many = Array.from({ length: 15 }, (_, index) => `brand-${String(index).padStart(2, "0")}`);
+
+    expect(toProductQuery({ brand: many }).brand).toHaveLength(10);
+  });
+
+  it("round-trips several brands through the canonical search", () => {
+    const canonical = toCanonicalSearch(toProductQuery({ brand: ["verde", "lumiere"] }));
+
+    expect(canonical).toBe("brand=lumiere&brand=verde");
+    expect(toRequestedSearch({ brand: ["lumiere", "verde"] })).toBe(canonical);
+    expect(toRequestedSearch({ brand: ["verde", "lumiere"] })).not.toBe(canonical);
+  });
+
+  it("toggles a brand on and off", () => {
+    const query = toProductQuery({ brand: "lumiere" });
+
+    expect(withBrandToggled(query, "verde")).toEqual(["lumiere", "verde"]);
+    expect(withBrandToggled(query, "lumiere")).toBeUndefined();
   });
 });
 
@@ -144,6 +186,8 @@ describe("hasFilters", () => {
 
   it("is true once a filter narrows the set", () => {
     expect(hasFilters(toProductQuery({ size: "m" }))).toBe(true);
+    expect(hasFilters(toProductQuery({ shade: "porcelain" }))).toBe(true);
+    expect(hasFilters(toProductQuery({ brand: "lumiere" }))).toBe(true);
     expect(hasFilters(toProductQuery({ in_stock: "true" }))).toBe(true);
   });
 });
@@ -171,6 +215,12 @@ describe("hrefWith", () => {
 
     expect(hrefWith(query, { offset: 25 }, { keepOffset: true })).toBe(
       "/products?category=tees&offset=25",
+    );
+  });
+
+  it("builds links under another path, for the brand pages", () => {
+    expect(hrefWith(toProductQuery({}), { shade: "porcelain" }, { pathname: "/brands/lumiere" })).toBe(
+      "/brands/lumiere?shade=porcelain",
     );
   });
 

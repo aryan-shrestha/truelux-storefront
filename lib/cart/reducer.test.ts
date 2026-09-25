@@ -7,11 +7,11 @@ function line(variantId: string, quantity = 1): CartLine {
   return {
     variantId,
     quantity,
-    productSlug: "boxy-logo-tee",
-    productName: "Boxy Logo Tee",
-    size: "M",
-    color: "Black",
-    unitPrice: "2400.00",
+    productSlug: "velvet-lip-tint",
+    productName: "Velvet Lip Tint",
+    size: "4 g",
+    shade: "Rosewood",
+    unitPrice: "1800.00",
     imageUrl: null,
   };
 }

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError, ApiUnreachableError } from "@/lib/api/errors";
 import { latestProducts } from "@/lib/catalog/latest";
-import { boxyLogoTee, soldOutJacket } from "@/tests/fixtures/catalog";
+import { soldOutPerfume, velvetLipTint } from "@/tests/fixtures/catalog";
 
 const listProducts = vi.hoisted(() => vi.fn());
 
@@ -13,12 +13,12 @@ afterEach(() => {
 });
 
 describe("latestProducts", () => {
-  it("asks for the nine newest products", async () => {
+  it("asks for the eight newest products", async () => {
     listProducts.mockResolvedValue({ count: 0, next: null, previous: null, results: [] });
 
     await latestProducts();
 
-    expect(listProducts).toHaveBeenCalledWith({ ordering: "-created_at", limit: 9 });
+    expect(listProducts).toHaveBeenCalledWith({ ordering: "-created_at", limit: 8 });
   });
 
   it("returns the results when the API answers", async () => {
@@ -26,10 +26,10 @@ describe("latestProducts", () => {
       count: 2,
       next: null,
       previous: null,
-      results: [boxyLogoTee, soldOutJacket],
+      results: [soldOutPerfume, velvetLipTint],
     });
 
-    await expect(latestProducts()).resolves.toEqual([boxyLogoTee, soldOutJacket]);
+    await expect(latestProducts()).resolves.toEqual([soldOutPerfume, velvetLipTint]);
   });
 
   it("degrades to nothing when the API refuses", async () => {

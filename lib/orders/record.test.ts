@@ -33,30 +33,27 @@ describe("parseOrderRecords", () => {
     expect(parseOrderRecords("{not json")).toEqual([]);
   });
 
-  it("drops an entry with an unknown payment method, keeping the rest", () => {
+  it("drops an entry with a payment method the shop no longer takes, keeping the rest", () => {
     const raw = stored([
-      { ...placed, orderNumber: "TL-2026-000141", paymentMethod: "card" },
+      { ...placed, orderNumber: "TL-2026-000141", paymentMethod: "khalti" },
       placed,
     ]);
 
     expect(parseOrderRecords(raw).map((entry) => entry.orderNumber)).toEqual(["TL-2026-000142"]);
   });
 
-  it("keeps an order whose amounts are unknown, rather than dropping it", () => {
-    // payment_gateway_unavailable names the order and nothing else. The number
-    // is the part worth keeping.
-    const [entry] = parseOrderRecords(stored([{ ...placed, amounts: { total: 4650 } }]));
+  it("drops an entry whose amounts are missing or not strings", () => {
+    const raw = stored([
+      { ...placed, orderNumber: "TL-2026-000140", amounts: null },
+      {
+        ...placed,
+        orderNumber: "TL-2026-000141",
+        amounts: { subtotal: 4500, shippingFee: "150.00", total: "4650.00" },
+      },
+      placed,
+    ]);
 
-    expect(entry?.orderNumber).toBe("TL-2026-000142");
-    expect(entry?.amounts).toBeNull();
-  });
-
-  it("never reads back an amount that is not a string", () => {
-    const [entry] = parseOrderRecords(
-      stored([{ ...placed, amounts: { subtotal: 4500, shippingFee: "150.00", total: "4650.00" } }]),
-    );
-
-    expect(entry?.amounts).toBeNull();
+    expect(parseOrderRecords(raw).map((entry) => entry.orderNumber)).toEqual(["TL-2026-000142"]);
   });
 });
 
@@ -72,12 +69,12 @@ describe("recordOrder", () => {
   });
 
   it("keeps one entry per order number", () => {
-    recordOrder({ ...placed, amounts: null });
+    recordOrder({ ...placed, amounts: { ...placed.amounts, total: "1.00" } });
     recordOrder(placed);
 
     const orders = readOrderRecords();
     expect(orders).toHaveLength(1);
-    expect(orders[0]?.amounts?.total).toBe("4650.00");
+    expect(orders[0]?.amounts.total).toBe("4650.00");
   });
 
   it("keeps the ten most recent", () => {

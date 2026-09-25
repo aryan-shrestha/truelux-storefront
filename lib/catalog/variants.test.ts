@@ -1,134 +1,127 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  colorOptions,
+  describeVariant,
   findVariant,
+  hasShades,
   isEntirelySoldOut,
   onlyOption,
+  shadeOptions,
   sizeOptions,
-  sizesOf,
   statusOf,
 } from "@/lib/catalog/variants";
-import { washedPocketTee } from "@/tests/fixtures/catalog";
+import { hydratingSerum, silkFoundation } from "@/tests/fixtures/catalog";
 
-const variants = washedPocketTee.variants;
+// silkFoundation:
+//   30 ml / porcelain   in stock
+//   30 ml / warm-beige  in stock
+//   50 ml / warm-beige  in stock, priced higher
+//   30 ml / deep-mocha  SOLD OUT
+// 50 ml in porcelain or deep-mocha was never made.
+const variants = silkFoundation.variants;
 
-// The fixture mirrors what seed_demo creates:
-//   m/washed-indigo   in stock
-//   l/washed-indigo   in stock
-//   xxl/washed-indigo in stock, and priced higher
-//   m/olive           in stock
-//   l/olive           SOLD OUT
-// xxl/olive was never made, and xl does not exist at all in this fixture.
-
-describe("sizesOf", () => {
-  it("keeps the API's order and does not repeat a size", () => {
-    expect(sizesOf(variants).map((size) => size.slug)).toEqual(["m", "l", "xxl"]);
-  });
-});
+function statesOf(options: Array<{ slug: string; state: string }>) {
+  return Object.fromEntries(options.map((option) => [option.slug, option.state]));
+}
 
 describe("sizeOptions", () => {
-  it("reports every size as available when no colour is chosen yet", () => {
-    expect(sizeOptions(variants, null).map((option) => option.state)).toEqual([
-      "available",
-      "available",
-      "available",
-    ]);
+  it("keeps the API's order and reports every size available before a shade is chosen", () => {
+    expect(statesOf(sizeOptions(variants, null))).toEqual({
+      "30-ml": "available",
+      "50-ml": "available",
+    });
   });
 
-  it("distinguishes not-made from sold-out once a colour is chosen", () => {
-    const states = Object.fromEntries(
-      sizeOptions(variants, "olive").map((option) => [option.slug, option.state]),
-    );
-
-    expect(states).toEqual({
-      m: "available",
-      // The pairing exists and has no stock. It may come back.
-      l: "sold-out",
-      // This pairing was never created. It is not coming back.
-      xxl: "not-made",
+  it("distinguishes not-made from sold-out once a shade is chosen", () => {
+    expect(statesOf(sizeOptions(variants, "deep-mocha"))).toEqual({
+      "30-ml": "sold-out",
+      "50-ml": "not-made",
     });
   });
 });
 
-describe("colorOptions", () => {
-  it("marks a colour not-made for a size it was never produced in", () => {
-    const states = Object.fromEntries(
-      colorOptions(variants, "xxl").map((option) => [option.slug, option.state]),
-    );
-
-    expect(states).toEqual({ "washed-indigo": "available", olive: "not-made" });
+describe("shadeOptions", () => {
+  it("carries each shade's swatch colour", () => {
+    expect(shadeOptions(variants, null).map((option) => option.hexCode)).toEqual([
+      "#F3DCC8",
+      "#D8A47F",
+      "#6B432C",
+    ]);
   });
 
-  it("marks a colour sold out when the pairing exists with no stock", () => {
-    const states = Object.fromEntries(
-      colorOptions(variants, "l").map((option) => [option.slug, option.state]),
-    );
+  it("marks a shade not-made for a size it was never produced in", () => {
+    expect(statesOf(shadeOptions(variants, "50-ml"))).toEqual({
+      porcelain: "not-made",
+      "warm-beige": "available",
+      "deep-mocha": "not-made",
+    });
+  });
 
-    expect(states).toEqual({ "washed-indigo": "available", olive: "sold-out" });
+  it("is empty for a shadeless product", () => {
+    expect(shadeOptions(hydratingSerum.variants, null)).toEqual([]);
+  });
+});
+
+describe("hasShades", () => {
+  it("tells a shaded product from a shadeless one", () => {
+    expect(hasShades(variants)).toBe(true);
+    expect(hasShades(hydratingSerum.variants)).toBe(false);
   });
 });
 
 describe("findVariant", () => {
-  it("resolves a pairing to the one variant", () => {
-    expect(findVariant(variants, "xxl", "washed-indigo")?.id).toBe("v-xxl-indigo");
-  });
-
-  it("resolves the variant carrying a price override", () => {
-    // The price follows the selection: showing base_price while charging the
-    // override is the surprise that ends at a support message.
-    expect(findVariant(variants, "xxl", "washed-indigo")?.price).toBe("2950.00");
-    expect(findVariant(variants, "m", "washed-indigo")?.price).toBe("2650.00");
+  it("resolves a shade and a size to the one variant, with its own price", () => {
+    expect(findVariant(variants, "50-ml", "warm-beige")).toMatchObject({
+      id: "v-50-warm-beige",
+      price: "4400.00",
+    });
   });
 
   it("returns nothing for a pairing that was never made", () => {
-    expect(findVariant(variants, "xxl", "olive")).toBeUndefined();
+    expect(findVariant(variants, "50-ml", "porcelain")).toBeUndefined();
   });
 
-  it("returns nothing until both halves are chosen", () => {
-    expect(findVariant(variants, "m", null)).toBeUndefined();
-    expect(findVariant(variants, null, "olive")).toBeUndefined();
+  it("returns nothing until both halves of a shaded product are chosen", () => {
+    expect(findVariant(variants, "30-ml", null)).toBeUndefined();
+    expect(findVariant(variants, null, "porcelain")).toBeUndefined();
+  });
+
+  it("resolves a shadeless product from its size alone", () => {
+    expect(findVariant(hydratingSerum.variants, "15-ml", null)?.id).toBe("v-15-serum");
   });
 });
 
 describe("statusOf", () => {
-  it("says nothing for an available option", () => {
+  it("says nothing for an available option and different words for the two unavailable states", () => {
     expect(statusOf("available")).toBeUndefined();
-  });
-
-  it("uses different words for the two unavailable states", () => {
     expect(statusOf("sold-out")).not.toBe(statusOf("not-made"));
   });
 });
 
 describe("isEntirelySoldOut", () => {
-  it("is false when anything has stock", () => {
+  it("is true only when every variant is out of stock", () => {
     expect(isEntirelySoldOut(variants)).toBe(false);
+    expect(isEntirelySoldOut(variants.map((variant) => ({ ...variant, inStock: false })))).toBe(
+      true,
+    );
   });
 
-  it("is true when nothing does", () => {
-    const gone = variants.map((variant) => ({ ...variant, inStock: false }));
-
-    expect(isEntirelySoldOut(gone)).toBe(true);
-  });
-
-  it("is false for a product with no variants, which is a different state", () => {
-    // A merchant can create a product and not finish it. That is "not set up",
-    // not "sold out", and the two should not collapse.
+  it("is false for a product with no variants, which is unfinished rather than sold out", () => {
     expect(isEntirelySoldOut([])).toBe(false);
   });
 });
 
 describe("onlyOption", () => {
-  it("preselects a group of one", () => {
-    expect(onlyOption([{ slug: "m", name: "M", state: "available" }])).toBe("m");
-  });
-
-  it("preselects nothing when there is a real choice", () => {
+  it("preselects a group of one and nothing otherwise", () => {
+    expect(onlyOption([{ slug: "50-ml" }])).toBe("50-ml");
     expect(onlyOption(sizeOptions(variants, null))).toBeNull();
-  });
-
-  it("preselects nothing for an empty group", () => {
     expect(onlyOption([])).toBeNull();
+  });
+});
+
+describe("describeVariant", () => {
+  it("reads size and shade, or the size alone", () => {
+    expect(describeVariant("30 ml", "Warm Beige")).toBe("30 ml · Warm Beige");
+    expect(describeVariant("15 ml", null)).toBe("15 ml");
   });
 });

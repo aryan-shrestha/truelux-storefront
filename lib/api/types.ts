@@ -1,12 +1,4 @@
-/**
- * The wire types, mirroring docs/integrations/backend-api.md field for field.
- *
- * The API speaks snake_case; this repository speaks camelCase. The mapping
- * happens once, in the endpoint modules, so API field names appear as strings
- * only here and there.
- */
-
-/** A decimal string, e.g. "4500.00". Never a number — see ADR 0003. */
+/** A decimal string, e.g. "4500.00". Never a number (ADR 0003). */
 export type Money = string;
 
 export type Page<T> = {
@@ -22,14 +14,18 @@ export type CategoryRef = {
 };
 
 export type Category = CategoryRef & {
-  /** Always one level deep. A child never has children of its own. */
   children: CategoryRef[];
 };
 
-export type ProductImage = {
-  url: string;
-  /** May be an empty string, which means the image is decorative. */
-  altText: string;
+export type BrandRef = {
+  name: string;
+  slug: string;
+};
+
+export type Brand = BrandRef & {
+  description: string;
+  logoUrl: string | null;
+  productCount: number;
 };
 
 export type SizeRef = {
@@ -37,15 +33,22 @@ export type SizeRef = {
   slug: string;
 };
 
-export type ColorRef = {
+export type ShadeRef = {
   name: string;
   slug: string;
+  hexCode: string;
+};
+
+export type ProductImage = {
+  url: string;
+  /** An empty string means the image is decorative. */
+  altText: string;
 };
 
 export type ProductVariant = {
   id: string;
   size: SizeRef;
-  color: ColorRef;
+  shade: ShadeRef | null;
   /** Already resolved: the variant's override, or its product's base price. */
   price: Money;
   inStock: boolean;
@@ -56,27 +59,28 @@ export type ProductSummary = {
   name: string;
   slug: string;
   basePrice: Money;
+  brand: BrandRef;
   category: CategoryRef;
   primaryImage: ProductImage | null;
-  /** True when any variant has stock. Never a quantity — the API sends none. */
   inStock: boolean;
 };
 
 export type Product = ProductSummary & {
   description: string;
   images: ProductImage[];
-  /**
-   * A sparse set of pairings, not a grid. A product in three sizes and two
-   * colours may have four variants, and a combination that was never created is
-   * a different fact from one that sold out.
-   */
   variants: ProductVariant[];
 };
 
-export const ORDER_STATUSES = ["pending", "paid", "shipped", "delivered", "cancelled"] as const;
+export const ORDER_STATUSES = [
+  "pending",
+  "confirmed",
+  "shipped",
+  "delivered",
+  "cancelled",
+] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
-export const PAYMENT_METHODS = ["cod", "khalti"] as const;
+export const PAYMENT_METHODS = ["cod"] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 export type ShippingAddress = {
@@ -87,10 +91,9 @@ export type ShippingAddress = {
 };
 
 export type OrderItem = {
-  /** Snapshots taken at purchase. They do not change when the catalogue does. */
   productName: string;
   variantSize: string;
-  variantColor: string;
+  variantShade: string | null;
   sku: string;
   quantity: number;
   unitPrice: Money;
@@ -124,7 +127,6 @@ export type CheckoutInput = {
   city: string;
   district: string;
   note: string;
-  paymentMethod: PaymentMethod;
 };
 
 export type CheckoutResult = {
@@ -133,22 +135,21 @@ export type CheckoutResult = {
   subtotal: Money;
   shippingFee: Money;
   total: Money;
-  /**
-   * Optional, not nullable. A cash-on-delivery response omits the key entirely
-   * rather than sending null, and modelling it as `string | null` produces a
-   * type that is wrong in a way the compiler cannot catch.
-   */
-  paymentUrl?: string;
 };
 
 export type ProductOrdering =
-  "name" | "-name" | "base_price" | "-base_price" | "created_at" | "-created_at";
+  | "name"
+  | "-name"
+  | "base_price"
+  | "-base_price"
+  | "created_at"
+  | "-created_at";
 
-/** Normalised by the listing route before it reaches the client. */
 export type ProductQuery = {
   category?: string;
+  brand?: string[];
   size?: string;
-  color?: string;
+  shade?: string;
   minPrice?: string;
   maxPrice?: string;
   inStock?: boolean;

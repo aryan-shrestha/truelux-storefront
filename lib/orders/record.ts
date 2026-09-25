@@ -1,15 +1,6 @@
 import { PAYMENT_METHODS, type Money, type PaymentMethod } from "@/lib/api/types";
 
-/**
- * The orders this device has placed, newest first.
- *
- * A convenience and never a credential: it prefills the order lookup and names
- * the order on the confirmation page. **It never holds an access token** — the
- * checkout response does not carry one, and the order routes must not add one.
- *
- * Anything read back is untrusted input, validated entry by entry.
- */
-
+// A convenience, never a credential: it never holds an access token.
 export const ORDER_RECORD_KEY = "tl.orders.v1";
 
 // Enough to find last month's order again; not a history, which is Phase 2.
@@ -27,12 +18,7 @@ export type OrderRecord = {
   /** This device's clock at placement. The API's own `placed_at` is on the order. */
   recordedAt: string;
   paymentMethod: PaymentMethod;
-  /**
-   * Exactly as the API returned them. Null when the order was placed but the
-   * response did not carry them: `payment_gateway_unavailable` names the order
-   * and nothing else.
-   */
-  amounts: OrderAmounts | null;
+  amounts: OrderAmounts;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -56,15 +42,11 @@ function toEntry(value: unknown): OrderRecord | null {
   const { orderNumber, email, recordedAt, paymentMethod, amounts } = value;
 
   if (!isString(orderNumber) || !isString(email) || !isString(recordedAt)) return null;
-  if (!PAYMENT_METHODS.includes(paymentMethod as PaymentMethod)) return null;
+  const method = PAYMENT_METHODS.find((candidate) => candidate === paymentMethod);
+  const parsedAmounts = toAmounts(amounts);
+  if (method === undefined || parsedAmounts === null) return null;
 
-  return {
-    orderNumber,
-    email,
-    recordedAt,
-    paymentMethod: paymentMethod as PaymentMethod,
-    amounts: toAmounts(amounts),
-  };
+  return { orderNumber, email, recordedAt, paymentMethod: method, amounts: parsedAmounts };
 }
 
 export function parseOrderRecords(raw: string | null): OrderRecord[] {

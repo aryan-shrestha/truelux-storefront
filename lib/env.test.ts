@@ -8,7 +8,7 @@ afterEach(() => {
 
 describe("env", () => {
   it("reads a configured value", () => {
-    expect(env.brandName).toBe("Threadline");
+    expect(env.brandName).toBe("TrueLux");
   });
 
   it("validates when a field is read, not when the module loads", () => {

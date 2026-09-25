@@ -1,5 +1,7 @@
 import { request, toAbsoluteImageUrl } from "@/lib/api/client";
 import type {
+  Brand,
+  BrandRef,
   Category,
   CategoryRef,
   Money,
@@ -9,28 +11,23 @@ import type {
   ProductQuery,
   ProductSummary,
   ProductVariant,
+  ShadeRef,
   SizeRef,
 } from "@/lib/api/types";
 
-/**
- * Catalogue reads. Server-side only, cached, per ADR 0001.
- *
- * The revalidation intervals are terms in a request budget, not preferences:
- * the backend allows 600 catalogue requests an hour per IP and a deployed
- * storefront is one IP. See docs/architecture.md before changing one or adding
- * a fourth call.
- */
-
+// Terms in the catalogue request budget (docs/architecture.md). Change one only
+// after redoing that arithmetic.
 const LIST_REVALIDATE = 300;
-const DETAIL_REVALIDATE = 900;
-const CATEGORY_REVALIDATE = 3600;
+const DETAIL_REVALIDATE = 1800;
+const REFERENCE_REVALIDATE = 3600;
 
 type RawRef = { name: string; slug: string };
+type RawShade = { name: string; slug: string; hex_code: string };
 type RawImage = { url: string; alt_text: string };
 type RawVariant = {
   id: string;
   size: RawRef;
-  color: RawRef;
+  shade: RawShade | null;
   price: Money;
   in_stock: boolean;
 };
@@ -39,6 +36,7 @@ type RawProductSummary = {
   name: string;
   slug: string;
   base_price: Money;
+  brand: RawRef;
   category: RawRef;
   primary_image: RawImage | null;
   in_stock: boolean;
@@ -49,12 +47,18 @@ type RawProduct = RawProductSummary & {
   variants: RawVariant[];
 };
 type RawCategory = RawRef & { children: RawRef[] };
+type RawBrand = RawRef & {
+  description: string;
+  logo_url: string | null;
+  product_count: number;
+};
 
-// Mapped field by field rather than through a generic snake-to-camel helper: a
-// helper types as `any` in both directions, and these functions are where a
-// field rename on the backend becomes a compile error here.
-function toRef(raw: RawRef): CategoryRef & SizeRef {
+function toRef(raw: RawRef): CategoryRef & BrandRef & SizeRef {
   return { name: raw.name, slug: raw.slug };
+}
+
+function toShade(raw: RawShade): ShadeRef {
+  return { name: raw.name, slug: raw.slug, hexCode: raw.hex_code };
 }
 
 function toImage(raw: RawImage): ProductImage {
@@ -65,7 +69,7 @@ function toVariant(raw: RawVariant): ProductVariant {
   return {
     id: raw.id,
     size: toRef(raw.size),
-    color: toRef(raw.color),
+    shade: raw.shade === null ? null : toShade(raw.shade),
     price: raw.price,
     inStock: raw.in_stock,
   };
@@ -77,6 +81,7 @@ function toSummary(raw: RawProductSummary): ProductSummary {
     name: raw.name,
     slug: raw.slug,
     basePrice: raw.base_price,
+    brand: toRef(raw.brand),
     category: toRef(raw.category),
     primaryImage: raw.primary_image === null ? null : toImage(raw.primary_image),
     inStock: raw.in_stock,
@@ -96,13 +101,24 @@ function toCategory(raw: RawCategory): Category {
   return { name: raw.name, slug: raw.slug, children: raw.children.map(toRef) };
 }
 
+function toBrand(raw: RawBrand): Brand {
+  return {
+    name: raw.name,
+    slug: raw.slug,
+    description: raw.description,
+    logoUrl: raw.logo_url === null ? null : toAbsoluteImageUrl(raw.logo_url),
+    productCount: raw.product_count,
+  };
+}
+
 export async function listProducts(query: ProductQuery = {}): Promise<Page<ProductSummary>> {
   const page = await request<Page<RawProductSummary>>("/api/v1/products/", {
     revalidate: LIST_REVALIDATE,
     query: {
       category: query.category,
+      brand: query.brand,
       size: query.size,
-      color: query.color,
+      shade: query.shade,
       min_price: query.minPrice,
       max_price: query.maxPrice,
       in_stock: query.inStock,
@@ -115,8 +131,6 @@ export async function listProducts(query: ProductQuery = {}): Promise<Page<Produ
 
   return {
     count: page.count,
-    // Absolute URLs built from the request's own host, which for a server-side
-    // call is the internal one. Never follow them; recompute limit and offset.
     next: page.next,
     previous: page.previous,
     results: page.results.map(toSummary),
@@ -130,10 +144,37 @@ export async function getProduct({ slug }: { slug: string }): Promise<Product> {
   return toProduct(raw);
 }
 
-/** A bare array, not a pagination envelope — the one endpoint shaped this way. */
 export async function listCategories(): Promise<Category[]> {
   const raw = await request<RawCategory[]>("/api/v1/categories/", {
-    revalidate: CATEGORY_REVALIDATE,
+    revalidate: REFERENCE_REVALIDATE,
   });
   return raw.map(toCategory);
+}
+
+export async function listBrands(): Promise<Brand[]> {
+  const raw = await request<RawBrand[]>("/api/v1/brands/", {
+    revalidate: REFERENCE_REVALIDATE,
+  });
+  return raw.map(toBrand);
+}
+
+export async function getBrand({ slug }: { slug: string }): Promise<Brand> {
+  const raw = await request<RawBrand>(`/api/v1/brands/${encodeURIComponent(slug)}/`, {
+    revalidate: REFERENCE_REVALIDATE,
+  });
+  return toBrand(raw);
+}
+
+export async function listShades(): Promise<ShadeRef[]> {
+  const raw = await request<RawShade[]>("/api/v1/shades/", {
+    revalidate: REFERENCE_REVALIDATE,
+  });
+  return raw.map(toShade);
+}
+
+export async function listSizes(): Promise<SizeRef[]> {
+  const raw = await request<RawRef[]>("/api/v1/sizes/", {
+    revalidate: REFERENCE_REVALIDATE,
+  });
+  return raw.map(toRef);
 }

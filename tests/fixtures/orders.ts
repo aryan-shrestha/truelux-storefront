@@ -1,12 +1,6 @@
 import type { RawOrder } from "@/lib/api/orders";
 
-/**
- * An order as the API sends it, for stubbing `fetch` and `page.route`.
- *
- * A Khalti order that came back from the payment page unpaid is the case that
- * must never read as confirmed, so `pending` is the default here.
- */
-export const pendingKhaltiOrder: RawOrder = {
+export const pendingOrder: RawOrder = {
   order_number: "TL-2026-000142",
   status: "pending",
   placed_at: "2026-09-20T10:14:00Z",
@@ -20,18 +14,26 @@ export const pendingKhaltiOrder: RawOrder = {
   },
   items: [
     {
-      product_name: "Washed Pocket Tee",
-      variant_size: "M",
-      variant_color: "Washed Indigo",
-      sku: "WPT-M-IND",
-      quantity: 3,
-      unit_price: "2650.00",
+      product_name: "Silk Skin Foundation",
+      variant_size: "30 ml",
+      variant_shade: "Warm Beige",
+      sku: "SSF-30-WB",
+      quantity: 1,
+      unit_price: "3200.00",
+    },
+    {
+      product_name: "Hydrating Serum",
+      variant_size: "15 ml",
+      variant_shade: "",
+      sku: "HS-15",
+      quantity: 2,
+      unit_price: "2900.00",
     },
   ],
-  subtotal: "7950.00",
+  subtotal: "9000.00",
   shipping_fee: "150.00",
-  total: "8100.00",
-  payment_method: "khalti",
+  total: "9150.00",
+  payment_method: "cod",
 };
 
-export const paidKhaltiOrder: RawOrder = { ...pendingKhaltiOrder, status: "paid" };
+export const confirmedOrder: RawOrder = { ...pendingOrder, status: "confirmed" };
