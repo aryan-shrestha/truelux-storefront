@@ -45,7 +45,7 @@ export function QuantityStepper({ itemName, value, min, max, onChange }: Quantit
           // Typing a 0 on the way to "10" must not delete the line; Remove does that.
           if (!Number.isNaN(next) && next >= min) onChange(next);
         }}
-        className="w-14 text-center tabular-nums"
+        className="w-14 [appearance:textfield] text-center tabular-nums [&::-webkit-inner-spin-button]:appearance-none"
       />
       <Button
         variant="outline"

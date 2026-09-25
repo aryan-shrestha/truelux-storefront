@@ -1,4 +1,5 @@
-"use client"
+// No "use client": the filter rail, a Server Component, styles links with
+// toggleVariants. The Radix primitive carries its own client boundary.
 
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
