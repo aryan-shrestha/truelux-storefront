@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { LookupForm } from "@/components/orders/LookupForm";
 import { recordOrder } from "@/lib/orders/record";
-import { pendingKhaltiOrder } from "@/tests/fixtures/orders";
+import { pendingOrder } from "@/tests/fixtures/orders";
 
 function jsonResponse(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), {
@@ -31,7 +31,7 @@ function record(orderNumber: string, email: string) {
     email,
     recordedAt: "2026-09-24T10:14:00.000Z",
     paymentMethod: "cod",
-    amounts: null,
+    amounts: { subtotal: "9000.00", shippingFee: "150.00", total: "9150.00" },
   });
 }
 
@@ -59,12 +59,12 @@ describe("LookupForm", () => {
   });
 
   it("posts the number and email, then shows the order", async () => {
-    const fetchMock = stubFetch(jsonResponse(pendingKhaltiOrder, 200));
+    const fetchMock = stubFetch(jsonResponse(pendingOrder, 200));
 
     render(<LookupForm />);
     await submit("TL-2026-000142", "sita@example.com");
 
-    expect(await screen.findByText("Awaiting payment")).toBeInTheDocument();
+    expect(await screen.findByText("Placed")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Order found" })).toHaveFocus();
     const [url, init] = fetchMock.mock.calls[0] ?? [];
     expect(String(url)).toBe("http://127.0.0.1:8000/api/v1/orders/lookup/");
@@ -99,12 +99,12 @@ describe("LookupForm", () => {
 
   it("looks up a recent order in one click", async () => {
     record("TL-2026-000142", "sita@example.com");
-    const fetchMock = stubFetch(jsonResponse(pendingKhaltiOrder, 200));
+    const fetchMock = stubFetch(jsonResponse(pendingOrder, 200));
 
     render(<LookupForm />);
     await userEvent.click(screen.getByRole("button", { name: "View order TL-2026-000142" }));
 
-    expect(await screen.findByText("Awaiting payment")).toBeInTheDocument();
+    expect(await screen.findByText("Placed")).toBeInTheDocument();
     expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)).email).toBe("sita@example.com");
   });
 });

@@ -11,6 +11,11 @@ describe("robots", () => {
     expect(rule?.allow).toContain("/products");
   });
 
+  it("keeps crawlers off filtered brand pages too", () => {
+    expect(rule?.disallow).toContain("/brands/*?");
+    expect(rule?.allow).toContain("/brands");
+  });
+
   it("keeps crawlers off every route that carries a cart or a credential", () => {
     expect(rule?.disallow).toEqual(expect.arrayContaining(["/cart", "/checkout", "/orders"]));
   });

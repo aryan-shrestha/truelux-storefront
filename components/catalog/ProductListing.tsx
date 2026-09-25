@@ -14,9 +14,8 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
-import { listProducts } from "@/lib/api/catalog";
-import { hasCode } from "@/lib/api/errors";
-import type { Page, ProductQuery, ProductSummary } from "@/lib/api/types";
+import type { ProductQuery } from "@/lib/api/types";
+import { listingPage } from "@/lib/catalog/listing";
 import type { ListingFacets } from "@/lib/catalog/navigation";
 import { hasFilters, toCanonicalSearch } from "@/lib/catalog/query";
 
@@ -75,17 +74,7 @@ export function ProductListing({
 }
 
 // Results and ProductCount make the same call; Next deduplicates it within a
-// render, so it is one upstream request and one cache key. The API answers an
-// unknown ?brand= slug (a stale link, say) with a 400 rather than an empty page.
-async function loadPage(query: ProductQuery): Promise<Page<ProductSummary> | null> {
-  try {
-    return await listProducts(query);
-  } catch (error) {
-    if (hasCode(error, "validation_error")) return null;
-    throw error;
-  }
-}
-
+// render, so it is one upstream request and one cache key.
 async function Results({
   query,
   apiQuery,
@@ -95,7 +84,7 @@ async function Results({
   apiQuery: ProductQuery;
   pathname: string;
 }) {
-  const page = await loadPage(apiQuery);
+  const page = await listingPage(apiQuery);
 
   if (page === null || page.results.length === 0) {
     return <NoResults query={query} pathname={pathname} />;
@@ -110,7 +99,7 @@ async function Results({
 }
 
 async function ProductCount({ query }: { query: ProductQuery }) {
-  const count = (await loadPage(query))?.count ?? 0;
+  const count = (await listingPage(query))?.count ?? 0;
   return count === 1 ? "1 product" : `${count} products`;
 }
 

@@ -1,12 +1,9 @@
 import { render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { OrderByToken } from "@/components/orders/OrderByToken";
-import { CART_STORAGE_KEY, readCart } from "@/lib/cart/storage";
-import { CartProvider } from "@/lib/cart/use-cart";
-import { HANDOFF_KEY, markHandoff } from "@/lib/orders/handoff";
 import { ORDER_RECORD_KEY, readOrderRecords } from "@/lib/orders/record";
-import { paidKhaltiOrder, pendingKhaltiOrder } from "@/tests/fixtures/orders";
+import { confirmedOrder, pendingOrder } from "@/tests/fixtures/orders";
 
 const TOKEN = "3f6c1a2e-8b4d-4e7a-9c1f-5d2b7e8a9c30";
 
@@ -29,38 +26,9 @@ function apiError(status: number, code: string) {
   return jsonResponse({ error: { code, message: "Reworded at will.", details: {} } }, status);
 }
 
-function seedCart() {
-  window.localStorage.setItem(
-    CART_STORAGE_KEY,
-    JSON.stringify({
-      version: 1,
-      lines: [
-        {
-          variantId: "9bcb804a-6c3d-4970-ba88-2076709bc494",
-          quantity: 1,
-          productSlug: "washed-pocket-tee",
-          productName: "Washed Pocket Tee",
-          size: "M",
-          color: "Washed Indigo",
-          unitPrice: "2650.00",
-          imageUrl: null,
-        },
-      ],
-    }),
-  );
-}
-
 function renderPage() {
-  return render(
-    <CartProvider>
-      <OrderByToken accessToken={TOKEN} />
-    </CartProvider>,
-  );
+  return render(<OrderByToken accessToken={TOKEN} />);
 }
-
-beforeEach(() => {
-  seedCart();
-});
 
 afterEach(() => {
   window.localStorage.clear();
@@ -69,7 +37,7 @@ afterEach(() => {
 
 describe("OrderByToken", () => {
   it("fetches the order by its token without caching, and renders the API's figures", async () => {
-    const fetchMock = stubFetch(jsonResponse(paidKhaltiOrder, 200));
+    const fetchMock = stubFetch(jsonResponse(confirmedOrder, 200));
 
     renderPage();
 
@@ -78,53 +46,32 @@ describe("OrderByToken", () => {
       `http://127.0.0.1:8000/api/v1/orders/${TOKEN}/`,
     );
     expect(fetchMock.mock.calls[0]?.[1]?.cache).toBe("no-store");
-    expect(screen.getByText("Paid")).toBeInTheDocument();
-    expect(screen.getByText("Rs 8,100")).toBeInTheDocument();
+    expect(screen.getByText("Confirmed")).toBeInTheDocument();
+    expect(screen.getByText("Rs 9,150")).toBeInTheDocument();
+    expect(screen.getByText("Cash on delivery")).toBeInTheDocument();
   });
 
-  it("does not describe a pending Khalti order as paid or confirmed", async () => {
-    stubFetch(jsonResponse(pendingKhaltiOrder, 200));
+  it("describes a pending order as placed and awaiting the shop's call, never as confirmed", async () => {
+    stubFetch(jsonResponse(pendingOrder, 200));
 
     renderPage();
 
-    expect(await screen.findByText("Awaiting payment")).toBeInTheDocument();
-    expect(document.body).not.toHaveTextContent(/payment is confirmed/i);
-    expect(screen.queryByText("Paid")).not.toBeInTheDocument();
+    expect(await screen.findByText("Placed")).toBeInTheDocument();
+    expect(screen.getByText(/will call you to confirm/)).toBeInTheDocument();
+    expect(screen.queryByText("Confirmed")).not.toBeInTheDocument();
   });
 
-  it("clears the bag when this browser handed the order to Khalti, once", async () => {
-    stubFetch(jsonResponse(paidKhaltiOrder, 200));
-    markHandoff("TL-2026-000142");
+  it("shows size and shade, and the size alone for a shadeless line", async () => {
+    stubFetch(jsonResponse(pendingOrder, 200));
 
     renderPage();
 
-    await screen.findByText("TL-2026-000142");
-    expect(readCart()).toEqual([]);
-    expect(window.localStorage.getItem(HANDOFF_KEY)).toBeNull();
-  });
-
-  it("leaves the bag alone when the order arrives from an email link", async () => {
-    stubFetch(jsonResponse(paidKhaltiOrder, 200));
-
-    renderPage();
-
-    await screen.findByText("TL-2026-000142");
-    expect(readCart()).toHaveLength(1);
-  });
-
-  it("is safe when the bag is already empty", async () => {
-    window.localStorage.removeItem(CART_STORAGE_KEY);
-    stubFetch(jsonResponse(paidKhaltiOrder, 200));
-    markHandoff("TL-2026-000142");
-
-    renderPage();
-
-    await screen.findByText("TL-2026-000142");
-    expect(readCart()).toEqual([]);
+    expect(await screen.findByText("30 ml · Warm Beige")).toBeInTheDocument();
+    expect(screen.getByText("15 ml")).toBeInTheDocument();
   });
 
   it("records the order number on this device, and never the token", async () => {
-    stubFetch(jsonResponse(paidKhaltiOrder, 200));
+    stubFetch(jsonResponse(confirmedOrder, 200));
 
     renderPage();
 
@@ -168,7 +115,7 @@ describe("OrderByToken", () => {
 
   it("never renders the access token, in any state", async () => {
     for (const response of [
-      jsonResponse(pendingKhaltiOrder, 200),
+      jsonResponse(pendingOrder, 200),
       apiError(404, "not_found"),
       apiError(500, "server_error"),
     ]) {

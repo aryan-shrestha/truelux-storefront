@@ -40,7 +40,7 @@ export function OrderView({ order }: { order: Order }) {
               {status.label}
             </Badge>
           </dd>
-          <dt className="text-muted-foreground">Placed</dt>
+          <dt className="text-muted-foreground">Ordered</dt>
           <dd>{formatOrderDate(order.placedAt)}</dd>
         </dl>
         <p className="leading-relaxed">{status.detail}</p>

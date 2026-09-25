@@ -11,6 +11,7 @@ import { DistrictPicker } from "@/components/checkout/DistrictPicker";
 import { OrderSummary } from "@/components/checkout/OrderSummary";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Field,
   FieldDescription,
@@ -257,13 +258,17 @@ export function CheckoutForm() {
 
         <FieldSet>
           <FieldLegend>Payment</FieldLegend>
-          <Alert>
-            <BanknoteIcon />
-            <AlertTitle>Cash on delivery</AlertTitle>
-            <AlertDescription>
-              You pay in cash when your order arrives. Nothing is charged now.
-            </AlertDescription>
-          </Alert>
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BanknoteIcon aria-hidden className="text-gold" />
+                Cash on delivery
+              </CardTitle>
+              <CardDescription>
+                You pay in cash when your order arrives. Nothing is charged now.
+              </CardDescription>
+            </CardHeader>
+          </Card>
         </FieldSet>
       </div>
 
