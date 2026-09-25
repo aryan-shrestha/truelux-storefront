@@ -3,12 +3,31 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterEach } from "vitest";
 
-// Testing Library registers this itself only when Vitest's globals are on, and
-// they are deliberately off here. Without it, rendered trees accumulate across
-// tests: duplicate roles, and a Radix dialog's `pointer-events: none` left on
-// <body> makes the next test's clicks fail for reasons that look like bugs.
+// Vitest globals are off, so Testing Library does not register its own cleanup.
 afterEach(cleanup);
 
-// jsdom lays nothing out, so it has no scrollIntoView. The combobox calls it to
-// keep the highlighted option visible; here there is nothing to scroll.
+// jsdom lays nothing out. cmdk, Radix and Embla call these browser APIs.
 Element.prototype.scrollIntoView = function scrollIntoView() {};
+
+class NoopObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+  takeRecords() {
+    return [];
+  }
+}
+globalThis.ResizeObserver ??= NoopObserver as unknown as typeof ResizeObserver;
+globalThis.IntersectionObserver ??= NoopObserver as unknown as typeof IntersectionObserver;
+
+window.matchMedia ??= (query: string) =>
+  ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener() {},
+    removeEventListener() {},
+    addListener() {},
+    removeListener() {},
+    dispatchEvent: () => false,
+  }) as MediaQueryList;
