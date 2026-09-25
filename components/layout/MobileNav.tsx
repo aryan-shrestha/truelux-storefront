@@ -1,90 +1,80 @@
 "use client";
 
+import { MenuIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
+import { SearchForm } from "@/components/layout/SearchForm";
 import { SITE_LINKS } from "@/components/layout/site-links";
-import { Dialog } from "@/components/ui/Dialog";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import type { Category } from "@/lib/api/types";
 
-/**
- * The design's menu icon, at every width. On a phone it is the only route to
- * the site links; above that it adds the category tree the header has no room
- * for.
- *
- * Categories arrive as props from the server component above, so the fetch
- * stays on the server and the data crosses the boundary once.
- */
 export function MobileNav({ categories }: { categories: Category[] }) {
   const [open, setOpen] = useState(false);
+  const close = () => setOpen(false);
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={setOpen}
-      title="Menu"
-      trigger={
-        <button
-          type="button"
-          aria-label="Menu"
-          className="hover:bg-ink/5 flex min-h-11 min-w-11 items-center justify-start rounded-[2px]"
-        >
-          <svg
-            aria-hidden
-            viewBox="0 0 30 20"
-            className="h-5 w-[30px]"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          >
-            <path d="M28 2H2M20 10H2M15 18H2" />
-          </svg>
-        </button>
-      }
-    >
-      <nav aria-label="Menu">
-        <ul className="mt-8 flex flex-col gap-4 text-[1.0625rem] font-medium tracking-[0.08em]">
-          {SITE_LINKS.map((link) => (
-            <li key={link.href}>
-              <Link href={link.href} onClick={() => setOpen(false)} className="block py-1">
-                {link.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-
-        {categories.length > 0 && (
-          <ul className="border-line mt-8 flex flex-col gap-6 border-t pt-8">
-            {categories.map((category) => (
-              <li key={category.slug}>
-                <Link
-                  href={`/products?category=${category.slug}`}
-                  onClick={() => setOpen(false)}
-                  className="text-heading font-display block font-semibold uppercase"
-                >
-                  {category.name}
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button variant="ghost" size="icon" aria-label="Menu" className="md:hidden">
+          <MenuIcon />
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>Menu</SheetTitle>
+        </SheetHeader>
+        <nav aria-label="Menu" className="flex flex-col gap-6 px-4 pb-8">
+          <SearchForm />
+          <ul className="flex flex-col gap-1 font-heading text-2xl">
+            {SITE_LINKS.map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} onClick={close} className="block py-2">
+                  {link.label}
                 </Link>
-                {category.children.length > 0 && (
-                  <ul className="mt-3 flex flex-col gap-3 pl-4">
-                    {category.children.map((child) => (
-                      <li key={child.slug}>
-                        <Link
-                          href={`/products?category=${child.slug}`}
-                          onClick={() => setOpen(false)}
-                          className="text-ui text-slate block"
-                        >
-                          {child.name}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
               </li>
             ))}
           </ul>
-        )}
-      </nav>
-    </Dialog>
+
+          {categories.length > 0 && (
+            <>
+              <Separator />
+              <ul className="flex flex-col gap-4">
+                {categories.map((category) => (
+                  <li key={category.slug}>
+                    <Link
+                      href={`/products?category=${category.slug}`}
+                      onClick={close}
+                      className="font-medium"
+                    >
+                      {category.name}
+                    </Link>
+                    {category.children.length > 0 && (
+                      <ul className="mt-2 flex flex-col gap-2 pl-4 text-muted-foreground">
+                        {category.children.map((child) => (
+                          <li key={child.slug}>
+                            <Link href={`/products?category=${child.slug}`} onClick={close}>
+                              {child.name}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </nav>
+      </SheetContent>
+    </Sheet>
   );
 }

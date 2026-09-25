@@ -2,16 +2,10 @@
 
 import { useEffect } from "react";
 
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { isApiError } from "@/lib/api/errors";
 
-/**
- * The generic failure boundary.
- *
- * It states what happened and offers a way forward. It does not apologise and
- * it does not say "something went wrong" — and it never renders an order's
- * access token, which is why the request id is the only identifier here.
- */
+// Shows the request id and nothing else identifying: an order's access token must never render here.
 export default function Error({
   error,
   reset,
@@ -26,19 +20,15 @@ export default function Error({
   const requestId = isApiError(error) ? error.requestId : null;
 
   return (
-    <section className="mx-auto max-w-[1600px] px-4 py-24 sm:px-8">
-      <h1 className="text-title font-display font-semibold">This page did not load</h1>
-      <p className="prose-body text-slate mt-4">
+    <section className="mx-auto flex max-w-7xl flex-col items-start gap-6 px-4 py-24 md:px-8">
+      <h1 className="text-title">This page did not load</h1>
+      <p className="max-w-prose text-muted-foreground">
         The shop is still here. Try again, and if it keeps happening, get in touch and quote the
         reference below.
       </p>
-
-      <div className="mt-8 flex flex-wrap gap-3">
-        <Button onClick={reset}>Try again</Button>
-      </div>
-
+      <Button onClick={reset}>Try again</Button>
       {requestId !== null && (
-        <p className="text-detail text-slate mt-8">
+        <p className="text-sm text-muted-foreground">
           Reference <span className="font-medium tabular-nums">{requestId}</span>
         </p>
       )}

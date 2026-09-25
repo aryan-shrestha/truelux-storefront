@@ -15,7 +15,7 @@ describe("CartButton", () => {
     window.localStorage.setItem(
       CART_STORAGE_KEY,
       JSON.stringify({
-        version: 1,
+        version: 2,
         lines: [
           { variantId: "a", quantity: 2 },
           { variantId: "b", quantity: 1 },
@@ -35,7 +35,7 @@ describe("CartButton", () => {
   it("announces the count rather than leaving a bare number", async () => {
     window.localStorage.setItem(
       CART_STORAGE_KEY,
-      JSON.stringify({ version: 1, lines: [{ variantId: "a", quantity: 1 }] }),
+      JSON.stringify({ version: 2, lines: [{ variantId: "a", quantity: 1 }] }),
     );
 
     render(
@@ -44,17 +44,17 @@ describe("CartButton", () => {
       </CartProvider>,
     );
 
-    expect(await screen.findByText("Cart, 1 item")).toBeInTheDocument();
+    expect(await screen.findByText("Bag, 1 item")).toBeInTheDocument();
   });
 
-  it("shows the bag glyph for an empty cart, not a zero", async () => {
+  it("shows no count badge for an empty bag, not a zero", async () => {
     render(
       <CartProvider>
         <CartButton />
       </CartProvider>,
     );
 
-    expect(await screen.findByText("Cart, 0 items")).toBeInTheDocument();
+    expect(await screen.findByText("Bag, 0 items")).toBeInTheDocument();
     expect(screen.queryByText("0")).not.toBeInTheDocument();
   });
 
@@ -62,11 +62,11 @@ describe("CartButton", () => {
     storeLine();
     renderButton();
 
-    const link = await screen.findByRole("link", { name: "Cart, 1 item" });
+    const link = await screen.findByRole("link", { name: "Bag, 1 item" });
     await userEvent.click(link);
 
     const sheet = screen.getByRole("dialog", { name: "Your bag (1)" });
-    expect(sheet).toHaveTextContent("Washed Pocket Tee");
+    expect(sheet).toHaveTextContent("Silk Skin Foundation");
     expect(screen.getByRole("link", { name: "Checkout" })).toHaveAttribute("href", "/checkout");
   });
 
@@ -74,9 +74,8 @@ describe("CartButton", () => {
     storeLine();
     renderButton();
 
-    const link = await screen.findByRole("link", { name: "Cart, 1 item" });
-    // jsdom cannot follow a link. Stopping it here, after the component's own
-    // handler has declined the click, keeps the test about the component.
+    const link = await screen.findByRole("link", { name: "Bag, 1 item" });
+    // jsdom cannot follow a link; stop it after the component's handler has declined.
     document.addEventListener("click", (event) => event.preventDefault(), { once: true });
     fireEvent.click(link, { metaKey: true });
 
@@ -88,7 +87,7 @@ describe("CartButton", () => {
     storeLine();
     renderButton();
 
-    const link = await screen.findByRole("link", { name: "Cart, 1 item" });
+    const link = await screen.findByRole("link", { name: "Bag, 1 item" });
     await userEvent.click(link);
     await userEvent.keyboard("{Escape}");
 
@@ -101,16 +100,16 @@ function storeLine() {
   window.localStorage.setItem(
     CART_STORAGE_KEY,
     JSON.stringify({
-      version: 1,
+      version: 2,
       lines: [
         {
-          variantId: "v-m-olive",
+          variantId: "v-30-porcelain",
           quantity: 1,
-          productSlug: "washed-pocket-tee",
-          productName: "Washed Pocket Tee",
-          size: "M",
-          color: "Olive",
-          unitPrice: "2650.00",
+          productSlug: "silk-skin-foundation",
+          productName: "Silk Skin Foundation",
+          size: "30 ml",
+          shade: "Porcelain",
+          unitPrice: "3200.00",
           imageUrl: null,
         },
       ],

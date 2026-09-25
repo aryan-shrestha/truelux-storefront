@@ -2,32 +2,24 @@ import type { MetadataRoute } from "next";
 
 import { listProducts } from "@/lib/api/catalog";
 import { ApiError, ApiUnreachableError } from "@/lib/api/errors";
+import { navigationBrands } from "@/lib/catalog/navigation";
 import { env } from "@/lib/env";
 
-/**
- * The API's maximum page size. The sitemap's product fetch is on the catalogue
- * budget like any other call, so a catalogue of 300 products should cost three
- * requests, not twelve.
- */
+// The API's maximum page size, so the sitemap costs ceil(products / 100) cache keys.
 const PAGE_SIZE = 100;
 
-/**
- * The home page, the unfiltered listing and every published product. Nothing
- * else: no filtered listings, no cart, no orders.
- *
- * It regenerates on the product fetch's own five-minute revalidate — a route
- * takes the shortest interval of its fetches — so it costs ceil(products / 100)
- * cache keys at 12 an hour, however often it is crawled.
- */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const pages: MetadataRoute.Sitemap = [
+  const [slugs, brands] = await Promise.all([productSlugs(), navigationBrands()]);
+
+  return [
     { url: env.siteUrl, changeFrequency: "daily", priority: 1 },
     { url: `${env.siteUrl}/products`, changeFrequency: "daily", priority: 0.8 },
-  ];
-
-  const slugs = await productSlugs();
-  return [
-    ...pages,
+    { url: `${env.siteUrl}/brands`, changeFrequency: "weekly", priority: 0.7 },
+    ...brands.map((brand) => ({
+      url: `${env.siteUrl}/brands/${encodeURIComponent(brand.slug)}`,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    })),
     ...slugs.map((slug) => ({
       url: `${env.siteUrl}/products/${encodeURIComponent(slug)}`,
       changeFrequency: "weekly" as const,
@@ -36,13 +28,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 }
 
-/**
- * Every published product's slug, paginated to exhaustion.
- *
- * An API failure yields the two fixed pages rather than failing the build or
- * serving an error: a sitemap missing products for an hour is recoverable,
- * and a deploy that cannot build because the backend was restarting is not.
- */
+// An API failure yields what was read so far: a deploy must not fail because the backend restarted.
 async function productSlugs(): Promise<string[]> {
   const slugs: string[] = [];
   try {

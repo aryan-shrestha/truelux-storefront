@@ -10,14 +10,14 @@ function seed(lines: Array<Partial<CartLine> & { variantId: string }>) {
   window.localStorage.setItem(
     CART_STORAGE_KEY,
     JSON.stringify({
-      version: 1,
+      version: 2,
       lines: lines.map((line) => ({
         quantity: 1,
-        productSlug: "boxy-logo-tee",
-        productName: "Boxy Logo Tee",
-        size: "M",
-        color: "Black",
-        unitPrice: "2400.00",
+        productSlug: "velvet-lip-tint",
+        productName: "Velvet Lip Tint",
+        size: "4 g",
+        shade: "Rosewood",
+        unitPrice: "1800.00",
         imageUrl: null,
         ...line,
       })),
@@ -39,14 +39,12 @@ afterEach(() => {
 
 describe("CartContents", () => {
   it("shows the lines that are in storage", () => {
-    seed([{ variantId: "a" }, { variantId: "b", productName: "Utility Cargo Pant" }]);
+    seed([{ variantId: "a" }, { variantId: "b", productName: "Rose Water Toner" }]);
 
     renderCart();
 
-    // By role: the product name also appears inside the stepper's and the
-    // remove control's accessible names, which is deliberate.
-    expect(screen.getByRole("link", { name: "Boxy Logo Tee" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Utility Cargo Pant" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Velvet Lip Tint" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Rose Water Toner" })).toBeInTheDocument();
   });
 
   it("invites shopping when the bag is empty", () => {
@@ -60,16 +58,14 @@ describe("CartContents", () => {
   });
 
   it("shows no total, and says where the figure comes from", () => {
-    // Two independent reasons a total cannot appear: ADR 0003 forbids the
-    // arithmetic, and the shipping fee depends on a district collected later.
     seed([{ variantId: "a", quantity: 3 }]);
 
     renderCart();
 
     expect(screen.getByText(/confirmed at checkout/)).toBeInTheDocument();
     // The line price, never a multiple of it.
-    expect(screen.getByText("Rs 2,400")).toBeInTheDocument();
-    expect(screen.queryByText("Rs 7,200")).not.toBeInTheDocument();
+    expect(screen.getByText("Rs 1,800")).toBeInTheDocument();
+    expect(screen.queryByText("Rs 5,400")).not.toBeInTheDocument();
   });
 
   it("changes a quantity through the stepper", async () => {
@@ -77,10 +73,22 @@ describe("CartContents", () => {
     const user = userEvent.setup();
 
     renderCart();
-    await user.click(screen.getByRole("button", { name: /Increase quantity of Boxy Logo Tee/ }));
+    await user.click(screen.getByRole("button", { name: /Increase quantity of Velvet Lip Tint/ }));
 
     const stored = JSON.parse(window.localStorage.getItem(CART_STORAGE_KEY) ?? "{}");
     expect(stored.lines[0].quantity).toBe(2);
+  });
+
+  it("shows size and shade, or the size alone for a shadeless product", () => {
+    seed([
+      { variantId: "a" },
+      { variantId: "b", productName: "Rose Water Toner", size: "100 ml", shade: null },
+    ]);
+
+    renderCart();
+
+    expect(screen.getByText("4 g · Rosewood")).toBeInTheDocument();
+    expect(screen.getByText("100 ml")).toBeInTheDocument();
   });
 
   it("names the product in the remove control, not just 'Remove'", async () => {
@@ -88,7 +96,7 @@ describe("CartContents", () => {
     const user = userEvent.setup();
 
     renderCart();
-    await user.click(screen.getByRole("button", { name: /Remove Boxy Logo Tee/ }));
+    await user.click(screen.getByRole("button", { name: /Remove Velvet Lip Tint/ }));
 
     expect(screen.getByText("Your bag is empty")).toBeInTheDocument();
   });
@@ -99,24 +107,22 @@ describe("CartContents", () => {
     renderCart();
 
     expect(
-      screen.getByRole("button", { name: /Decrease quantity of Boxy Logo Tee/ }),
+      screen.getByRole("button", { name: /Decrease quantity of Velvet Lip Tint/ }),
     ).toBeDisabled();
   });
 });
 
 describe("the quantity field", () => {
   it("does not delete the line when a zero is typed", async () => {
-    // Selecting the field and typing "10" would otherwise remove the line on
-    // the first keystroke. Remove is the way to delete.
     seed([{ variantId: "a", quantity: 5 }]);
     const user = userEvent.setup();
 
     renderCart();
-    const field = screen.getByRole("spinbutton", { name: /Quantity of Boxy Logo Tee/ });
+    const field = screen.getByRole("spinbutton", { name: /Quantity of Velvet Lip Tint/ });
     await user.clear(field);
     await user.type(field, "0");
 
-    expect(screen.getByRole("link", { name: "Boxy Logo Tee" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Velvet Lip Tint" })).toBeInTheDocument();
   });
 
   it("accepts a typed quantity", async () => {
@@ -124,7 +130,7 @@ describe("the quantity field", () => {
     const user = userEvent.setup();
 
     renderCart();
-    await user.type(screen.getByRole("spinbutton", { name: /Quantity of Boxy Logo Tee/ }), "0");
+    await user.type(screen.getByRole("spinbutton", { name: /Quantity of Velvet Lip Tint/ }), "0");
 
     const stored = JSON.parse(window.localStorage.getItem(CART_STORAGE_KEY) ?? "{}");
     expect(stored.lines[0].quantity).toBe(10);
