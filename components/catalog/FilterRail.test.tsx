@@ -2,37 +2,69 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { FilterRail } from "@/components/catalog/FilterRail";
-import { categoryTree } from "@/tests/fixtures/catalog";
+import type { ListingFacets } from "@/lib/catalog/navigation";
+import { brands, categoryTree, shades, sizes } from "@/tests/fixtures/catalog";
 
-function group(name: string) {
-  return screen.getByText(name, { selector: "summary" }).closest("details")!;
-}
+const facets: ListingFacets = { categories: categoryTree, brands, shades, sizes };
 
 describe("FilterRail", () => {
-  it("collapses a parent with children, and leaves a childless one a plain link", () => {
-    render(<FilterRail categories={categoryTree} query={{}} />);
+  it("links categories and their children, marking the applied one", () => {
+    render(<FilterRail facets={facets} query={{ category: "serums" }} />);
 
-    expect(group("Tops")).not.toHaveAttribute("open");
-    expect(screen.getByRole("link", { name: "Bottoms" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Fragrance" })).toHaveAttribute(
       "href",
-      "/products?category=bottoms",
+      "/products?category=fragrance",
+    );
+    expect(screen.getByRole("link", { name: "Serums" })).toHaveAttribute("aria-current", "true");
+  });
+
+  it("adds a brand to the ones already applied, and removes an applied one", () => {
+    render(<FilterRail facets={facets} query={{ brand: ["verde"] }} />);
+
+    expect(screen.getByRole("link", { name: "Lumière" })).toHaveAttribute(
+      "href",
+      "/products?brand=lumiere&brand=verde",
+    );
+    const verde = screen.getByRole("link", { name: "Verde" });
+    expect(verde).toHaveAttribute("aria-current", "true");
+    expect(verde).toHaveAttribute("href", "/products");
+  });
+
+  it("offers shades as named swatch links carrying ?shade=", () => {
+    render(<FilterRail facets={facets} query={{}} />);
+
+    expect(screen.getByRole("link", { name: "Warm Beige" })).toHaveAttribute(
+      "href",
+      "/products?shade=warm-beige",
     );
   });
 
-  it("opens the group holding the applied category, so it is never hidden", () => {
-    render(<FilterRail categories={categoryTree} query={{ category: "hoodies" }} />);
+  it("offers sizes as links carrying ?size=, and toggles an applied one off", () => {
+    render(<FilterRail facets={facets} query={{ size: "30-ml" }} />);
 
-    expect(group("Tops")).toHaveAttribute("open");
-    expect(screen.getByRole("link", { name: "Hoodies" })).toHaveAttribute("aria-current", "true");
+    expect(screen.getByRole("link", { name: "50 ml" })).toHaveAttribute(
+      "href",
+      "/products?size=50-ml",
+    );
+    expect(screen.getByRole("link", { name: "30 ml" })).toHaveAttribute("href", "/products");
   });
 
-  it("keeps the parent's own filter inside the group, named for what it does", () => {
-    render(<FilterRail categories={categoryTree} query={{ category: "tops" }} />);
-
-    expect(group("Tops")).toHaveAttribute("open");
-    expect(screen.getByRole("link", { name: "All tops" })).toHaveAttribute(
-      "href",
-      "/products?category=tops",
+  it("hides the brand group on a brand page and builds links under that page", () => {
+    render(
+      <FilterRail facets={facets} query={{}} pathname="/brands/lumiere" showBrands={false} />,
     );
+
+    expect(screen.queryByRole("link", { name: "Verde" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Porcelain" })).toHaveAttribute(
+      "href",
+      "/brands/lumiere?shade=porcelain",
+    );
+  });
+
+  it("leaves out a group the API returned nothing for", () => {
+    render(<FilterRail facets={{ ...facets, shades: [], sizes: [] }} query={{}} />);
+
+    expect(screen.queryByRole("button", { name: "Shade" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Size" })).not.toBeInTheDocument();
   });
 });

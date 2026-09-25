@@ -1,32 +1,41 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { act } from "react";
+import { describe, expect, it, vi } from "vitest";
 
 import { Gallery } from "@/components/catalog/Gallery";
 import type { ProductImage } from "@/lib/api/types";
 
-const images: ProductImage[] = [0, 1, 2].map((index) => ({
-  url: `http://127.0.0.1:8000/media/products/tee-${index}.jpg`,
-  altText: `Tee, view ${index + 1}`,
-}));
-
-function track() {
-  const element = screen.getByRole("region", { name: "Photographs of Tee" });
-  Object.defineProperty(element, "clientWidth", { value: 500, configurable: true });
-  Array.from(element.children).forEach((slide, index) =>
-    Object.defineProperty(slide, "offsetLeft", { value: index * 504, configurable: true }),
-  );
-  element.scrollTo = vi.fn() as typeof element.scrollTo;
-  return element;
-}
-
-afterEach(() => {
-  vi.restoreAllMocks();
+// jsdom has no layout, so Embla never settles on a slide. A stand-in API records
+// the scroll and lets the test fire the "select" Embla would.
+const embla = vi.hoisted(() => {
+  const handlers = new Set<() => void>();
+  let selected = 0;
+  const api = {
+    scrollTo: (index: number) => {
+      selected = index;
+    },
+    selectedScrollSnap: () => selected,
+    canScrollPrev: () => selected > 0,
+    canScrollNext: () => selected < 2,
+    scrollPrev: () => {},
+    scrollNext: () => {},
+    on: (_event: string, handler: () => void) => handlers.add(handler),
+    off: (_event: string, handler: () => void) => handlers.delete(handler),
+  };
+  return { api, settle: () => handlers.forEach((handler) => handler()) };
 });
+
+vi.mock("embla-carousel-react", () => ({ default: () => [() => {}, embla.api] }));
+
+const images: ProductImage[] = [0, 1, 2].map((index) => ({
+  url: `http://127.0.0.1:8000/media/products/serum-${index}.jpg`,
+  altText: `Serum, view ${index + 1}`,
+}));
 
 describe("Gallery", () => {
   it("marks the first thumbnail current and disables previous at the start", () => {
-    render(<Gallery images={images} name="Tee" />);
+    render(<Gallery images={images} name="Serum" />);
 
     expect(screen.getByRole("button", { name: "Show photograph 1 of 3" })).toHaveAttribute(
       "aria-current",
@@ -35,39 +44,29 @@ describe("Gallery", () => {
     expect(screen.getByRole("button", { name: "Previous photograph" })).toBeDisabled();
   });
 
-  it("scrolls the track to a thumbnail's photograph", async () => {
-    render(<Gallery images={images} name="Tee" />);
-    const element = track();
+  it("moves to a thumbnail's photograph", async () => {
+    const user = userEvent.setup();
+    render(<Gallery images={images} name="Serum" />);
 
-    await userEvent.click(screen.getByRole("button", { name: "Show photograph 3 of 3" }));
+    await user.click(screen.getByRole("button", { name: "Show photograph 3 of 3" }));
+    act(() => embla.settle());
 
-    expect(element.scrollTo).toHaveBeenCalledWith({ left: 1008 });
-  });
-
-  it("reads the current photograph back from where a swipe came to rest", () => {
-    render(<Gallery images={images} name="Tee" />);
-    const element = track();
-
-    element.scrollLeft = 510;
-    fireEvent.scroll(element);
-
-    expect(screen.getByRole("button", { name: "Show photograph 2 of 3" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "Show photograph 3 of 3" })).toHaveAttribute(
       "aria-current",
       "true",
     );
-    expect(screen.getByRole("button", { name: "Previous photograph" })).toBeEnabled();
   });
 
   it("offers no thumbnails or buttons for a single photograph", () => {
-    render(<Gallery images={images.slice(0, 1)} name="Tee" />);
+    render(<Gallery images={images.slice(0, 1)} name="Serum" />);
 
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "Tee, view 1" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Serum, view 1" })).toBeInTheDocument();
   });
 
   it("keeps its shape when there are no photographs", () => {
-    render(<Gallery images={[]} name="Tee" />);
+    render(<Gallery images={[]} name="Serum" />);
 
-    expect(screen.getByText("No photographs of Tee yet")).toBeInTheDocument();
+    expect(screen.getByText("No photographs of Serum yet")).toBeInTheDocument();
   });
 });

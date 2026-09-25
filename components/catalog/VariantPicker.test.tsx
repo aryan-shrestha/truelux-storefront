@@ -6,7 +6,7 @@ import { VariantPicker } from "@/components/catalog/VariantPicker";
 import type { Product } from "@/lib/api/types";
 import { CART_STORAGE_KEY } from "@/lib/cart/storage";
 import { CartProvider } from "@/lib/cart/use-cart";
-import { washedPocketTee } from "@/tests/fixtures/catalog";
+import { hydratingSerum, silkFoundation } from "@/tests/fixtures/catalog";
 
 function renderPicker(product: Product) {
   return render(
@@ -16,129 +16,110 @@ function renderPicker(product: Product) {
   );
 }
 
+function storedLines() {
+  return JSON.parse(window.localStorage.getItem(CART_STORAGE_KEY) ?? "{}").lines;
+}
+
 afterEach(() => {
   window.localStorage.clear();
 });
 
-/**
- * The accessible name is the label's text, and the status arrives as a separate
- * sr-only element, so the two are joined with whitespace. Matching on a function
- * says what is being asserted without pinning that detail.
- */
-function named(label: string, status?: string) {
-  return (name: string) =>
-    name.trim().startsWith(label) && (status === undefined || name.includes(status));
-}
-
-describe("VariantPicker", () => {
-  it("tells sold out and never made apart, in words", async () => {
-    // The fixture's olive comes in M (in stock) and L (sold out). XXL in olive
-    // was never made. A picker built from independent size and colour lists
-    // would offer all three identically.
+describe("VariantPicker, for a product with shades", () => {
+  it("resolves a shade and a size to the right variant and adds it", async () => {
     const user = userEvent.setup();
-    renderPicker(washedPocketTee);
+    renderPicker(silkFoundation);
 
-    await user.click(screen.getByRole("radio", { name: named("Olive") }));
-
-    expect(screen.getByRole("radio", { name: named("L", "Sold out") })).toBeInTheDocument();
-    expect(screen.getByRole("radio", { name: named("XXL", "Not made") })).toBeInTheDocument();
-  });
-
-  it("keeps an unavailable option reachable rather than removing it from the tab order", async () => {
-    // A customer needs to be able to find out that their size is gone.
-    const user = userEvent.setup();
-    renderPicker(washedPocketTee);
-
-    await user.click(screen.getByRole("radio", { name: named("Olive") }));
-    const soldOut = screen.getByRole("radio", { name: named("L", "Sold out") });
-
-    expect(soldOut).not.toBeDisabled();
-    expect(soldOut).toHaveAttribute("aria-disabled", "true");
-  });
-
-  it("does not select an unavailable pairing when it is clicked", async () => {
-    const user = userEvent.setup();
-    renderPicker(washedPocketTee);
-
-    await user.click(screen.getByRole("radio", { name: named("Olive") }));
-    await user.click(screen.getByRole("radio", { name: named("XXL", "Not made") }));
-
-    expect(screen.getByRole("radio", { name: named("XXL", "Not made") })).not.toBeChecked();
-  });
-
-  it("shows the base price until a selection resolves, then the variant's own", async () => {
-    // XXL carries a price_override. Showing base_price while charging the
-    // override is the surprise that ends at a support message.
-    const user = userEvent.setup();
-    renderPicker(washedPocketTee);
-
-    expect(screen.getByText("Rs 2,650")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("radio", { name: named("XXL") }));
-    await user.click(screen.getByRole("radio", { name: named("Washed Indigo") }));
-
-    expect(screen.getByText("Rs 2,950")).toBeInTheDocument();
-  });
-
-  it("keeps add to bag disabled until a pairing resolves", async () => {
-    const user = userEvent.setup();
-    renderPicker(washedPocketTee);
-
-    expect(screen.getByRole("button", { name: "Add to bag" })).toBeDisabled();
-
-    await user.click(screen.getByRole("radio", { name: named("M") }));
-    await user.click(screen.getByRole("radio", { name: named("Olive") }));
-
-    expect(screen.getByRole("button", { name: "Add to bag" })).toBeEnabled();
-  });
-
-  it("adds the resolved variant to the cart and says so", async () => {
-    const user = userEvent.setup();
-    renderPicker(washedPocketTee);
-
-    await user.click(screen.getByRole("radio", { name: named("M") }));
-    await user.click(screen.getByRole("radio", { name: named("Olive") }));
+    await user.click(screen.getByRole("radio", { name: "Warm Beige" }));
+    await user.click(screen.getByRole("radio", { name: "50 ml" }));
     await user.click(screen.getByRole("button", { name: "Add to bag" }));
 
     expect(screen.getByRole("button", { name: "Added to bag" })).toBeInTheDocument();
-
-    const stored = JSON.parse(window.localStorage.getItem(CART_STORAGE_KEY) ?? "{}");
-    expect(stored.lines).toHaveLength(1);
-    expect(stored.lines[0].variantId).toBe("v-m-olive");
+    expect(storedLines()).toEqual([
+      expect.objectContaining({ variantId: "v-50-warm-beige", size: "50 ml", shade: "Warm Beige" }),
+    ]);
   });
 
-  it("renders a single-variant product as labels, not as groups of one", () => {
-    const cap: Product = {
-      ...washedPocketTee,
-      variants: washedPocketTee.variants.slice(0, 1),
-    };
+  it("names the chosen shade visibly, not only through the swatch", async () => {
+    const user = userEvent.setup();
+    renderPicker(silkFoundation);
 
-    renderPicker(cap);
+    await user.click(screen.getByRole("radio", { name: "Porcelain" }));
+
+    expect(screen.getByText("Porcelain")).toBeVisible();
+  });
+
+  it("disables an out-of-stock or never-made combination, and says which", async () => {
+    const user = userEvent.setup();
+    renderPicker(silkFoundation);
+
+    await user.click(screen.getByRole("radio", { name: "Porcelain" }));
+
+    expect(screen.getByRole("radio", { name: /^50 ml, Not available/ })).toBeDisabled();
+    expect(screen.getByRole("radio", { name: "Deep Mocha, Sold out" })).toBeDisabled();
+  });
+
+  it("shows the variant's own price once the selection resolves", async () => {
+    const user = userEvent.setup();
+    renderPicker(silkFoundation);
+
+    expect(screen.getByText("Rs 3,200")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("radio", { name: "Warm Beige" }));
+    await user.click(screen.getByRole("radio", { name: "50 ml" }));
+
+    expect(screen.getByText("Rs 4,400")).toBeInTheDocument();
+  });
+
+  it("keeps add to bag disabled until both a shade and a size are chosen", async () => {
+    const user = userEvent.setup();
+    renderPicker(silkFoundation);
+
+    expect(screen.getByRole("button", { name: "Add to bag" })).toBeDisabled();
+    expect(screen.getByText(/Choose a shade and a size/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("radio", { name: "30 ml" }));
+    expect(screen.getByRole("button", { name: "Add to bag" })).toBeDisabled();
+
+    await user.click(screen.getByRole("radio", { name: "Porcelain" }));
+    expect(screen.getByRole("button", { name: "Add to bag" })).toBeEnabled();
+  });
+});
+
+describe("VariantPicker, for a shadeless product", () => {
+  it("renders no shade group and resolves from the size alone", async () => {
+    const user = userEvent.setup();
+    renderPicker(hydratingSerum);
+
+    expect(screen.queryByText("Shade")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("radio", { name: "15 ml" }));
+    await user.click(screen.getByRole("button", { name: "Add to bag" }));
+
+    expect(storedLines()).toEqual([expect.objectContaining({ variantId: "v-15-serum", shade: null })]);
+  });
+});
+
+describe("VariantPicker, for simple and unfinished products", () => {
+  it("needs no selection for a single-variant product", () => {
+    renderPicker({ ...silkFoundation, variants: silkFoundation.variants.slice(0, 1) });
 
     expect(screen.queryByRole("radio")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add to bag" })).toBeEnabled();
   });
 
   it("says sold out, not broken, when nothing has stock", () => {
-    const gone: Product = {
-      ...washedPocketTee,
-      variants: washedPocketTee.variants.map((variant) => ({ ...variant, inStock: false })),
-    };
+    renderPicker({
+      ...silkFoundation,
+      variants: silkFoundation.variants.map((variant) => ({ ...variant, inStock: false })),
+    });
 
-    renderPicker(gone);
-
-    // The whole-product message, not the per-option word that now appears on
-    // every unavailable chip.
     expect(screen.getByText(/no restock notification/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Add to bag/ })).not.toBeInTheDocument();
   });
 
   it("treats a product with no variants as unfinished, not as sold out", () => {
-    // A merchant can create a product and not finish it. The two are different
-    // facts and a customer reads them differently.
-    renderPicker({ ...washedPocketTee, variants: [] });
+    renderPicker({ ...silkFoundation, variants: [] });
 
     expect(screen.getByText(/not available to buy yet/)).toBeInTheDocument();
-    expect(screen.queryByText(/no restock notification/)).not.toBeInTheDocument();
   });
 });

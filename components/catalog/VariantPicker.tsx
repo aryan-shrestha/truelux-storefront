@@ -1,197 +1,222 @@
 "use client";
 
-import { useState } from "react";
+import { CheckIcon } from "lucide-react";
+import { useId, useState } from "react";
 
-import { Button } from "@/components/ui/Button";
-import { Price } from "@/components/ui/Price";
-import { RadioGroup, type RadioOption } from "@/components/ui/Radio";
+import { Button } from "@/components/ui/button";
+import { Price } from "@/components/ui/price";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { Product } from "@/lib/api/types";
+import { useCart } from "@/lib/cart/use-cart";
 import {
-  colorOptions,
   findVariant,
+  hasShades,
   isEntirelySoldOut,
   onlyOption,
+  shadeOptions,
   sizeOptions,
   statusOf,
-  type VariantOption,
+  type ShadeOption,
+  type SizeOption,
 } from "@/lib/catalog/variants";
-import { useCart } from "@/lib/cart/use-cart";
 
-/**
- * The only client component on the product page.
- *
- * Every state comes from the variant list, which is a sparse set of pairings
- * rather than a grid — see `lib/catalog/variants.ts`. A picker built from
- * independent size and colour lists looks right against a well-formed product
- * and lies about a sparse one.
- */
 export function VariantPicker({ product }: { product: Product }) {
   const { add, full } = useCart();
+  const { variants } = product;
+  const shaded = hasShades(variants);
 
-  const initialSize = onlyOption(sizeOptions(product.variants, null));
-  const initialColor = onlyOption(colorOptions(product.variants, null));
-
-  const [size, setSize] = useState<string | null>(initialSize);
-  const [color, setColor] = useState<string | null>(initialColor);
+  const [size, setSize] = useState(() => onlyOption(sizeOptions(variants, null)));
+  const [shade, setShade] = useState(() => onlyOption(shadeOptions(variants, null)));
   const [added, setAdded] = useState(false);
 
-  const sizes = sizeOptions(product.variants, color);
-  const colors = colorOptions(product.variants, size);
-  const selected = findVariant(product.variants, size, color);
+  if (variants.length === 0) {
+    return <p>This product is not available to buy yet.</p>;
+  }
 
-  const soldOut = isEntirelySoldOut(product.variants);
-  const unfinished = product.variants.length === 0;
+  const sizes = sizeOptions(variants, shade);
+  const shades = shadeOptions(variants, size);
+  const selected = findVariant(variants, size, shade);
 
-  function choose(setter: (value: string) => void) {
+  function choose(setter: (value: string | null) => void) {
     return (value: string) => {
       setAdded(false);
-      setter(value);
+      // Radix single toggle groups send "" when the chosen item is pressed again.
+      setter(value === "" ? null : value);
     };
   }
 
-  if (unfinished) {
-    // A merchant can create a product and not finish it. That is "not set up",
-    // not "sold out", and treating it as an error would be wrong too.
-    return <Unavailable message="This piece is not available to buy yet." />;
+  function handleAdd() {
+    if (selected === undefined) return;
+    add({
+      variantId: selected.id,
+      quantity: 1,
+      productSlug: product.slug,
+      productName: product.name,
+      size: selected.size.name,
+      shade: selected.shade?.name ?? null,
+      unitPrice: selected.price,
+      imageUrl: product.primaryImage?.url ?? null,
+    });
+    setAdded(true);
   }
 
   return (
     <div className="flex flex-col gap-6">
-      {/* The price follows the selection: price_override is real, and showing
-          the base price while charging the override is the kind of surprise
-          that ends at a support message. */}
-      <p aria-live="polite" className="text-heading font-display font-semibold">
+      {/* The variant's own price once resolved: price overrides are real. */}
+      <p aria-live="polite" className="font-heading text-3xl">
         <Price amount={selected?.price ?? product.basePrice} />
       </p>
 
-      <Choice label="Size" name="size" options={sizes} value={size} onChange={choose(setSize)} />
-      <Choice
-        label="Colour"
-        name="color"
-        options={colors}
-        value={color}
-        onChange={choose(setColor)}
-      />
+      {shaded && <ShadeChoice options={shades} value={shade} onChange={choose(setShade)} />}
+      <SizeChoice options={sizes} value={size} onChange={choose(setSize)} />
 
-      {soldOut ? (
-        <Unavailable message="Sold out. There is no restock notification yet." />
+      {isEntirelySoldOut(variants) ? (
+        <p>Sold out. There is no restock notification yet.</p>
       ) : (
-        <>
+        <div className="flex flex-col gap-3">
           <Button
+            size="lg"
             disabled={selected === undefined || !selected.inStock || full}
-            onClick={() => {
-              if (selected === undefined) return;
-              add({
-                variantId: selected.id,
-                quantity: 1,
-                productSlug: product.slug,
-                productName: product.name,
-                size: selected.size.name,
-                color: selected.color.name,
-                unitPrice: selected.price,
-                imageUrl: product.primaryImage?.url ?? null,
-              });
-              setAdded(true);
-            }}
+            onClick={handleAdd}
           >
-            {added && (
-              // The bag is browser state (ADR 0002): adding makes no request,
-              // so there is nothing to wait on and no spinner. The feedback is
-              // the change itself — a check that draws in, and the header's
-              // count popping.
-              <svg
-                aria-hidden
-                viewBox="0 0 16 16"
-                className="size-4"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="m3 8.5 3.2 3L13 4.5" pathLength={1} className="animate-draw" />
-              </svg>
-            )}
+            {added && <CheckIcon data-icon="inline-start" />}
             {added ? "Added to bag" : "Add to bag"}
           </Button>
-
-          {/* The button's label changing is not enough on its own. */}
           <span aria-live="polite" className="sr-only">
             {added ? `${product.name} added to your bag` : ""}
           </span>
-
-          <Hint selected={selected !== undefined} size={size} color={color} full={full} />
-        </>
+          <Hint missingSize={size === null} missingShade={shaded && shade === null} full={full} />
+        </div>
       )}
     </div>
   );
 }
 
-/** A group of one is a decision already made: render it as a label, not a picker. */
-function Choice({
-  label,
-  name,
+function ShadeChoice({
   options,
   value,
   onChange,
 }: {
-  label: string;
-  name: string;
-  options: VariantOption[];
+  options: ShadeOption[];
   value: string | null;
   onChange: (value: string) => void;
 }) {
-  const single = options[0];
+  const labelId = useId();
+  const chosen = options.find((option) => option.slug === value);
+  const [single] = options;
+
   if (options.length === 1 && single !== undefined) {
-    return (
-      <p className="text-ui">
-        <span className="text-detail text-slate">{label} </span>
-        {single.name}
-      </p>
-    );
+    return <ChoiceLabel label="Shade" value={single.name} />;
   }
 
-  const radioOptions: RadioOption[] = options.map((option) => ({
-    value: option.slug,
-    label: option.name,
-    status: statusOf(option.state),
-  }));
+  return (
+    <div className="flex flex-col gap-3">
+      <p id={labelId} className="text-sm">
+        <span className="text-muted-foreground">Shade</span>
+        {chosen !== undefined && <span className="ml-2 font-medium">{chosen.name}</span>}
+      </p>
+      <ToggleGroup
+        type="single"
+        aria-labelledby={labelId}
+        value={value ?? ""}
+        onValueChange={onChange}
+        variant="swatch"
+        size="swatch"
+        className="flex-wrap"
+      >
+        {options.map((option) => (
+          <ToggleGroupItem
+            key={option.slug}
+            value={option.slug}
+            disabled={option.state !== "available"}
+            aria-label={[option.name, statusOf(option.state)].filter(Boolean).join(", ")}
+            title={option.name}
+          >
+            <span
+              aria-hidden
+              className="size-8 rounded-full"
+              // The swatch colour is data from the API, not a design token.
+              style={{ backgroundColor: option.hexCode }}
+            />
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+    </div>
+  );
+}
+
+function SizeChoice({
+  options,
+  value,
+  onChange,
+}: {
+  options: SizeOption[];
+  value: string | null;
+  onChange: (value: string) => void;
+}) {
+  const labelId = useId();
+  const [single] = options;
+
+  if (options.length === 1 && single !== undefined) {
+    return <ChoiceLabel label="Size" value={single.name} />;
+  }
 
   return (
-    <RadioGroup
-      label={label}
-      name={name}
-      options={radioOptions}
-      value={value}
-      onChange={onChange}
-    />
+    <div className="flex flex-col gap-3">
+      <p id={labelId} className="text-sm text-muted-foreground">
+        Size
+      </p>
+      <ToggleGroup
+        type="single"
+        aria-labelledby={labelId}
+        value={value ?? ""}
+        onValueChange={onChange}
+        variant="outline"
+        className="flex-wrap"
+      >
+        {options.map((option) => (
+          <ToggleGroupItem
+            key={option.slug}
+            value={option.slug}
+            disabled={option.state !== "available"}
+            aria-label={[option.name, statusOf(option.state)].filter(Boolean).join(", ")}
+          >
+            {option.name}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+    </div>
+  );
+}
+
+function ChoiceLabel({ label, value }: { label: string; value: string }) {
+  return (
+    <p className="text-sm">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="ml-2 font-medium">{value}</span>
+    </p>
   );
 }
 
 function Hint({
-  selected,
-  size,
-  color,
+  missingSize,
+  missingShade,
   full,
 }: {
-  selected: boolean;
-  size: string | null;
-  color: string | null;
+  missingSize: boolean;
+  missingShade: boolean;
   full: boolean;
 }) {
   if (full) {
     return (
-      <p className="text-detail text-slate">Your bag is full. Remove something to add more.</p>
+      <p className="text-sm text-muted-foreground">
+        Your bag is full. Remove something to add more.
+      </p>
     );
   }
-  if (selected) return null;
+  if (!missingSize && !missingShade) return null;
 
   const missing =
-    size === null && color === null ? "a size and a colour" : size === null ? "a size" : "a colour";
-
-  return <p className="text-detail text-slate">Choose {missing} to add this to your bag.</p>;
-}
-
-function Unavailable({ message }: { message: string }) {
-  return <p className="text-ui">{message}</p>;
+    missingSize && missingShade ? "a shade and a size" : missingShade ? "a shade" : "a size";
+  return <p className="text-sm text-muted-foreground">Choose {missing} to add this to your bag.</p>;
 }

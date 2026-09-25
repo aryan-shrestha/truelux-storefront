@@ -1,30 +1,28 @@
+import { cn } from "cn";
 import Link from "next/link";
+import type { ReactNode } from "react";
 
-import { hrefWith } from "@/lib/catalog/query";
-import type { Category, ProductOrdering, ProductQuery } from "@/lib/api/types";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { toggleVariants } from "@/components/ui/toggle";
+import type { ProductOrdering, ProductQuery } from "@/lib/api/types";
+import type { ListingFacets } from "@/lib/catalog/navigation";
+import { hrefWith, withBrandToggled } from "@/lib/catalog/query";
 
-/**
- * Filters are links, so they work by keyboard, by middle-click, with the back
- * button and with JavaScript still loading. Selecting one is a navigation, and
- * the URL is the only place the state lives (ADR 0004).
- *
- * **It offers no size or colour picker, and cannot.** `catalog-browsing.md`
- * planned to derive both from the current result set, but the list payload
- * carries no variants — `ProductListSerializer` publishes `in_stock` as a
- * boolean and nothing else about them — and the API has no endpoint listing
- * sizes or colours. `?size=` and `?color=` remain valid and are honoured when
- * present; they simply cannot be surfaced as controls without an API change.
- */
-
-/**
- * Fixed bands rather than two number inputs. A free numeric range would let a
- * visitor mint a cache key per value they type, which is the hole the
- * normaliser exists to close.
- */
+// Filters are links (ADR 0004): they work by keyboard, middle-click, the back
+// button and before JavaScript loads. Fixed price bands rather than free inputs,
+// because a free range mints a cache key per typed value.
 const PRICE_BANDS = [
-  { label: "Under Rs 3,000", minPrice: undefined, maxPrice: "3000" },
-  { label: "Rs 3,000 to 6,000", minPrice: "3000", maxPrice: "6000" },
-  { label: "Over Rs 6,000", minPrice: "6000", maxPrice: undefined },
+  { label: "Under Rs 2,000", minPrice: undefined, maxPrice: "2000" },
+  { label: "Rs 2,000 to 5,000", minPrice: "2000", maxPrice: "5000" },
+  { label: "Over Rs 5,000", minPrice: "5000", maxPrice: undefined },
 ] as const;
 
 const SORTS: ReadonlyArray<{ value: ProductOrdering | ""; label: string }> = [
@@ -36,195 +34,245 @@ const SORTS: ReadonlyArray<{ value: ProductOrdering | ""; label: string }> = [
 ];
 
 type FilterRailProps = {
-  categories: Category[];
+  facets: ListingFacets;
   query: ProductQuery;
+  pathname?: string;
+  showBrands?: boolean;
 };
 
-export function FilterRail({ categories, query }: FilterRailProps) {
+export function FilterRail({
+  facets,
+  query,
+  pathname = "/products",
+  showBrands = true,
+}: FilterRailProps) {
+  const href = (change: Partial<ProductQuery>) => hrefWith(query, change, { pathname });
+  const groups = ["category", "brand", "shade", "size", "price", "availability"];
+
   return (
-    <div className="flex flex-col gap-8">
-      <Group title="Category">
-        <FilterLink href={hrefWith(query, { category: undefined })} active={!query.category}>
-          Everything
-        </FilterLink>
-        {categories.map((category) =>
-          category.children.length === 0 ? (
-            <FilterLink
-              key={category.slug}
-              href={hrefWith(query, { category: category.slug })}
-              active={query.category === category.slug}
-            >
-              {category.name}
-            </FilterLink>
-          ) : (
-            <CategoryGroup key={category.slug} category={category} query={query} />
-          ),
+    <div className="flex flex-col gap-6">
+      {/* Every group starts open, so the rail is complete without JavaScript. */}
+      <Accordion type="multiple" defaultValue={groups}>
+        <FilterGroup value="category" title="Category">
+          <ul className="flex flex-col gap-2">
+            <li>
+              <TextFilter href={href({ category: undefined })} active={!query.category}>
+                Everything
+              </TextFilter>
+            </li>
+            {facets.categories.map((category) => (
+              <li key={category.slug} className="flex flex-col gap-2">
+                <TextFilter
+                  href={href({ category: category.slug })}
+                  active={query.category === category.slug}
+                >
+                  {category.name}
+                </TextFilter>
+                {category.children.length > 0 && (
+                  <ul className="flex flex-col gap-2 border-l pl-3">
+                    {category.children.map((child) => (
+                      <li key={child.slug}>
+                        <TextFilter
+                          href={href({ category: child.slug })}
+                          active={query.category === child.slug}
+                        >
+                          {child.name}
+                        </TextFilter>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))}
+          </ul>
+        </FilterGroup>
+
+        {showBrands && facets.brands.length > 0 && (
+          <FilterGroup value="brand" title="Brand">
+            <ul className="flex flex-wrap gap-2">
+              {facets.brands.map((brand) => (
+                <li key={brand.slug}>
+                  <ToggleFilter
+                    href={href({ brand: withBrandToggled(query, brand.slug) })}
+                    active={query.brand?.includes(brand.slug) ?? false}
+                  >
+                    {brand.name}
+                  </ToggleFilter>
+                </li>
+              ))}
+            </ul>
+          </FilterGroup>
         )}
-      </Group>
 
-      <Group title="Price">
-        {PRICE_BANDS.map((band) => {
-          const active = query.minPrice === band.minPrice && query.maxPrice === band.maxPrice;
-          return (
-            <FilterLink
-              key={band.label}
-              href={hrefWith(query, {
-                minPrice: active ? undefined : band.minPrice,
-                maxPrice: active ? undefined : band.maxPrice,
+        {facets.shades.length > 0 && (
+          <FilterGroup value="shade" title="Shade">
+            <ul className="flex flex-wrap gap-2">
+              {facets.shades.map((shade) => {
+                const active = query.shade === shade.slug;
+                return (
+                  <li key={shade.slug}>
+                    <Link
+                      href={href({ shade: active ? undefined : shade.slug })}
+                      aria-current={active ? "true" : undefined}
+                      title={shade.name}
+                      className={toggleVariants({ variant: "swatch", size: "swatch" })}
+                    >
+                      <span
+                        aria-hidden
+                        className="size-8 rounded-full"
+                        // The swatch colour is data from the API, not a design token.
+                        style={{ backgroundColor: shade.hexCode }}
+                      />
+                      <span className="sr-only">{shade.name}</span>
+                    </Link>
+                  </li>
+                );
               })}
-              active={active}
-            >
-              {band.label}
-            </FilterLink>
-          );
-        })}
-      </Group>
+            </ul>
+          </FilterGroup>
+        )}
 
-      <Group title="Availability">
-        <FilterLink
-          href={hrefWith(query, { inStock: query.inStock ? undefined : true })}
-          active={Boolean(query.inStock)}
-        >
-          In stock only
-        </FilterLink>
-      </Group>
+        {facets.sizes.length > 0 && (
+          <FilterGroup value="size" title="Size">
+            <ul className="flex flex-wrap gap-2">
+              {facets.sizes.map((size) => {
+                const active = query.size === size.slug;
+                return (
+                  <li key={size.slug}>
+                    <ToggleFilter href={href({ size: active ? undefined : size.slug })} active={active}>
+                      {size.name}
+                    </ToggleFilter>
+                  </li>
+                );
+              })}
+            </ul>
+          </FilterGroup>
+        )}
 
-      <SortForm query={query} />
-    </div>
-  );
-}
+        <FilterGroup value="price" title="Price">
+          <ul className="flex flex-col gap-2">
+            {PRICE_BANDS.map((band) => {
+              const active = query.minPrice === band.minPrice && query.maxPrice === band.maxPrice;
+              return (
+                <li key={band.label}>
+                  <TextFilter
+                    href={href({
+                      minPrice: active ? undefined : band.minPrice,
+                      maxPrice: active ? undefined : band.maxPrice,
+                    })}
+                    active={active}
+                  >
+                    {band.label}
+                  </TextFilter>
+                </li>
+              );
+            })}
+          </ul>
+        </FilterGroup>
 
-/**
- * A parent with children collapses, as a native `<details>`: it opens and
- * closes by keyboard and without JavaScript, and announces its state.
- *
- * The parent's own filter moves inside as "All {name}", because the summary is
- * the toggle and a link inside it would be a control within a control. The
- * label says what it does: the API's filter matches the parent exactly and does
- * not include its children (site-shell.md).
- *
- * It starts open when the applied category is the parent or one of its
- * children, so the current filter is never hidden.
- */
-function CategoryGroup({ category, query }: { category: Category; query: ProductQuery }) {
-  const containsActive =
-    query.category === category.slug ||
-    category.children.some((child) => child.slug === query.category);
-
-  return (
-    <details open={containsActive} className="group">
-      <summary
-        className={[
-          "text-ui flex min-h-8 cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden",
-          containsActive ? "text-ink font-medium" : "text-slate hover:text-ink",
-        ].join(" ")}
-      >
-        {category.name}
-        <svg
-          aria-hidden
-          viewBox="0 0 12 12"
-          className="size-3 shrink-0 transition-transform duration-300 ease-(--ease-settle) group-open:rotate-45"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        >
-          <path d="M1 6h10M6 1v10" />
-        </svg>
-      </summary>
-      <div className="border-line mt-1 mb-2 ml-1 flex flex-col gap-1.5 border-l pl-3">
-        <FilterLink
-          href={hrefWith(query, { category: category.slug })}
-          active={query.category === category.slug}
-        >
-          All {category.name.toLowerCase()}
-        </FilterLink>
-        {category.children.map((child) => (
-          <FilterLink
-            key={child.slug}
-            href={hrefWith(query, { category: child.slug })}
-            active={query.category === child.slug}
+        <FilterGroup value="availability" title="Availability">
+          <TextFilter
+            href={href({ inStock: query.inStock ? undefined : true })}
+            active={Boolean(query.inStock)}
           >
-            {child.name}
-          </FilterLink>
-        ))}
-      </div>
-    </details>
-  );
-}
+            In stock only
+          </TextFilter>
+        </FilterGroup>
+      </Accordion>
 
-function Group({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-2">
-      <h2 className="text-detail text-slate">{title}</h2>
-      {children}
+      <SortForm query={query} pathname={pathname} />
     </div>
   );
 }
 
-function FilterLink({
+function FilterGroup({
+  value,
+  title,
+  children,
+}: {
+  value: string;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <AccordionItem value={value}>
+      <AccordionTrigger>{title}</AccordionTrigger>
+      <AccordionContent>{children}</AccordionContent>
+    </AccordionItem>
+  );
+}
+
+function TextFilter({
   href,
   active,
   children,
 }: {
   href: string;
   active: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <Link
       href={href}
-      // Marked, not merely styled: a screen reader needs to know which is applied.
       aria-current={active ? "true" : undefined}
-      className={[
-        "text-ui w-fit transition-colors",
-        active
-          ? "decoration-indigo font-medium underline underline-offset-4"
-          : "text-slate hover:text-ink",
-      ].join(" ")}
+      className={cn(
+        "text-sm transition-colors",
+        active ? "font-medium underline underline-offset-4" : "text-muted-foreground hover:text-foreground",
+      )}
     >
       {children}
     </Link>
   );
 }
 
-/**
- * A real form with method="get", so sorting works before JavaScript loads. The
- * other filters ride along as hidden inputs, because a GET form replaces the
- * whole query string.
- */
-function SortForm({ query }: { query: ProductQuery }) {
+function ToggleFilter({
+  href,
+  active,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  children: ReactNode;
+}) {
   return (
-    <form method="get" action="/products" className="flex flex-col gap-2">
+    <Link
+      href={href}
+      aria-current={active ? "true" : undefined}
+      className={toggleVariants({ variant: "outline", size: "sm" })}
+    >
+      {children}
+    </Link>
+  );
+}
+
+/** A GET form so sorting works before JavaScript loads; it carries the other filters along. */
+function SortForm({ query, pathname }: { query: ProductQuery; pathname: string }) {
+  return (
+    <form method="get" action={pathname} className="flex flex-col gap-2">
       {query.category && <input type="hidden" name="category" value={query.category} />}
+      {query.brand?.map((brand) => (
+        <input key={brand} type="hidden" name="brand" value={brand} />
+      ))}
       {query.size && <input type="hidden" name="size" value={query.size} />}
-      {query.color && <input type="hidden" name="color" value={query.color} />}
+      {query.shade && <input type="hidden" name="shade" value={query.shade} />}
       {query.minPrice && <input type="hidden" name="min_price" value={query.minPrice} />}
       {query.maxPrice && <input type="hidden" name="max_price" value={query.maxPrice} />}
       {query.inStock && <input type="hidden" name="in_stock" value="true" />}
       {query.search && <input type="hidden" name="search" value={query.search} />}
 
-      <label htmlFor="ordering" className="text-detail text-slate">
-        Sort
-      </label>
-      <select
-        id="ordering"
-        name="ordering"
-        defaultValue={query.ordering ?? ""}
-        className="border-wash text-ui bg-paper min-h-11 rounded-[2px] border px-2"
-      >
-        {SORTS.map((sort) => (
-          <option key={sort.label} value={sort.value}>
-            {sort.label}
-          </option>
-        ))}
-      </select>
-      {/* Always visible rather than hidden behind an auto-submitting select:
-          the select has no handler, so this is what makes sorting work at all,
-          with or without JavaScript. */}
-      <button type="submit" className="text-detail w-fit underline underline-offset-4">
-        Apply
-      </button>
+      <Label htmlFor="ordering">Sort</Label>
+      <div className="flex gap-2">
+        <NativeSelect id="ordering" name="ordering" defaultValue={query.ordering ?? ""} className="flex-1">
+          {SORTS.map((sort) => (
+            <NativeSelectOption key={sort.label} value={sort.value}>
+              {sort.label}
+            </NativeSelectOption>
+          ))}
+        </NativeSelect>
+        <Button type="submit" variant="outline">
+          Apply
+        </Button>
+      </div>
     </form>
   );
 }

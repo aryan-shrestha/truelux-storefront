@@ -1,6 +1,5 @@
-import { Skeleton } from "@/components/ui/Skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
-/** The listing grid's shape: the same columns, tile ratio and caption lines. */
 export function ProductGridSkeleton() {
   return (
     <ul
@@ -9,12 +8,10 @@ export function ProductGridSkeleton() {
     >
       {Array.from({ length: 8 }, (_, index) => (
         <li key={index} className="flex flex-col gap-3">
-          <Skeleton className="aspect-[365/375] w-full" />
+          <Skeleton className="aspect-4/5 w-full rounded-xl" />
           <Skeleton className="h-3 w-16" />
-          <div className="flex justify-between gap-4">
-            <Skeleton className="h-4 w-2/3" />
-            <Skeleton className="h-4 w-14" />
-          </div>
+          <Skeleton className="h-4 w-2/3" />
+          <Skeleton className="h-4 w-14" />
         </li>
       ))}
     </ul>
