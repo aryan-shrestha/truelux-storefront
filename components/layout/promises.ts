@@ -1,4 +1,3 @@
-// The shop's standing claims, shown on the home page and on every product page.
 export const PROMISES = {
   cashOnDelivery: {
     title: "Cash on delivery",

@@ -10,7 +10,6 @@ type SectionHeadingProps = {
   className?: string;
 };
 
-// The design's section opener: a small line above a serif title, and an optional lede.
 export function SectionHeading({
   id,
   eyebrow,

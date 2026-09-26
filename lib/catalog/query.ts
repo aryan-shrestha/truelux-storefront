@@ -141,7 +141,6 @@ export function appliedFilterCount(query: ProductQuery): number {
   );
 }
 
-/** For the repeatable filters, `?brand=` and `?skin_type=`. */
 export function withToggled(current: string[] | undefined, value: string): string[] | undefined {
   const values = current ?? [];
   const next = values.includes(value)
