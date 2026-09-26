@@ -8,10 +8,10 @@ export const contentType = "image/png";
 
 // ImageResponse cannot read CSS variables, so these repeat the light theme's
 // values from app/globals.css.
-const IVORY = "#faf6f1";
-const ESPRESSO = "#2b1d17";
-const ROSE = "#8e5a52";
-const SHADES = ["#f3dcc8", "#e9c6a8", "#dcb08c", "#c99571", "#ae7a56", "#8c5c3e", "#6b432c", "#4a2e1f"];
+const BACKGROUND = "#fdfdfb";
+const FOREGROUND = "#333333";
+const MUTED_FOREGROUND = "#66655f";
+const STONE = "#e8e6dd";
 
 export default function OpengraphImage() {
   return new ImageResponse(
@@ -25,19 +25,17 @@ export default function OpengraphImage() {
           justifyContent: "center",
           padding: 96,
           gap: 32,
-          background: IVORY,
-          color: ESPRESSO,
+          background: BACKGROUND,
+          color: FOREGROUND,
         }}
       >
-        <div style={{ fontSize: 112, fontFamily: "serif" }}>{env.brandName}</div>
-        <div style={{ fontSize: 40, color: ROSE }}>
+        <div style={{ fontSize: 104, fontWeight: 700, letterSpacing: 12, textTransform: "uppercase" }}>
+          {env.brandName}
+        </div>
+        <div style={{ fontSize: 40, color: MUTED_FOREGROUND }}>
           Skincare, makeup and fragrance, delivered across Nepal.
         </div>
-        <div style={{ display: "flex", width: 560, height: 20, marginTop: 24 }}>
-          {SHADES.map((shade) => (
-            <div key={shade} style={{ flex: 1, background: shade }} />
-          ))}
-        </div>
+        <div style={{ display: "flex", width: 560, height: 16, marginTop: 24, background: STONE }} />
       </div>
     ),
     size,

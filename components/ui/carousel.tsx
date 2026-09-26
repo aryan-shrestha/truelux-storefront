@@ -188,7 +188,7 @@ function CarouselPrevious({
       variant={variant}
       size={size}
       className={cn(
-        "absolute touch-manipulation rounded-full",
+        "absolute touch-manipulation",
         orientation === "horizontal"
           ? "inset-y-0 -left-12 my-auto"
           : "-top-12 left-1/2 -translate-x-1/2 rotate-90",
@@ -218,7 +218,7 @@ function CarouselNext({
       variant={variant}
       size={size}
       className={cn(
-        "absolute touch-manipulation rounded-full",
+        "absolute touch-manipulation",
         orientation === "horizontal"
           ? "inset-y-0 -right-12 my-auto"
           : "-bottom-12 left-1/2 -translate-x-1/2 rotate-90",
@@ -234,8 +234,99 @@ function CarouselNext({
   )
 }
 
+type CarouselEvent = Parameters<NonNullable<CarouselApi>["on"]>[0]
+
+const COUNT_EVENTS: CarouselEvent[] = ["reInit"]
+const SELECT_EVENTS: CarouselEvent[] = ["select", "reInit"]
+const PROGRESS_EVENTS: CarouselEvent[] = ["scroll", "reInit"]
+const SHARE_EVENTS: CarouselEvent[] = ["slidesInView", "reInit", "resize"]
+
+function useCarouselSnapshot<T>(
+  events: CarouselEvent[],
+  read: (api: NonNullable<CarouselApi>) => T,
+  fallback: T
+) {
+  const { api } = useCarousel()
+  const subscribe = React.useCallback(
+    (onChange: () => void) => {
+      if (!api) return () => {}
+      for (const event of events) api.on(event, onChange)
+      return () => {
+        for (const event of events) api.off(event, onChange)
+      }
+    },
+    [api, events]
+  )
+  return React.useSyncExternalStore(
+    subscribe,
+    () => (api ? read(api) : fallback),
+    () => fallback
+  )
+}
+
+function CarouselDots({
+  className,
+  label = (index: number, count: number) => `Slide ${index + 1} of ${count}`,
+  ...props
+}: Omit<React.ComponentProps<"div">, "children"> & {
+  label?: (index: number, count: number) => string
+}) {
+  const { api } = useCarousel()
+  const count = useCarouselSnapshot(COUNT_EVENTS, (api) => api.scrollSnapList().length, 0)
+  const selected = useCarouselSnapshot(SELECT_EVENTS, (api) => api.selectedScrollSnap(), 0)
+  if (count < 2) return null
+
+  return (
+    <div data-slot="carousel-dots" className={cn("flex justify-center", className)} {...props}>
+      {Array.from({ length: count }, (_, index) => (
+        <button
+          key={index}
+          type="button"
+          aria-label={label(index, count)}
+          aria-current={index === selected ? "true" : undefined}
+          onClick={() => api?.scrollTo(index)}
+          className="group/dot flex h-11 w-14 items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <span className="h-0.5 w-11 bg-current opacity-40 transition-opacity group-aria-[current]/dot:opacity-100" />
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function CarouselProgress({ className, ...props }: Omit<React.ComponentProps<"div">, "children">) {
+  const progress = useCarouselSnapshot(
+    PROGRESS_EVENTS,
+    (api) => Math.min(Math.max(api.scrollProgress(), 0), 1),
+    0
+  )
+  const share = useCarouselSnapshot(
+    SHARE_EVENTS,
+    (api) => api.slidesInView().length / Math.max(api.slideNodes().length, 1),
+    0
+  )
+
+  return (
+    <div
+      aria-hidden
+      data-slot="carousel-progress"
+      className={cn("relative h-0.5 w-full bg-border", className)}
+      {...props}
+    >
+      {share > 0 && (
+        <span
+          className="absolute inset-y-0 bg-foreground"
+          style={{ width: `${share * 100}%`, left: `${progress * (1 - share) * 100}%` }}
+        />
+      )}
+    </div>
+  )
+}
+
 export {
   type CarouselApi,
+  CarouselDots,
+  CarouselProgress,
   Carousel,
   CarouselContent,
   CarouselItem,
