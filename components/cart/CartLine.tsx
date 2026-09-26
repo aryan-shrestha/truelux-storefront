@@ -20,14 +20,14 @@ export function CartLine({ line }: { line: Line }) {
         href={`/products/${line.productSlug}`}
         tabIndex={-1}
         aria-hidden
-        className="relative aspect-4/5 w-20 shrink-0 overflow-hidden rounded-lg bg-muted"
+        className="bg-muted relative aspect-4/5 w-20 shrink-0 overflow-hidden"
       >
         {line.imageUrl !== null && (
           <Image src={line.imageUrl} alt="" fill sizes="80px" className="object-cover" />
         )}
       </Link>
 
-      <div className="flex flex-1 flex-col gap-1">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <Link href={`/products/${line.productSlug}`} className="font-medium">
             {line.productName}
@@ -35,9 +35,9 @@ export function CartLine({ line }: { line: Line }) {
           {/* The unit price, never a line total (ADR 0003). */}
           <Price amount={line.unitPrice} className="text-muted-foreground" />
         </div>
-        <p className="text-sm text-muted-foreground">{describeVariant(line.size, line.shade)}</p>
+        <p className="text-muted-foreground text-sm">{describeVariant(line.size, line.shade)}</p>
 
-        <div className="mt-3 flex items-center gap-3">
+        <div className="mt-3 flex flex-wrap items-center gap-3">
           <QuantityStepper
             itemName={line.productName}
             value={line.quantity}
@@ -45,7 +45,7 @@ export function CartLine({ line }: { line: Line }) {
             max={MAX_UNITS_PER_LINE}
             onChange={(quantity) => setQuantity(line.variantId, quantity)}
           />
-          <Button variant="link" onClick={() => remove(line.variantId)}>
+          <Button variant="link" size="sm" onClick={() => remove(line.variantId)}>
             Remove<span className="sr-only"> {line.productName}</span>
           </Button>
         </div>

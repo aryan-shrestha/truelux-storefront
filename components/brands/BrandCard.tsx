@@ -6,8 +6,8 @@ import type { Brand } from "@/lib/api/types";
 
 export function BrandCard({ brand }: { brand: Brand }) {
   return (
-    <Card className="relative h-full transition-colors hover:bg-muted">
-      <div className="mx-4 flex aspect-3/2 items-center justify-center rounded-lg bg-muted">
+    <Card className="hover:bg-muted relative h-full transition-colors">
+      <div className="bg-muted mx-4 flex aspect-3/2 items-center justify-center">
         {brand.logoUrl === null ? (
           <span aria-hidden className="font-heading text-3xl">
             {brand.name}

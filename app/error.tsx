@@ -20,15 +20,15 @@ export default function Error({
   const requestId = isApiError(error) ? error.requestId : null;
 
   return (
-    <section className="mx-auto flex max-w-7xl flex-col items-start gap-6 px-4 py-24 md:px-8">
-      <h1 className="text-title">This page did not load</h1>
-      <p className="max-w-prose text-muted-foreground">
+    <section className="max-w-page mx-auto flex w-full flex-col items-start gap-6 px-4 py-24 md:px-8">
+      <h1 className="font-heading text-title">This page did not load</h1>
+      <p className="text-muted-foreground max-w-prose">
         The shop is still here. Try again, and if it keeps happening, get in touch and quote the
         reference below.
       </p>
       <Button onClick={reset}>Try again</Button>
       {requestId !== null && (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Reference <span className="font-medium tabular-nums">{requestId}</span>
         </p>
       )}

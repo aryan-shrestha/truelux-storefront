@@ -261,7 +261,7 @@ export function CheckoutForm() {
           <Card size="sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BanknoteIcon aria-hidden className="text-gold" />
+                <BanknoteIcon aria-hidden />
                 Cash on delivery
               </CardTitle>
               <CardDescription>
@@ -462,7 +462,7 @@ function CheckoutSkeleton() {
       </div>
       <div className="flex flex-col gap-4 lg:w-96 lg:shrink-0">
         <Skeleton className="h-40 w-full" />
-        <Skeleton className="h-12 w-full rounded-full" />
+        <Skeleton className="h-14 w-full rounded-none" />
       </div>
     </div>
   );

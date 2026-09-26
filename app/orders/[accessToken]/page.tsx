@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { PageShell } from "@/components/layout/PageShell";
 import { OrderByToken } from "@/components/orders/OrderByToken";
 
 // Every confirmation email links here. Moving this route strands customers with
@@ -13,9 +14,8 @@ export default async function OrderPage({ params }: PageProps<"/orders/[accessTo
   const { accessToken } = await params;
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-10 md:px-8">
-      <h1 className="mb-10 text-title">Your order</h1>
+    <PageShell title="Your order">
       <OrderByToken accessToken={accessToken} />
-    </section>
+    </PageShell>
   );
 }

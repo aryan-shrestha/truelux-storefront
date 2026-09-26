@@ -38,7 +38,7 @@ export function DistrictPicker({ id, name, invalid, describedBy }: DistrictPicke
           aria-expanded={open}
           aria-invalid={invalid || undefined}
           aria-describedby={describedBy}
-          className="w-full justify-between rounded-lg font-normal"
+          className="w-full justify-between font-normal"
         >
           {district ?? <span className="text-muted-foreground">Choose a district</span>}
           <ChevronsUpDownIcon data-icon="inline-end" className="opacity-50" />

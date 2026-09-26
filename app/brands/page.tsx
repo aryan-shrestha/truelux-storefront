@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { BrandCard } from "@/components/brands/BrandCard";
+import { PageShell } from "@/components/layout/PageShell";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { navigationBrands } from "@/lib/catalog/navigation";
 import { env } from "@/lib/env";
@@ -15,8 +16,7 @@ export default async function BrandsPage() {
   const brands = await navigationBrands();
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-10 md:px-8">
-      <h1 className="text-title mb-10">Brands</h1>
+    <PageShell title="Brands">
       {brands.length === 0 ? (
         <Empty className="border">
           <EmptyHeader>
@@ -35,6 +35,6 @@ export default async function BrandsPage() {
           ))}
         </ul>
       )}
-    </section>
+    </PageShell>
   );
 }
