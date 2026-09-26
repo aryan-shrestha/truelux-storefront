@@ -13,7 +13,7 @@ const toggleVariants = cva(
       variant: {
         default: "rounded-none bg-transparent",
         outline:
-          "rounded-none border border-input bg-transparent hover:bg-muted data-[state=on]:border-foreground data-[state=on]:bg-foreground data-[state=on]:text-background data-[state=on]:hover:bg-foreground/85 aria-[current]:border-foreground aria-[current]:bg-foreground aria-[current]:text-background aria-[current]:hover:bg-foreground/85 disabled:line-through disabled:opacity-60",
+          "rounded-none border border-input bg-transparent hover:bg-muted data-[state=on]:border-foreground data-[state=on]:bg-foreground data-[state=on]:text-background data-[state=on]:hover:bg-foreground/85 data-[state=on]:hover:text-background aria-[current]:border-foreground aria-[current]:bg-foreground aria-[current]:text-background aria-[current]:hover:bg-foreground/85 aria-[current]:hover:text-background disabled:line-through disabled:opacity-60",
         swatch:
           "relative rounded-full border border-border p-0 ring-offset-2 ring-offset-background hover:bg-transparent data-[state=on]:bg-transparent data-[state=on]:ring-2 data-[state=on]:ring-foreground aria-[current]:ring-2 aria-[current]:ring-foreground disabled:opacity-60 disabled:after:absolute disabled:after:inset-x-1 disabled:after:top-1/2 disabled:after:h-px disabled:after:-rotate-45 disabled:after:bg-foreground",
       },

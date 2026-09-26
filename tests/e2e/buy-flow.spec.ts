@@ -66,6 +66,21 @@ test("filters the catalogue by brand, shade and skin type through links", async 
   await expect(page).toHaveURL(/\/products\?brand=lumiere&shade=porcelain&skin_type=dry$/);
 });
 
+test("an applied filter keeps its inverted text on hover", async ({ page }) => {
+  await page.goto("/products?category=hydrate&skin_type=dry");
+
+  const dry = page.getByRole("region", { name: "Skin type" }).getByRole("link", { name: "Dry" });
+  await expect(dry).toHaveAttribute("aria-current", "true");
+  await dry.hover();
+  const color = await dry.evaluate(async (link) => {
+    await Promise.all(link.getAnimations().map((animation) => animation.finished));
+    return getComputedStyle(link).color;
+  });
+
+  const pageBackground = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  expect(color).toBe(pageBackground);
+});
+
 test("the mega-menu opens a skin type and a whole root category", async ({ page }) => {
   await page.goto("/");
 
