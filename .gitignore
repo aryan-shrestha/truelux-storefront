@@ -51,3 +51,5 @@ docs/design/*.svg
 # playwright
 /test-results/
 /playwright-report/
+docs/design/renders/
+docs/design/*.png

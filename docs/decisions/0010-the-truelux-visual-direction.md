@@ -1,6 +1,6 @@
 # ADR 0010: The TrueLux visual direction
 
-Status: Accepted
+Status: Superseded by ADR 0011
 
 Date: 2026-09-25
 
