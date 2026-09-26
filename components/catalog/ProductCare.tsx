@@ -6,6 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { PROMISES } from "@/components/layout/promises";
 import { env } from "@/lib/env";
 
 // The design's Benefits / How to use / Ingredients panel. The API has no benefits
@@ -13,14 +14,8 @@ import { env } from "@/lib/env";
 export function ProductCare() {
   const items = [
     { title: "Delivery", body: env.shippingNote },
-    {
-      title: "Payment",
-      body: "Cash on delivery only. Nothing is charged online; you pay when your order reaches you.",
-    },
-    {
-      title: "Authenticity",
-      body: "Every product is genuine, from the brands we stock.",
-    },
+    { title: "Payment", body: PROMISES.cashOnDelivery.body },
+    { title: "Authenticity", body: PROMISES.authentic.body },
   ];
 
   return (

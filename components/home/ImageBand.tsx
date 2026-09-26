@@ -16,7 +16,7 @@ export function ImageBand() {
           </h2>
           <p className="text-lg leading-relaxed">
             We stock each brand directly, so what arrives at your door is exactly what the brand
-            made. Browse a brand&apos;s full range, then pay in cash when your order reaches you.
+            made. Browse a brand’s full range, then pay in cash when your order reaches you.
           </p>
           <Button asChild variant="overlay" size="cta" className="mt-3">
             <Link href="/brands">

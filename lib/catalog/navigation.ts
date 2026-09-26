@@ -81,7 +81,7 @@ export function shopMenu(categories: Category[], skinTypes: SkinTypeRef[]): Menu
   return [...columns.slice(0, 1), skinTypeColumn, ...columns.slice(1)];
 }
 
-export type CategoryTrail = { root: Category; child: CategoryRef | null };
+type CategoryTrail = { root: Category; child: CategoryRef | null };
 
 /** Where a category slug sits in the one-level tree; null when it is not in it. */
 export function findCategory(

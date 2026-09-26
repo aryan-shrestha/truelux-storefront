@@ -31,7 +31,9 @@ export async function Footer() {
       <div className="max-w-page mx-auto flex flex-col gap-12 px-4 pt-16 pb-10 md:px-10">
         <div className="grid gap-10 md:grid-cols-[1fr_2fr]">
           <div className="flex max-w-xs flex-col gap-4">
-            <p className="text-2xl font-bold tracking-[0.2em] uppercase">{env.brandName}</p>
+            <p translate="no" className="text-2xl font-bold tracking-[0.2em] uppercase">
+              {env.brandName}
+            </p>
             <p className="text-ink-muted text-sm">
               Authentic skincare, makeup and fragrance, delivered across Nepal. You pay in cash when
               your order arrives.

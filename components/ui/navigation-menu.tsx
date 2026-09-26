@@ -11,12 +11,13 @@ function NavigationMenu({
 }: React.ComponentProps<typeof NavigationMenuPrimitive.Root> & {
   viewport?: boolean
 }) {
+  // Static, so the full-width viewport spans the sticky header rather than the menu's own cell.
   return (
     <NavigationMenuPrimitive.Root
       data-slot="navigation-menu"
       data-viewport={viewport}
       className={cn(
-        "group/navigation-menu relative flex max-w-max flex-1 items-center justify-center [&>div:first-child]:h-full",
+        "group/navigation-menu static flex max-w-max flex-1 items-center justify-center [&>div:first-child]:h-full",
         className
       )}
       {...props}

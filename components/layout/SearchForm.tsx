@@ -16,7 +16,7 @@ export function SearchForm({ onSubmit }: { onSubmit?: () => void }) {
           type="search"
           name="search"
           aria-label="Search products"
-          placeholder="Search products"
+          placeholder="Search products…"
           maxLength={100}
           required
         />

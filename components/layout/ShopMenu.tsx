@@ -12,10 +12,9 @@ import {
 } from "@/components/ui/navigation-menu";
 import type { MenuColumn } from "@/lib/catalog/navigation";
 
-// The root is static so the viewport spans the sticky header, not this cell.
 export function ShopMenu({ columns }: { columns: MenuColumn[] }) {
   return (
-    <NavigationMenu className="static hidden h-full md:flex" aria-label="Main">
+    <NavigationMenu className="hidden h-full md:flex" aria-label="Main">
       <NavigationMenuList className="h-full gap-6">
         <NavigationMenuItem className="h-full">
           {columns.length === 0 ? (

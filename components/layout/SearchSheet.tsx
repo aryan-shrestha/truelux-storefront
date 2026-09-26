@@ -29,7 +29,7 @@ export function SearchSheet() {
           <SheetHeader className="p-0">
             <SheetTitle className="font-heading text-title">Search</SheetTitle>
             <SheetDescription>
-              Matches words in a product&apos;s name or description.
+              Matches words in a product’s name or description.
             </SheetDescription>
           </SheetHeader>
           <SearchForm onSubmit={() => setOpen(false)} />

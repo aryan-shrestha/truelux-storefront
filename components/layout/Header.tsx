@@ -25,6 +25,7 @@ export async function Header() {
 
         <Link
           href="/"
+          translate="no"
           className="text-xl font-bold tracking-[0.2em] uppercase md:text-[1.625rem] md:tracking-[0.22em]"
         >
           {env.brandName}
