@@ -1,11 +1,6 @@
 import type { CartLine } from "@/lib/cart/storage";
 
 /**
- * Pure cart operations. No React, no network, no storage — which is what makes
- * them cheap to test, and they are where a bug is silent.
- */
-
-/**
  * The API enforces no cart size at all; its own documentation names this as the
  * first thing to add if checkout is abused. A checkout request with thousands
  * of lines holds a row lock on every variant inside one transaction.

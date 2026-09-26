@@ -1,6 +1,4 @@
 /**
- * Nepal's 77 districts, for the checkout's district select.
- *
  * A select rather than a text input because `district` decides the shipping
  * band: the backend charges the inside-valley fee only for `kathmandu`,
  * `lalitpur` and `bhaktapur`, matched case-insensitively, and anything else —

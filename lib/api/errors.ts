@@ -1,6 +1,4 @@
 /**
- * One error type for every failure the API can report.
- *
  * The backend pins its error codes as a public contract and rewords its messages
  * freely, so `code` is the only thing anything branches on (ADR 0005). No
  * component above this module reads a status code.
@@ -35,8 +33,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /**
- * Builds an ApiError from a non-2xx response.
- *
  * A body that is not JSON, or JSON without an `error` object, is a server fault
  * whatever its status says: the envelope is a contract, and a response that does
  * not honour it cannot be reported as the condition it claims.

@@ -92,8 +92,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     () => false,
   );
 
-  // Every mutation reads the store, applies the reducer and writes back. There
-  // is no second copy to keep in step.
   const act = useCallback((action: CartAction) => {
     writeCart(cartReducer(getSnapshot(), action));
   }, []);

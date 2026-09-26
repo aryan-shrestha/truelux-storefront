@@ -1,6 +1,4 @@
 /**
- * Every environment variable this storefront reads, in one place.
- *
  * `process.env` is not called anywhere else: one file should list the whole
  * configuration surface, and a variable read at a call site is a variable
  * nobody finds when the deploy is wrong.

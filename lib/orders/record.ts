@@ -72,7 +72,6 @@ export function readOrderRecords(): OrderRecord[] {
   }
 }
 
-/** Newest first, one entry per order number. */
 export function recordOrder(entry: OrderRecord): void {
   const orders = [
     entry,
