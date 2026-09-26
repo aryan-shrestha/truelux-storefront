@@ -1,6 +1,11 @@
-// A plain module because the server header and the client menu both render it.
+// A plain module because the server header, the client menu and the footer all render it.
 export const SITE_LINKS = [
-  { href: "/products", label: "Shop" },
   { href: "/brands", label: "Brands" },
-  { href: "/products?ordering=-created_at", label: "New in" },
+  { href: "/#journal", label: "Journal" },
+  { href: "/#about", label: "About" },
+] as const;
+
+export const ORDER_LINKS = [
+  { href: "/orders/lookup", label: "Find an order" },
+  { href: "/cart", label: "Your bag" },
 ] as const;

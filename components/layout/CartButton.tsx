@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRef, useState, type MouseEvent } from "react";
 
 import { CartDrawer } from "@/components/cart/CartDrawer";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useCart } from "@/lib/cart/use-cart";
@@ -28,14 +27,14 @@ export function CartButton() {
 
   return (
     <>
-      <Button asChild variant="ghost" size="icon" className="relative">
+      <Button asChild variant="ghost" size="icon" className="w-auto min-w-11 gap-1.5 px-2.5">
         <Link ref={linkRef} href="/cart" onClick={handleClick} aria-haspopup="dialog">
           <ShoppingBagIcon aria-hidden />
           {/* Nothing from storage renders on the server, or hydration fails. */}
           {hasCount && (
-            <Badge aria-hidden className="absolute -top-0.5 -right-0.5 tabular-nums">
+            <span aria-hidden className="tabular-nums">
               {count}
-            </Badge>
+            </span>
           )}
           <span aria-live="polite" className="sr-only">
             {ready ? `Bag, ${count} ${count === 1 ? "item" : "items"}` : "Bag"}
@@ -53,7 +52,7 @@ export function CartButton() {
           }}
         >
           <SheetHeader>
-            <SheetTitle className="text-2xl">
+            <SheetTitle className="font-heading text-heading">
               {hasCount ? `Your bag (${count})` : "Your bag"}
             </SheetTitle>
           </SheetHeader>

@@ -1,80 +1,153 @@
 "use client";
 
-import { MenuIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, MenuIcon } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
-import { SearchForm } from "@/components/layout/SearchForm";
-import { SITE_LINKS } from "@/components/layout/site-links";
+import { ORDER_LINKS, SITE_LINKS } from "@/components/layout/site-links";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import type { Category } from "@/lib/api/types";
+import { Item } from "@/components/ui/item";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import type { MenuColumn } from "@/lib/catalog/navigation";
 
-export function MobileNav({ categories }: { categories: Category[] }) {
+type Panel = { kind: "root" } | { kind: "shop" } | { kind: "column"; index: number };
+
+export function MobileNav({ columns }: { columns: MenuColumn[] }) {
   const [open, setOpen] = useState(false);
+  const [panel, setPanel] = useState<Panel>({ kind: "root" });
   const close = () => setOpen(false);
 
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (next) setPanel({ kind: "root" });
+  }
+
+  const column = panel.kind === "column" ? columns[panel.index] : undefined;
+
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Menu" className="md:hidden">
+        <Button variant="ghost" size="icon" aria-label="Menu" className="-ml-2.5 md:hidden">
           <MenuIcon />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="overflow-y-auto">
-        <SheetHeader>
+      <SheetContent side="left" className="gap-0 overflow-y-auto p-0 data-[side=left]:w-full data-[side=left]:sm:max-w-sm">
+        <SheetHeader className="h-16 justify-center border-b border-foreground px-4">
           <SheetTitle>Menu</SheetTitle>
         </SheetHeader>
-        <nav aria-label="Menu" className="flex flex-col gap-6 px-4 pb-8">
-          <SearchForm />
-          <ul className="flex flex-col gap-1 font-heading text-2xl">
-            {SITE_LINKS.map((link) => (
-              <li key={link.href}>
-                <Link href={link.href} onClick={close} className="block py-2">
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
 
-          {categories.length > 0 && (
+        <nav aria-label="Menu">
+          {panel.kind === "root" && (
             <>
-              <Separator />
-              <ul className="flex flex-col gap-4">
-                {categories.map((category) => (
-                  <li key={category.slug}>
-                    <Link
-                      href={`/products?category=${category.slug}`}
-                      onClick={close}
-                      className="font-medium"
-                    >
-                      {category.name}
+              <ul>
+                <li>
+                  {columns.length === 0 ? (
+                    <LinkRow href="/products" onNavigate={close}>
+                      Shop
+                    </LinkRow>
+                  ) : (
+                    <ForwardRow onClick={() => setPanel({ kind: "shop" })}>Shop</ForwardRow>
+                  )}
+                </li>
+                {SITE_LINKS.map((link) => (
+                  <li key={link.href}>
+                    <LinkRow href={link.href} onNavigate={close}>
+                      {link.label}
+                    </LinkRow>
+                  </li>
+                ))}
+              </ul>
+              <ul className="flex flex-col px-4 py-3 text-muted-foreground">
+                {ORDER_LINKS.map((link) => (
+                  <li key={link.href}>
+                    <Link href={link.href} onClick={close} className="block py-2.5">
+                      {link.label}
                     </Link>
-                    {category.children.length > 0 && (
-                      <ul className="mt-2 flex flex-col gap-2 pl-4 text-muted-foreground">
-                        {category.children.map((child) => (
-                          <li key={child.slug}>
-                            <Link href={`/products?category=${child.slug}`} onClick={close}>
-                              {child.name}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
                   </li>
                 ))}
               </ul>
             </>
           )}
+
+          {panel.kind === "shop" && (
+            <ul>
+              <li>
+                <BackRow onClick={() => setPanel({ kind: "root" })} label="Shop" />
+              </li>
+              <li>
+                <LinkRow href="/products" onNavigate={close}>
+                  Shop everything
+                </LinkRow>
+              </li>
+              {columns.map((candidate, index) => (
+                <li key={candidate.title}>
+                  <ForwardRow onClick={() => setPanel({ kind: "column", index })}>
+                    {candidate.title}
+                  </ForwardRow>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {column !== undefined && (
+            <ul>
+              <li>
+                <BackRow onClick={() => setPanel({ kind: "shop" })} label={column.title} />
+              </li>
+              {column.links.map((link) => (
+                <li key={link.href}>
+                  <LinkRow href={link.href} onNavigate={close} indented>
+                    {link.label}
+                  </LinkRow>
+                </li>
+              ))}
+            </ul>
+          )}
         </nav>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function ForwardRow({ onClick, children }: { onClick: () => void; children: ReactNode }) {
+  return (
+    <Item asChild variant="rule" size="lg">
+      <button type="button" onClick={onClick}>
+        <span className="flex-1">{children}</span>
+        <ChevronRightIcon aria-hidden />
+      </button>
+    </Item>
+  );
+}
+
+// Focus moves to the back row when a sub-menu opens, so a keyboard user is not left on nothing.
+function BackRow({ onClick, label }: { onClick: () => void; label: string }) {
+  return (
+    <Item asChild variant="rule" size="lg">
+      <button type="button" onClick={onClick} autoFocus aria-label={`Back from ${label}`}>
+        <ChevronLeftIcon aria-hidden />
+        <span className="flex-1">{label}</span>
+      </button>
+    </Item>
+  );
+}
+
+function LinkRow({
+  href,
+  onNavigate,
+  indented = false,
+  children,
+}: {
+  href: string;
+  onNavigate: () => void;
+  indented?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <Item asChild variant="rule" size="lg">
+      <Link href={href} onClick={onNavigate} className={indented ? "pl-12" : undefined}>
+        {children}
+      </Link>
+    </Item>
   );
 }

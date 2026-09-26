@@ -1,10 +1,13 @@
 import { SearchIcon } from "lucide-react";
+import Form from "next/form";
 
+import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 
-export function SearchForm({ className }: { className?: string }) {
+// next/form navigates client-side when JavaScript has loaded and is a plain GET form before.
+export function SearchForm({ onSubmit }: { onSubmit?: () => void }) {
   return (
-    <form action="/products" role="search" className={className}>
+    <Form action="/products" role="search" onSubmit={onSubmit} className="flex gap-2">
       <InputGroup>
         <InputGroupAddon>
           <SearchIcon />
@@ -13,10 +16,12 @@ export function SearchForm({ className }: { className?: string }) {
           type="search"
           name="search"
           aria-label="Search products"
-          placeholder="Search"
+          placeholder="Search products"
           maxLength={100}
+          required
         />
       </InputGroup>
-    </form>
+      <Button type="submit">Search</Button>
+    </Form>
   );
 }

@@ -16,7 +16,7 @@ function NavigationMenu({
       data-slot="navigation-menu"
       data-viewport={viewport}
       className={cn(
-        "group/navigation-menu relative flex max-w-max flex-1 items-center justify-center",
+        "group/navigation-menu relative flex max-w-max flex-1 items-center justify-center [&>div:first-child]:h-full",
         className
       )}
       {...props}
@@ -99,13 +99,13 @@ function NavigationMenuViewport({
   return (
     <div
       className={cn(
-        "absolute inset-x-0 top-full isolate z-50 flex justify-center"
+        "absolute inset-x-0 top-[calc(100%+1px)] isolate z-50 flex justify-center"
       )}
     >
       <NavigationMenuPrimitive.Viewport
         data-slot="navigation-menu-viewport"
         className={cn(
-          "relative h-(--radix-navigation-menu-viewport-height) w-full overflow-hidden border-t border-b border-t-foreground bg-popover text-popover-foreground duration-200 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+          "relative h-(--radix-navigation-menu-viewport-height) w-full overflow-hidden border-b bg-popover text-popover-foreground duration-200 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
           className
         )}
         {...props}

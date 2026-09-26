@@ -46,10 +46,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <CartProvider>
           <a
             href="#main"
-            className="sr-only rounded-full bg-primary px-4 py-2 text-sm text-primary-foreground focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50"
+            className="sr-only bg-primary px-4 py-2 text-sm text-primary-foreground focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50"
           >
             Skip to content
           </a>
+          <p className="bg-ink px-4 py-3 text-center text-sm text-ink-foreground">
+            {env.shippingNote}
+          </p>
           <Header />
           <main id="main" className="flex-1">
             {children}

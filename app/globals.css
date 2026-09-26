@@ -140,6 +140,8 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 
   --ease-settle: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --container-page: 90rem;
 }
 
 @layer base {

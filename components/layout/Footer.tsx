@@ -1,59 +1,90 @@
 import Link from "next/link";
 
-import { SITE_LINKS } from "@/components/layout/site-links";
-import { Separator } from "@/components/ui/separator";
+import { ORDER_LINKS, SITE_LINKS } from "@/components/layout/site-links";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { categoryHref, navigationCategories } from "@/lib/catalog/navigation";
 import { env } from "@/lib/env";
 
-export function Footer() {
+type FooterColumn = { title: string; links: ReadonlyArray<{ href: string; label: string }> };
+
+export async function Footer() {
+  const categories = await navigationCategories();
+  const columns: FooterColumn[] = [
+    { title: "Shop", links: [{ href: "/products", label: "Shop everything" }, ...SITE_LINKS] },
+    {
+      title: "Categories",
+      links: categories.map((category) => ({
+        href: categoryHref(category.slug),
+        label: category.name,
+      })),
+    },
+    { title: "Orders", links: ORDER_LINKS },
+  ].filter((column) => column.links.length > 0);
+
   return (
-    <footer className="mt-24 bg-muted">
-      <div className="mx-auto flex max-w-7xl flex-col gap-10 px-4 py-14 md:px-8">
-        <div className="flex flex-col justify-between gap-10 md:flex-row">
-          <div className="flex max-w-sm flex-col gap-3">
-            <p className="font-heading text-3xl">{env.brandName}</p>
-            <p className="text-sm text-muted-foreground">
+    <footer className="mt-20 bg-ink text-ink-foreground">
+      <div className="mx-auto flex max-w-page flex-col gap-12 px-4 pt-16 pb-10 md:px-10">
+        <div className="grid gap-10 md:grid-cols-[1fr_2fr]">
+          <div className="flex max-w-xs flex-col gap-4">
+            <p className="text-2xl font-bold tracking-[0.2em] uppercase">{env.brandName}</p>
+            <p className="text-sm text-ink-muted">
               Authentic skincare, makeup and fragrance, delivered across Nepal. You pay in cash
               when your order arrives.
             </p>
           </div>
 
-          <nav aria-label="Footer" className="grid grid-cols-2 gap-10 text-sm">
-            <div className="flex flex-col gap-3">
-              <p className="font-medium">Shop</p>
-              <ul className="flex flex-col gap-2 text-muted-foreground">
-                {SITE_LINKS.map((link) => (
-                  <li key={link.href}>
-                    <Link href={link.href} className="hover:text-foreground">
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="flex flex-col gap-3">
-              <p className="font-medium">Orders</p>
-              <ul className="flex flex-col gap-2 text-muted-foreground">
-                <li>
-                  <Link href="/orders/lookup" className="hover:text-foreground">
-                    Find an order
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/cart" className="hover:text-foreground">
-                    Your bag
-                  </Link>
-                </li>
-              </ul>
-            </div>
+          <nav aria-label="Footer" className="hidden grid-cols-3 gap-10 md:grid">
+            {columns.map((column) => (
+              <section key={column.title} aria-label={column.title} className="flex flex-col gap-5">
+                <p className="font-semibold">{column.title}</p>
+                <FooterLinks links={column.links} />
+              </section>
+            ))}
+          </nav>
+
+          <nav aria-label="Footer" className="md:hidden">
+            <Accordion type="multiple" className="border-t border-ink-muted/40">
+              {columns.map((column) => (
+                <AccordionItem
+                  key={column.title}
+                  value={column.title}
+                  className="border-ink-muted/40"
+                >
+                  <AccordionTrigger className="text-base **:data-[slot=accordion-trigger-icon]:text-ink-foreground">
+                    {column.title}
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <FooterLinks links={column.links} />
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           </nav>
         </div>
 
-        <Separator />
-
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-ink-muted">
           © {new Date().getFullYear()} {env.brandName}. Prices in Nepalese rupees.
         </p>
       </div>
     </footer>
+  );
+}
+
+function FooterLinks({ links }: { links: FooterColumn["links"] }) {
+  return (
+    <ul className="flex flex-col gap-3 text-[0.9375rem]">
+      {links.map((link) => (
+        <li key={link.href}>
+          <Link href={link.href} className="hover:underline hover:underline-offset-4">
+            {link.label}
+          </Link>
+        </li>
+      ))}
+    </ul>
   );
 }

@@ -32,7 +32,7 @@ export function HeaderFrame({ children }: { children: ReactNode }) {
       // A keyboard user tabbing into a hidden header must be able to see it.
       onFocusCapture={() => setHidden(false)}
       className={cn(
-        "sticky top-0 z-30 border-b bg-background/95 backdrop-blur transition-transform duration-500 ease-(--ease-settle)",
+        "sticky top-0 z-30 border-b border-foreground bg-background transition-transform duration-500 ease-(--ease-settle)",
         hidden && "-translate-y-full",
       )}
     >
