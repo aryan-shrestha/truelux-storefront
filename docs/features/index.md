@@ -37,10 +37,13 @@ ADR 0011). On 2026-09-26 the whole storefront was restyled to the client's mocku
 (#14, ADR 0011, superseding ADR 0010's direction), with skin types, the product care
 details and a mega-menu from the backend's skin-types contract.
 
-**Verified against unit tests, component tests and a local stub of the API, not yet
-against the real backend.** The Playwright spec passed against a stub shaped like
-the contract docs; it is written for the backend's `seed_demo` data and has not been
-run against it. The skin-types backend change was being built in parallel.
+**Verified against the live backend with its `seed_demo` data**, at 1400px and
+390px: home → mega-menu → category → skin-type filter → product → shade → bag →
+cash-on-delivery checkout → confirmation → order lookup, with no console errors and
+no HTTP errors, and a crawl of 72 internal links with none dead. Against that API
+the Playwright spec passes eight of its nine cases; the mega-menu case fails at its
+second "Shop all" click, where the menu's viewport wrapper intercepts the pointer
+(#3, #14).
 
 Things worth knowing, each recorded in its feature document:
 
@@ -60,6 +63,9 @@ Things worth knowing, each recorded in its feature document:
 - **`toggle.tsx` has no `"use client"`**, so the Server Component filter panel can
   style its links with `toggleVariants` (#11). Found by rendering the page, not by
   the tests.
+- **An applied outline toggle sets its text under hover explicitly**:
+  `hover:text-foreground` otherwise outranks the on-state `text-background` and an
+  applied filter reads at 1.6:1 on hover (#11).
 - **The cart's storage key is `tl.cart.v2`**; v1 lines had a colour (#6, #13).
 - **`pending` now means "placed, awaiting the shop's call"**, and `confirmed`
   replaced `paid` (#8).

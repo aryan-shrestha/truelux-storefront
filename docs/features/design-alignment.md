@@ -161,8 +161,9 @@ controls. The bag line no longer overflows at 375px.
 ## Remaining
 
 - Real photography (every `public/art/` file).
-- A pass against the real backend's `seed_demo` data once the skin-types change is
-  deployed; verification so far used a local stub shaped like the contract docs.
+- The Playwright mega-menu case fails against the live API: after the first
+  navigation, the second "Shop all" click is intercepted by the menu's viewport
+  wrapper. The same journey passes by hand; the spec or the menu needs a look.
 
 ---
 
@@ -266,8 +267,14 @@ beyond the menu panel and the filter panel's open state.
 - `components/catalog/ProductDetails.test.tsx` — rows hidden when empty.
 - `components/catalog/FilterPanel.test.tsx`, `components/catalog/CategoryBand.test.tsx`.
 - `lib/api/catalog.test.ts`, `lib/catalog/rails.test.ts`, `app/page.test.tsx`.
-- `tests/e2e/buy-flow.spec.ts` — filtering by skin type and the mega-menu; all eight
-  specs passed against the local stub.
+- `tests/e2e/buy-flow.spec.ts` — filtering by skin type, the mega-menu, and an
+  applied filter keeping its inverted text on hover. Against the live API with
+  `seed_demo`, eight of nine pass; the mega-menu case fails (see Remaining).
+
+Verified against the live, seeded backend at 1400px and 390px: home → mega-menu →
+category → skin-type filter → product → shade → bag → cash-on-delivery checkout →
+confirmation → order lookup, with no console or HTTP errors, and 72 internal links
+crawled with none dead.
 
 Visual verification: Playwright screenshots at 1400px and 375px compared with the
 renders; the final set is in `docs/design/renders/impl/`.
