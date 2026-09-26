@@ -3,14 +3,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { ListingHero } from "@/components/catalog/ListingHero";
 import { ProductListing } from "@/components/catalog/ProductListing";
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { getBrand } from "@/lib/api/catalog";
 import { hasCode } from "@/lib/api/errors";
@@ -69,7 +68,7 @@ export default async function BrandPage({ params, searchParams }: PageProps<"/br
 
   return (
     <ProductListing
-      heading={<BrandHeader brand={brand} />}
+      hero={<BrandHero brand={brand} />}
       query={query}
       facets={facets}
       pathname={pathname}
@@ -78,33 +77,29 @@ export default async function BrandPage({ params, searchParams }: PageProps<"/br
   );
 }
 
-function BrandHeader({ brand }: { brand: Brand }) {
+function BrandHero({ brand }: { brand: Brand }) {
   return (
-    <div className="flex w-full flex-col gap-6">
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link href="/brands">Brands</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>{brand.name}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-        {brand.logoUrl !== null && (
-          <div className="relative aspect-square w-24 shrink-0 overflow-hidden rounded-xl bg-muted">
-            <Image src={brand.logoUrl} alt="" fill sizes="96px" className="object-contain p-3" />
-          </div>
-        )}
-        <div className="flex max-w-2xl flex-col gap-2">
-          <h1 className="text-title">{brand.name}</h1>
-          {brand.description && <p className="text-muted-foreground">{brand.description}</p>}
+    <ListingHero
+      eyebrow={
+        <div className="flex flex-col items-start gap-6">
+          {brand.logoUrl !== null && (
+            <div className="relative size-20 bg-background">
+              <Image src={brand.logoUrl} alt="" fill sizes="80px" className="object-contain p-3" />
+            </div>
+          )}
+          <Breadcrumb>
+            <BreadcrumbList className="text-on-image">
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild className="hover:text-on-image">
+                  <Link href="/brands">Brands</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
         </div>
-      </div>
-    </div>
+      }
+      title={brand.name}
+      description={brand.description || `Every ${brand.name} product we stock.`}
+    />
   );
 }

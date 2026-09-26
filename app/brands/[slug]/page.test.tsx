@@ -52,7 +52,7 @@ describe("/brands/[slug]", () => {
     expect(listing.props.pathname).toBe("/brands/lumiere");
     expect(listing.props.query).toMatchObject({ shade: "porcelain", brand: undefined });
 
-    render(listing.props.heading);
+    render(listing.props.hero);
     expect(screen.getByRole("heading", { level: 1, name: "Lumière" })).toBeInTheDocument();
     expect(screen.getByText("French-inspired complexion care.")).toBeInTheDocument();
   });

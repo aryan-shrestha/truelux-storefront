@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  appliedFilterCount,
   hasFilters,
   hrefWith,
   PAGE_SIZE,
@@ -226,6 +227,26 @@ describe("hasFilters", () => {
     expect(hasFilters(toProductQuery({ shade: "porcelain" }))).toBe(true);
     expect(hasFilters(toProductQuery({ brand: "lumiere" }))).toBe(true);
     expect(hasFilters(toProductQuery({ in_stock: "true" }))).toBe(true);
+  });
+});
+
+describe("appliedFilterCount", () => {
+  it("counts each repeated value, and a price band once", () => {
+    const query = toProductQuery({
+      skin_type: ["dry", "oily"],
+      brand: "verde",
+      min_price: "2000",
+      max_price: "5000",
+      in_stock: "true",
+    });
+
+    expect(appliedFilterCount(query)).toBe(5);
+  });
+
+  it("leaves out the category, search and sort, which are not filters in the panel", () => {
+    expect(
+      appliedFilterCount(toProductQuery({ category: "serums", search: "rose", ordering: "name" })),
+    ).toBe(0);
   });
 });
 

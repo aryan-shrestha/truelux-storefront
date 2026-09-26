@@ -129,6 +129,18 @@ export function hasFilters(query: ProductQuery): boolean {
   );
 }
 
+/** How many narrowing choices the customer has made, category and search aside. */
+export function appliedFilterCount(query: ProductQuery): number {
+  return (
+    (query.skinType?.length ?? 0) +
+    (query.brand?.length ?? 0) +
+    Number(Boolean(query.shade)) +
+    Number(Boolean(query.size)) +
+    Number(Boolean(query.minPrice ?? query.maxPrice)) +
+    Number(Boolean(query.inStock))
+  );
+}
+
 /** For the repeatable filters, `?brand=` and `?skin_type=`. */
 export function withToggled(current: string[] | undefined, value: string): string[] | undefined {
   const values = current ?? [];
