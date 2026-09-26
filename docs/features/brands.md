@@ -2,7 +2,7 @@
 
 Status: Implemented
 
-Last updated: 2026-09-25
+Last updated: 2026-09-26
 
 ---
 
@@ -17,7 +17,7 @@ customers actually shop.
 
 What is included in this implementation?
 
-- A **Brand** filter group in `FilterRail`, multi-select, stored in the URL as
+- A **Brand** filter group in `FilterPanel`, multi-select, stored in the URL as
   repeated `?brand=` parameters (ADR 0004)
 - The brand name on `ProductCard` and above the product title on product detail,
   linking to the brand page
@@ -73,22 +73,24 @@ unknown or inactive brand returns 404, which renders `not-found.tsx`.
   `[]` when a read fails.
 - `lib/catalog/listing.ts` — `listingPage` returns `null` when the API rejects the
   filters with `validation_error`.
-- `components/catalog/FilterRail.tsx` — a Brand group of toggle-styled links, each
+- `components/catalog/FilterPanel.tsx` — a Brand group of toggle-styled links, each
   adding or removing its brand; the applied ones carry `aria-current`.
-- `components/catalog/ProductCard.tsx` — the brand name, linking to its page, above
+- `components/catalog/ProductCard.tsx` — the brand name, linking to its page, below
   the product name. The product link stretches over the tile; the brand link sits
   above it, because anchors cannot nest.
-- `app/products/[slug]/page.tsx` — the brand above the title, linking to the brand
+- `app/products/[slug]/page.tsx` — the brand below the title, linking to the brand
   page; the page title is "{product} by {brand}".
 - `components/catalog/ProductListing.tsx` — the listing shared by `/products` and
-  the brand page: heading, count, filter rail, grid, pagination and empty states.
+  the brand page: hero, category band, count, Filter and sort panel, grid,
+  pagination and empty states.
 - `app/brands/page.tsx` — every active brand as a `Card` (`components/brands/BrandCard.tsx`)
   with the logo or a wordmark fallback, the name and the product count.
-- `app/brands/[slug]/page.tsx` — breadcrumb, logo, name and description above
-  `ProductListing` with `lockedBrand`; `notFound()` on `not_found`;
+- `app/brands/[slug]/page.tsx` — a `ListingHero` with the logo on a light tile, a
+  Brands link, the name and the description (or "Every {brand} product we stock"),
+  above `ProductListing` with `lockedBrand`; `notFound()` on `not_found`;
   `generateMetadata` with a canonical URL and the logo as the Open Graph image.
 - `components/layout/site-links.ts` — "Brands" in the header, the mobile menu and
-  the footer. `components/home/BrandStrip.tsx` — the home page's brands strip.
+  the footer. `components/home/BrandGrid.tsx` — up to six brand tiles on the home page.
 - `app/sitemap.ts` — `/brands` and every brand page. `app/robots.ts` — allows
   `/brands`, disallows `/brands/*?`.
 
@@ -180,7 +182,7 @@ An eleventh brand in a URL is silently dropped by the canonical redirect.
 ```text
 GET /api/v1/brands/              server, revalidate 3600
 GET /api/v1/brands/{slug}/       server, revalidate 3600
-GET /api/v1/products/?brand=…    server, revalidate 300
+GET /api/v1/products/?brand=…    server, revalidate 600
 ```
 
 ### Errors handled
@@ -203,7 +205,7 @@ GET /api/v1/products/?brand=…    server, revalidate 300
 - `lib/catalog/listing.test.ts` — `validation_error` becomes no results; other
   failures propagate.
 - `lib/catalog/navigation.test.ts` — the brand list and facets degrade to `[]`.
-- `components/catalog/FilterRail.test.tsx` — brand links add and remove with the
+- `components/catalog/FilterPanel.test.tsx` — brand links add and remove with the
   right `href` and `aria-current`; the group is hidden on a brand page.
 - `components/catalog/ProductCard.test.tsx` — the brand links to its page.
 - `app/brands/[slug]/page.test.tsx` — the header renders, the listing is locked to
@@ -217,8 +219,8 @@ GET /api/v1/products/?brand=…    server, revalidate 300
 ```text
 app/brands/
 components/brands/BrandCard.tsx
-components/catalog/{FilterRail,ProductCard,ProductListing}.tsx
-components/home/BrandStrip.tsx
+components/catalog/{FilterPanel,ProductCard,ProductListing}.tsx
+components/home/BrandGrid.tsx
 lib/api/{catalog,client,types}.ts
 lib/catalog/{query,navigation,listing}.ts
 ```

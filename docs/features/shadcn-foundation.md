@@ -2,7 +2,7 @@
 
 Status: Implemented
 
-Last updated: 2026-09-25
+Last updated: 2026-09-26
 
 ---
 
@@ -69,11 +69,19 @@ existing `globals.css`, which was then rewritten around the TrueLux tokens (see
   | Empty-state panels | `empty` |
   | Failure notices | `alert` |
 
-- Edits made inside the generated files: pill `button` radius and 44px sizes;
+- Edits made inside the generated files (restyled 2026-09-26 for
+  [design-alignment.md](design-alignment.md)): square `button`s with 44px sizes, a
+  56px `lg`, a 64px outlined `cta` size, an `inline` size and an `overlay` variant
+  for text on imagery;
   44px `input`, `native-select` and `toggle`; a `swatch` toggle variant and size;
   outline toggles that mark `data-state=on` and `aria-current` with a foreground
-  border and strike through when disabled; `button-group`'s last child rounded to
-  match pills; `input-group` at 40px and pill-shaped; `card` titles at `text-xl`;
+  border and strike through when disabled, filled charcoal when applied;
+  `button-group`'s last child squared; square `input`, `input-group` (44px),
+  `native-select` and `textarea`; a `label` `badge` variant; plus/minus
+  `accordion` icons; a dot `breadcrumb` separator; `card`, `empty` and `sheet`
+  titles in the theme's type; `navigation-menu` as a full-width mega-menu with a
+  static root; `carousel` gains `CarouselDots` and `CarouselProgress`; `item` (added
+  2026-09-26) gains a `rule` variant and `lg` size for the mobile menu rows;
   `pagination` links as `next/link`; accordion content no longer underlines links;
   `carousel` reads Embla's scroll state with `useSyncExternalStore` (the generated
   effect set state synchronously and failed `react-hooks/set-state-in-effect`);

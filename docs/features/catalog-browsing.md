@@ -2,7 +2,7 @@
 
 Status: Implemented
 
-Last updated: 2026-09-25
+Last updated: 2026-09-26
 
 ---
 
@@ -18,11 +18,12 @@ the catalogue's per-IP request budget.
 
 What is included in this implementation?
 
-- `/products`: the listing, its filter rail, sorting, search results, pagination and
-  empty states
+- `/products`: the listing hero, the category band, the Filter and sort panel,
+  sorting, search results, pagination and empty states, laid out as
+  `Product-Listing---desktop-1..3.png` ([design-alignment.md](design-alignment.md))
 - The same listing under a brand, at `/brands/[slug]` (see [brands.md](brands.md))
-- Filters: category (with children), brand (several), shade, size, price band, in
-  stock only
+- Filters: category (a root includes its children), skin type (several), brand
+  (several), shade, size, price band, in stock only
 - The search-parameter normaliser and the canonical redirect
 
 What is explicitly outside the scope?
@@ -44,41 +45,47 @@ the URL (ADR 0004).
 ## Implemented
 
 - `lib/catalog/query.ts` — `toProductQuery` keeps only known parameters with valid
-  values: slugs for `category`, `size`, `shade`, and every valid `brand` (sorted,
-  deduplicated, at most ten); prices matching a decimal pattern; `in_stock` only as
+  values: slugs for `category`, `size`, `shade`, and every valid `brand` and
+  `skin_type` (each sorted, deduplicated, at most ten); prices matching a decimal pattern; `in_stock` only as
   `true`; a known `ordering`; a trimmed search capped at 100 characters; whole-page
   offsets. `limit` is fixed at 25. `toCanonicalSearch` writes them in a fixed order;
   `toRequestedSearch` renders what arrived the same way, so the two compare.
   `hrefWith` builds every filter and page link, returning to page one on a filter
-  change, under `/products` or a brand path.
+  change, under `/products` or a brand path. `withToggled` adds or removes one value
+  of a repeatable filter; `appliedFilterCount` counts what the panel shows as
+  applied.
 - `app/products/page.tsx` — redirects to the canonical URL when the request differs,
-  then renders `ProductListing` with the facets.
-- `components/catalog/ProductListing.tsx` — the page heading, a live product count,
-  the sticky filter rail, and the grid in a `Suspense` boundary keyed on the
-  canonical query, so every filter change shows the skeleton. Three empty states:
-  a search with no match, filters with no match (with "Clear filters"), and an empty
-  catalogue.
-- `components/catalog/FilterRail.tsx` — groups in an `Accordion` that starts open:
-  category and children as text links, brand and size as toggle-styled links, shade
-  as swatch links, price bands, in stock only; a GET form with a `NativeSelect` for
-  sorting that carries the other filters as hidden inputs.
+  then renders `ProductListing` with `ShopHero` and the facets.
+- `components/catalog/ShopHero.tsx` + `ListingHero.tsx` — a full-bleed band on
+  `public/art/listing.svg` with a scrim: the category's name (or "Shop", or "Results
+  for …"), a line of copy, and a Shop › root breadcrumb inside a category.
+- `components/catalog/CategoryBand.tsx` — the greige band: "Shop all" then the roots;
+  inside a root, "Shop all" (the root, which includes its children) then its
+  children. The applied one is underlined and `aria-current`. Links keep the other
+  filters.
+- `components/catalog/ProductListing.tsx` — hero, band, then the Filter and sort
+  panel with a live product count on its row, and the grid in a `Suspense` boundary
+  keyed on the canonical query. Three empty states as before.
+- `components/catalog/FilterPanel.tsx` — one `Accordion` item, "Filter and sort (n
+  applied)", open whenever a filter or sort is applied and closed otherwise. Inside,
+  in up to four columns: Skin type, Brand and Size as toggle-styled links, Shade as
+  swatch links, Price bands, In stock only, and the GET sort form carrying every
+  filter (skin types included) as hidden inputs. "Clear filters" keeps the category,
+  search and sort.
 - `components/catalog/{ProductGrid,ProductCard,ProductGridSkeleton,Pagination}.tsx`
-  — the grid (the first row gets `priority`), the tile (brand, name, price, a
-  "Sold out" badge, 4:5 on a tinted tile), the skeleton, and numbered shadcn
-  pagination computed from `count` and `offset`.
-- `lib/catalog/navigation.ts` — `listingFacets()` reads categories, brands, shades
-  and sizes, each degrading to `[]`.
+  — four columns from `lg` with hairline gutters; the card is centred: the image on
+  a tinted 4:5 tile, the name, the brand, the price, and "Sold out" as a label.
+- `lib/catalog/navigation.ts` — `listingFacets()` reads categories, brands, shades,
+  sizes and skin types, each degrading to `[]`; `findCategory()` places a slug in
+  the tree.
 - `lib/catalog/listing.ts` — a `validation_error` from the product list (an unknown
-  brand) is an empty result.
+  brand or skin type) is an empty result.
 
 ---
 
 ## Remaining
 
-- Child-category filtering: `?category=` matches one category exactly, so a parent
-  shows only what is attached to it. Needs a backend change.
-- On a phone the filter rail sits, open, above the grid. A filter sheet would need
-  JavaScript, which the filters deliberately do not.
+None. See the decision on the closed panel for what now needs JavaScript.
 
 ---
 
@@ -116,6 +123,26 @@ They work without JavaScript, with middle-click and with the back button (ADR 00
 No `Checkbox` or `ToggleGroup` in the rail; see
 [shadcn-foundation.md](shadcn-foundation.md).
 
+### Decision: the facets sit in a panel that is closed until something is applied
+
+**Decision**
+
+Categories are in the always-visible band; every other facet is in a Filter and sort
+`Accordion` that is open whenever a filter or sort is applied and closed otherwise.
+
+**Reason**
+
+The design has no filter rail: a full-width four-column grid under a category band.
+Opening the panel whenever something is applied keeps what narrowed the grid in view.
+
+**Consequence**
+
+The filters are still links, but **opening the closed panel needs JavaScript**:
+Radix does not render closed content. Without it a shopper can still browse by
+category, search, paginate, and follow any filtered link. This relaxes the old
+"the whole rail works without JavaScript" property and is recorded as a deviation
+in `design-alignment.md`.
+
 ### Decision: pagination is numbered links, price is fixed bands
 
 **Decision**
@@ -138,11 +165,16 @@ Price bands are Under Rs 2,000, Rs 2,000 to 5,000, and Over Rs 5,000.
   `fetch` with `revalidate` serves identical keys from the data cache.
 - **`min_price` and `max_price` filter on `base_price`**, not the variant price.
 - **`in_stock` on a product means some variant has stock.**
-- **An unknown `?brand=` is a 400 from the API**, while an unknown `?category=`,
-  `?size=` or `?shade=` is an empty page. `listingPage` makes both read as "nothing
-  matches".
-- **The shade and size facets list only values in use**, so a shade can disappear
-  from the rail while a link still carries it.
+- **An unknown `?brand=` or `?skin_type=` is a 400 from the API**, while an unknown
+  `?category=`, `?size=` or `?shade=` is an empty page. `listingPage` makes both
+  read as "nothing matches".
+- **`?category=<root>` includes the root's children** (backend `skin-types.md`); a
+  child's slug matches only that child. "Shop all" in the band and the menus relies
+  on this.
+- **The shade, size and skin-type facets list only values in use**, so a value can
+  disappear from the panel while a link still carries it.
+- `toggleVariants()` is called without `cn` on filter links, so a variant's radius
+  must not fight the base class: the radius lives in each variant.
 - **The API's `next` and `previous` carry the server's own host.** Pagination never
   renders them.
 - **`ordering` is silently ignored by the API when invalid**, which is why the
@@ -164,11 +196,12 @@ Price bands are Under Rs 2,000, Rs 2,000 to 5,000, and Over Rs 5,000.
 ### Calls
 
 ```text
-GET /api/v1/products/        server, revalidate 300 (one key per canonical query)
+GET /api/v1/products/        server, revalidate 600 (one key per canonical query)
 GET /api/v1/categories/      server, revalidate 3600
 GET /api/v1/brands/          server, revalidate 3600
 GET /api/v1/shades/          server, revalidate 3600
 GET /api/v1/sizes/           server, revalidate 3600
+GET /api/v1/skin-types/      server, revalidate 3600
 ```
 
 ### Errors handled
@@ -183,8 +216,9 @@ GET /api/v1/sizes/           server, revalidate 3600
 
 ## State and data
 
-URL only: `category`, `brand` (repeated), `size`, `shade`, `min_price`, `max_price`,
-`in_stock`, `search`, `ordering`, `offset`.
+URL only: `category`, `brand` (repeated), `size`, `shade`, `skin_type` (repeated),
+`min_price`, `max_price`, `in_stock`, `search`, `ordering`, `offset`. React state:
+only the panel's open state.
 
 ---
 
@@ -199,10 +233,14 @@ URL only: `category`, `brand` (repeated), `size`, `shade`, `min_price`, `max_pri
 ## Tests
 
 - `lib/catalog/query.test.ts` — allowlist, slugs, prices, flags, orderings, offsets,
-  brands, idempotent canonicalisation, `hrefWith`.
-- `lib/catalog/listing.test.ts`, `lib/catalog/navigation.test.ts`.
-- `components/catalog/FilterRail.test.tsx`, `components/catalog/ProductCard.test.tsx`.
-- `tests/e2e/buy-flow.spec.ts` — browse and filter by brand and shade.
+  brands, skin types (parsing, dedupe, cap, canonical order, toggling),
+  `appliedFilterCount`, idempotent canonicalisation, `hrefWith`.
+- `lib/catalog/listing.test.ts`, `lib/catalog/navigation.test.ts` (`findCategory`).
+- `components/catalog/FilterPanel.test.tsx` — closed and open states, skin-type and
+  brand toggles, shade and size links, clear filters, hidden inputs, the brand page.
+- `components/catalog/CategoryBand.test.tsx` — roots, a root's children, the applied
+  child, nothing on failure. `components/catalog/ProductCard.test.tsx`.
+- `tests/e2e/buy-flow.spec.ts` — filter by brand, shade and skin type.
 
 ---
 
@@ -213,4 +251,5 @@ app/products/page.tsx
 app/products/loading.tsx
 components/catalog/
 lib/catalog/{query,navigation,listing}.ts
+public/art/listing.svg
 ```

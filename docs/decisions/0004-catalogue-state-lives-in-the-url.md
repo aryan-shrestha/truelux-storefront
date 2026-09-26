@@ -170,7 +170,7 @@ sender.
 ```text
 app/products/page.tsx            reads and normalises searchParams
 lib/api/catalog.ts               takes a normalised query object
-components/catalog/FilterRail    renders links, not handlers
+components/catalog/FilterPanel   renders links, not handlers
 app/robots.ts                    disallows filtered listing URLs
 docs/features/catalog-browsing.md
 docs/architecture.md             the cache-key argument

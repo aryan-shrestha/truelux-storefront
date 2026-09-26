@@ -2,7 +2,7 @@
 
 Status: In progress
 
-Last updated: 2026-09-25
+Last updated: 2026-09-26
 
 ---
 
@@ -43,7 +43,7 @@ filtered listings mints cache keys. The order routes carry a credential.
   description, Open Graph `siteName`, `type` and `locale` (`en_NP`), and a
   `same-origin` referrer policy.
 - `app/opengraph-image.tsx` — a 1200×630 PNG generated with `ImageResponse`: the
-  brand name, a line about the shop and the shade ribbon. It applies to every route
+  brand name, a line about the shop and a stone rule. It applies to every route
   that does not set its own image.
 - Route metadata: home (canonical `/`), `/products` (canonical `/products` on every
   filtered, sorted or searched view), `/brands` (canonical), `/brands/[slug]`
@@ -96,7 +96,7 @@ CSS variables.
 - **The sitemap's reads are on the catalogue budget.** Paginate at 100.
 - **`robots.txt` is a request, not a control.** The order routes are also `noindex`
   and send a `same-origin` referrer.
-- The sitemap regenerates on its shortest fetch interval (five minutes), whatever a
+- The sitemap regenerates on its shortest fetch interval (ten minutes), whatever a
   route-level `revalidate` says.
 
 ---
@@ -105,7 +105,7 @@ CSS variables.
 
 ```text
 /robots.txt          static
-/sitemap.xml         static, revalidated every 5 minutes
+/sitemap.xml         static, revalidated every 10 minutes
 /opengraph-image     static PNG
 ```
 
@@ -116,7 +116,7 @@ CSS variables.
 ### Calls
 
 ```text
-GET /api/v1/products/?limit=100&offset=…    server, revalidate 300 (sitemap)
+GET /api/v1/products/?limit=100&offset=…    server, revalidate 600 (sitemap)
 GET /api/v1/brands/                         server, revalidate 3600 (sitemap)
 ```
 

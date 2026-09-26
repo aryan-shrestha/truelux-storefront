@@ -1,6 +1,6 @@
 # Code Conventions
 
-Last updated: 2026-09-25
+Last updated: 2026-09-26
 
 This document records conventions that apply across the repository.
 
@@ -257,7 +257,7 @@ Conventions:
   second UI kit. A primitive shadcn lacks is composed from shadcn parts.
 - **Tailor inside `components/ui/*` or the theme, not at the call site.** A size,
   radius or variant the brand needs is edited into the generated file (the 44px
-  button and toggle sizes, the `swatch` toggle variant, pill buttons). A call site
+  button and toggle sizes, the `swatch` toggle variant, square buttons). A call site
   passes layout classes, not a restyle.
 - **A link styled as a control uses the component's variants.** Filters stay links
   (ADR 0004), so they take `toggleVariants(...)` or `buttonVariants(...)` rather than

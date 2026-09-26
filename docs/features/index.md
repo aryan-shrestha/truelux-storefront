@@ -10,19 +10,20 @@ only, and there is no authentication anywhere.
 
 | #   | Feature            | Status      | Documentation                    | Depends on | Last updated |
 | --- | ------------------ | ----------- | -------------------------------- | ---------- | ------------ |
-| 1   | design-system      | Implemented | `features/design-system.md`      | 11         | 2026-09-25   |
-| 2   | api-client         | Implemented | `features/api-client.md`         | —          | 2026-09-25   |
-| 3   | site-shell         | Implemented | `features/site-shell.md`         | 1, 2       | 2026-09-25   |
-| 4   | catalog-browsing   | Implemented | `features/catalog-browsing.md`   | 2, 3       | 2026-09-25   |
-| 5   | product-detail     | Implemented | `features/product-detail.md`     | 4          | 2026-09-25   |
+| 1   | design-system      | Implemented | `features/design-system.md`      | 11         | 2026-09-26   |
+| 2   | api-client         | Implemented | `features/api-client.md`         | —          | 2026-09-26   |
+| 3   | site-shell         | Implemented | `features/site-shell.md`         | 1, 2       | 2026-09-26   |
+| 4   | catalog-browsing   | Implemented | `features/catalog-browsing.md`   | 2, 3       | 2026-09-26   |
+| 5   | product-detail     | Implemented | `features/product-detail.md`     | 4          | 2026-09-26   |
 | 6   | cart               | Implemented | `features/cart.md`               | 5          | 2026-09-25   |
 | 7   | checkout           | Implemented | `features/checkout.md`           | 6          | 2026-09-25   |
 | 8   | order-status       | Implemented | `features/order-status.md`       | 7          | 2026-09-25   |
-| 9   | storefront-home    | Implemented | `features/storefront-home.md`    | 4, 12      | 2026-09-25   |
-| 10  | seo-and-metadata   | In progress | `features/seo-and-metadata.md`   | 4, 5, 9    | 2026-09-25   |
-| 11  | shadcn-foundation  | Implemented | `features/shadcn-foundation.md`  | —          | 2026-09-25   |
-| 12  | brands             | Implemented | `features/brands.md`             | 2, 4, 11   | 2026-09-25   |
-| 13  | shades-and-sizes   | Implemented | `features/shades-and-sizes.md`   | 2, 4, 5, 11 | 2026-09-25  |
+| 9   | storefront-home    | Implemented | `features/storefront-home.md`    | 4, 12      | 2026-09-26   |
+| 10  | seo-and-metadata   | In progress | `features/seo-and-metadata.md`   | 4, 5, 9    | 2026-09-26   |
+| 11  | shadcn-foundation  | Implemented | `features/shadcn-foundation.md`  | —          | 2026-09-26   |
+| 12  | brands             | Implemented | `features/brands.md`             | 2, 4, 11   | 2026-09-26   |
+| 13  | shades-and-sizes   | Implemented | `features/shades-and-sizes.md`   | 2, 4, 5, 11 | 2026-09-26  |
+| 14  | design-alignment   | Implemented | `features/design-alignment.md`   | 1, 3, 4, 5, 9, 11 | 2026-09-26 |
 
 `Depends on` refers to the `#` column of this table.
 
@@ -30,25 +31,33 @@ only, and there is no authentication anywhere.
 
 **Everything is built except `Product` JSON-LD (#10).** The fork from the clothing
 storefront was turned into TrueLux on 2026-09-25: shadcn/ui replaced the hand-built
-primitives (#11), the TrueLux theme replaced the streetwear mockup (#1, ADR 0010),
-brands (#12) and shades and sizes (#13) arrived with the backend's new contract,
-and online payment was removed in favour of cash on delivery (backend ADR 0011).
+primitives (#11), brands (#12) and shades and sizes (#13) arrived with the backend's
+new contract, and online payment was removed in favour of cash on delivery (backend
+ADR 0011). On 2026-09-26 the whole storefront was restyled to the client's mockups
+(#14, ADR 0011, superseding ADR 0010's direction), with skin types, the product care
+details and a mega-menu from the backend's skin-types contract.
 
-**Verified against unit tests, component tests and a local mock of the API, not yet
-against the real backend.** The backend implemented brands and the shade and size
-facets on 2026-09-25; the Playwright spec is written against its `seed_demo` data
-and has not been run against it.
+**Verified against unit tests, component tests and a local stub of the API, not yet
+against the real backend.** The Playwright spec passed against a stub shaped like
+the contract docs; it is written for the backend's `seed_demo` data and has not been
+run against it. The skin-types backend change was being built in parallel.
 
 Things worth knowing, each recorded in its feature document:
 
-- **An unknown `?brand=` slug is a 400 from the API**, unlike every other filter.
-  The listing turns it into its empty state (#12).
-- **The facet lists are facets**, not lookup tables: `/shades/` and `/sizes/` list
-  only values in use by a visible product (#13).
-- **The catalogue request budget was redone** for the brand, shade and size reads;
-  product detail now revalidates every 30 minutes, and the budget holds to roughly
-  160 products (`architecture.md`).
-- **`toggle.tsx` has no `"use client"`**, so the Server Component filter rail can
+- **An unknown `?brand=` or `?skin_type=` slug is a 400 from the API**, unlike the
+  other filters. The listing turns it into its empty state (#4, #12).
+- **`?category=<root>` now includes its children**, which is what the menus' "Shop
+  all" links rely on (#4, #14).
+- **The facet lists are facets**, not lookup tables: `/shades/`, `/sizes/` and
+  `/skin-types/` list only values in use by a visible product (#13, #14).
+- **The catalogue request budget was redone again** for the mega-menu, skin types
+  and related products: the listing now revalidates every 10 minutes, related
+  products hourly, and the budget holds to roughly 150 products (`architecture.md`).
+- **Only categories are always visible on the listing**; the other facets are in a
+  panel that needs JavaScript to open when nothing is applied (#4, #14).
+- **The product page needs the backend's skin-types fields**; deploy the backend
+  first (#5).
+- **`toggle.tsx` has no `"use client"`**, so the Server Component filter panel can
   style its links with `toggleVariants` (#11). Found by rendering the page, not by
   the tests.
 - **The cart's storage key is `tl.cart.v2`**; v1 lines had a colour (#6, #13).
@@ -68,7 +77,8 @@ Things worth knowing, each recorded in its feature document:
 | 0007 | The brand wordmark is configuration (amended by 0010)         | design-system, site-shell                          |
 | 0008 | ~~The storefront follows the supplied home design~~ **superseded by 0010** | —                                     |
 | 0009 | shadcn/ui is the component library                            | shadcn-foundation, every component                 |
-| 0010 | The TrueLux visual direction                                  | design-system, site-shell, storefront-home         |
+| 0010 | ~~The TrueLux visual direction~~ **superseded by 0011**       | —                                                  |
+| 0011 | The storefront follows the supplied design                    | design-system, design-alignment, site-shell, storefront-home, catalog-browsing, product-detail |
 
 ADR 0001 is the one to read first: the query normaliser, `robots.ts` and the
 revalidation intervals all exist to protect its request budget.

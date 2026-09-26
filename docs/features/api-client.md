@@ -2,7 +2,7 @@
 
 Status: Implemented
 
-Last updated: 2026-09-25
+Last updated: 2026-09-26
 
 ---
 
@@ -154,14 +154,22 @@ type error here, and a generic transformer types as `any` in every direction.
 ### `lib/api/catalog.ts`
 
 ```ts
-listProducts(query: ProductQuery): Promise<Page<ProductSummary>>   // revalidate 300
+listProducts(query: ProductQuery): Promise<Page<ProductSummary>>   // revalidate 600
 getProduct({ slug }): Promise<Product>                             // revalidate 1800
 listCategories(): Promise<Category[]>                              // revalidate 3600
 listBrands(): Promise<Brand[]>                                     // revalidate 3600
 getBrand({ slug }): Promise<Brand>                                 // revalidate 3600
 listShades(): Promise<ShadeRef[]>                                  // revalidate 3600
 listSizes(): Promise<SizeRef[]>                                    // revalidate 3600
+listSkinTypes(): Promise<SkinTypeRef[]>                            // revalidate 3600
+listRelatedProducts({ category, limit }): Promise<Page<ProductSummary>>  // revalidate 3600
 ```
+
+`Product` carries `skinTypes`, `skinFeel` and `keyIngredients`, mapped from the
+detail's `skin_types`, `skin_feel` and `key_ingredients`; the two strings are `""`
+when unset. `listRelatedProducts` calls the same endpoint as `listProducts` and is
+a separate function only because it states a different caching directive: one key
+per category on the product page, costed separately in the request budget.
 
 `listCategories` returns a bare array — the one endpoint with no pagination
 envelope — and its return type says so.
@@ -378,13 +386,15 @@ None.
 ### Calls
 
 ```text
-GET  /api/v1/products/            server,  revalidate 300
+GET  /api/v1/products/            server,  revalidate 600
 GET  /api/v1/products/{slug}/     server,  revalidate 1800
 GET  /api/v1/categories/          server,  revalidate 3600
 GET  /api/v1/brands/              server,  revalidate 3600
 GET  /api/v1/brands/{slug}/       server,  revalidate 3600
 GET  /api/v1/shades/              server,  revalidate 3600
 GET  /api/v1/sizes/               server,  revalidate 3600
+GET  /api/v1/skin-types/          server,  revalidate 3600
+GET  /api/v1/products/?category=…&limit=9   server, revalidate 3600 (related)
 POST /api/v1/checkout/            browser, no-store
 GET  /api/v1/orders/{token}/      browser, no-store
 POST /api/v1/orders/lookup/       browser, no-store

@@ -2,7 +2,7 @@
 
 Status: Implemented
 
-Last updated: 2026-09-25
+Last updated: 2026-09-26
 
 ---
 
@@ -18,9 +18,10 @@ than a fresh set of choices.
 
 What is included in this implementation?
 
-- The TrueLux direction of [ADR 0010](../decisions/0010-the-truelux-visual-direction.md):
-  quiet luxury, a warm ivory ground, espresso text, a muted rose-nude primary and
-  champagne-gold accents used sparingly
+- The direction of [ADR 0011](../decisions/0011-the-storefront-follows-the-supplied-design.md):
+  the client's mockups in `docs/design/`, re-expressed as shadcn theme variables.
+  A near-white ground, charcoal text and primary, a greige and a stone band, square
+  controls, thin rules
 - The token set as shadcn CSS variables in `app/globals.css`, light and dark
 - Two typefaces through `next/font`
 - The component vocabulary, which is shadcn/ui
@@ -30,16 +31,16 @@ What is included in this implementation?
 What is explicitly outside the scope?
 
 - A theme toggle. Dark mode follows `prefers-color-scheme` only.
-- Real photography. Home imagery is generated SVG still lifes in `public/home/`.
+- Real photography. Imagery is generated SVG placeholder art in `public/art/`; the
+  mockups' embedded photographs are another brand's assets and are not used.
 
 ---
 
 ## Context
 
-The fork arrived with a streetwear mockup's palette (ink on grey paper, indigo
-accent, a grain texture) and hand-built primitives. ADR 0010 replaces the
-direction and ADR 0009 the primitives. [ADR 0008](../decisions/0008-the-storefront-follows-the-supplied-home-design.md)
-is superseded and its mockup is no longer in the repository.
+ADR 0011 supersedes ADR 0010's rose-nude direction. The mockups were measured from
+the PNG renders in `docs/design/renders/`; see [design-alignment.md](design-alignment.md)
+for the page-by-page mapping and deviations.
 
 ---
 
@@ -52,69 +53,82 @@ Defined once in `app/globals.css` and mapped to Tailwind colours under
 
 | Token | Light | Dark | Role |
 | --- | --- | --- | --- |
-| `--background` | `#faf6f1` ivory | `#1e1512` | Page |
-| `--foreground` | `#2b1d17` espresso | `#f3ebe3` | Text |
-| `--card`, `--popover` | `#fffcf8` | `#261b17` | Raised surfaces, sheets |
-| `--primary` | `#8e5a52` rose-nude | `#d9a79b` | Primary buttons, the focus ring |
-| `--primary-foreground` | `#faf6f1` | `#1e1512` | Text on primary |
-| `--secondary` | `#f1e6df` | `#33251f` | Secondary surfaces, the sold-out badge |
-| `--muted` | `#f4ece6` | `#2c201b` | Image tiles, the footer, skeletons |
-| `--muted-foreground` | `#6e5a50` | `#bfaea3` | Secondary text |
-| `--accent` | `#f3ead9` champagne | `#3a2e22` | Hover backgrounds |
-| `--destructive` | `#a63d32` | `#e07a6d` | Checkout and lookup failures |
-| `--border` | `#e7dcd3` | `#3a2c26` | Hairlines |
-| `--input` | `#a08672` | `#7e6a5e` | Control borders, 3:1 against the page |
-| `--ring` | `#8e5a52` | `#d9a79b` | Focus |
-| `--gold` | `#9a7b45` | `#c9a96e` | The sparing accent: promise icons, ritual numerals, the brand strip's rules |
-| `--chart-1`…`5` | rose, gold, blush, taupe, espresso | lighter equivalents | Reserved for the admin's charts |
-| `--shade-1`…`8` | `#f3dcc8` → `#4a2e1f` | same | The hero's shade ribbon, porcelain to deep |
+| `--background` | `#fdfdfb` near-white | `#1b1b1a` | Page |
+| `--foreground` | `#333333` charcoal | `#ecebe6` | Text, the header's bottom rule, the open-menu bar |
+| `--card` | `#ffffff` | `#232322` | Cards, the routine steps |
+| `--popover` | `#fdfdfb` | `#1b1b1a` | Sheets, the mega-menu |
+| `--primary` | `#333333` | `#ecebe6` | Primary buttons (Add to bag, Checkout), the focus ring |
+| `--primary-foreground` | `#ffffff` | `#1b1b1a` | Text on primary |
+| `--secondary` | `#e8e6dd` stone | `#2e2d2a` | The stone bands: About, the product care panel |
+| `--muted` | `#f3f2ee` greige | `#252523` | The greige bands (category band, brands, routine), image tiles, skeletons |
+| `--muted-foreground` | `#66655f` | `#a9a8a1` | Secondary text |
+| `--accent` | `#f3f2ee` | `#2e2d2a` | Hover backgrounds |
+| `--destructive` | `#a3392f` | `#e0776b` | Checkout and lookup failures |
+| `--border` | `#d6d5cf` | `#3a3936` | Hairlines |
+| `--input` | `#8a8983` | `#7d7c76` | Control borders and the outlined CTA, 3:1 against the page |
+| `--ring` | `#333333` | `#ecebe6` | Focus |
+| `--ink`, `--ink-foreground` | `#333333`, `#ffffff` | `#111110`, `#ecebe6` | The announcement bar and the footer |
+| `--ink-muted` | `#c9c8c2` | `#a9a8a1` | Secondary text on ink |
+| `--on-image` | `#ffffff` | `#ffffff` | Text and outlined buttons over imagery |
+| `--scrim` | `rgb(40 36 30 / 0.45)` | `rgb(0 0 0 / 0.5)` | The gradient behind text on the hero and listing images |
+| `--chart-1`…`5` | charcoal to stone | lighter equivalents | Reserved for the admin's charts |
 
-Measured contrast (WCAG): foreground on background 15.1:1; muted-foreground on
-background 6.0:1 and on muted 5.6:1; primary-foreground on primary 5.2:1; input
-border on background 3.2:1; dark foreground on dark background 15.2:1.
+Removed: `--gold` and `--shade-1`…`8` (the old accent and the hero's shade ribbon).
+
+Measured contrast (WCAG): foreground on background 12.4:1; muted-foreground on
+background 5.7:1, on greige 5.2:1, on stone 4.7:1; ink-foreground on ink 12.6:1;
+ink-muted on ink 7.5:1; input border on background 3.4:1 and on greige 3.1:1;
+destructive on background 6.5:1. Dark: foreground 14.4:1, muted-foreground 7.2:1,
+input 4.1:1.
 
 ### Type
 
-- **Cormorant Garamond** (400, 500, 600), `--font-heading`: the wordmark and every
-  `h1`–`h3` (set in the base layer), prices on the product page, order numbers.
-- **Manrope**, `--font-sans`: everything else.
-- Scale tokens: `text-display` (hero, `clamp(2.75rem, 6vw, 5rem)`), `text-title`
-  (page titles, `clamp(2rem, 3.5vw, 2.75rem)`), `text-heading` (1.625rem); the rest
-  is Tailwind's scale.
+- **Noto Sans**, `--font-sans`: the interface, the hero and product titles, prices,
+  the wordmark (bold, tracked, uppercase).
+- **Belleza**, `--font-heading`: section titles (`SectionHeading`, the About
+  statement, page titles in `PageShell`, card and empty-state titles). The mockup's
+  section face is a flared humanist in the Optima family; Belleza was the closest of
+  eight Google candidates compared side by side against the render. Falls back to
+  Optima, then Candara.
+- Headings default to weight 400 with `text-wrap: balance`; the font is chosen at
+  the call site because the design mixes a sans hero title with serif section titles.
+- Scale tokens: `text-display` (hero and listing titles, `clamp(1.75rem, 2.6vw,
+  2.25rem)`), `text-title` (section titles, `clamp(1.75rem, 2.4vw, 2.125rem)`),
+  `text-heading` (product title, the routine, `clamp(1.5rem, 2vw, 1.875rem)`).
 
 ### Shape and layout
 
-- `--radius: 0.75rem`. Buttons are pills (`rounded-full`, edited into
-  `button.tsx`); cards and image tiles are soft rectangles.
-- Product imagery sits on `bg-muted` tiles at 4:5.
-- One content width, `max-w-7xl`, with `px-4 md:px-8`.
-- Touch targets: buttons, toggles, inputs and native selects are 44px tall by
-  default, edited into the generated files.
+- `--radius: 0.375rem`, used only for cards and the routine steps. Buttons, inputs,
+  selects, toggles, badges, alerts, empty states and image tiles are square.
+- `--container-page: 90rem` (`max-w-page`), with `px-4 md:px-8`: the design runs
+  edge to edge at 1400px with 32px gutters.
+- Bands (hero, category band, About, brands, routine, care, footer) are full-bleed;
+  their content sits in `max-w-page`.
+- Buttons: `default` charcoal; `outline` with the `--input` border; `overlay` for
+  imagery; sizes `lg` (56px), `cta` (64px, the design's "Discover more" with the
+  arrow pushed to the end) and `inline` (text links with an arrow).
+- Touch targets: 44px buttons, toggles, inputs and selects, as before.
 
-### The one flourish
+### Motion
 
-The hero's shade ribbon: eight foundation tones, porcelain to deep, from the
-`--shade-*` tokens. It is decorative (`aria-hidden`) and the only ornament on the
-page. Motion is limited to responses to the customer's action (sheet and accordion
-transitions, the image hover on product tiles) and stops under
-`prefers-reduced-motion`.
+Only in response to the customer: sheet, accordion and mega-menu transitions, the
+image scale on product cards. The hero carousel does not autoplay. Everything stops
+under `prefers-reduced-motion`.
 
 ### Dark mode
 
-`@custom-variant dark (@media (prefers-color-scheme: dark))` and one
-`@media (prefers-color-scheme: dark)` block redefining the variables, with
-`color-scheme` switched so native controls follow. The SVG still lifes keep their
-light palette in both schemes.
+`@custom-variant dark (@media (prefers-color-scheme: dark))` and one media block
+redefining the variables. The mockups have no dark mode; the dark set keeps their
+structure (charcoal and stone become near-black and warm greys). The SVG art keeps
+its light palette.
 
 ---
 
 ## Remaining
 
-- Real product and editorial photography to replace the SVG placeholders in
-  `public/home/`, when the merchant has it.
-- An optical check of the wordmark against the final brand name at every width
-  (ADR 0007): the layout is built for "TrueLux" and tolerates longer names, but has
-  not been reviewed with one.
+- Real photography to replace `public/art/`.
+- An optical check of the wordmark with a brand name much longer than "TrueLux"
+  (ADR 0007).
 
 ---
 
@@ -129,20 +143,18 @@ media block.
 
 **Reason**
 
-ADR 0010 says dark mode follows the operating system, and a class needs a theme
-provider and client state the storefront does not otherwise have.
+No theme provider or client state is needed, and the storefront has neither.
 
 **Consequence**
 
-shadcn's `dark:` utilities inside the generated components work unchanged. There is
-no toggle to add without revisiting this.
+shadcn's `dark:` utilities inside the generated components work unchanged.
 
 ### Decision: brand tailoring lives in `components/ui`
 
 **Decision**
 
-Pill buttons, 44px control heights, the `swatch` toggle variant and the card title
-size are edits to the generated files, not classes at call sites.
+Square corners, the CTA and overlay button variants, the mega-menu, the carousel
+dots and progress rule, and the menu row variant are edits to the generated files.
 
 **Reason**
 
@@ -153,25 +165,43 @@ ADR 0009: the look is owned in one place, so a call site states layout only.
 Re-running `shadcn add --overwrite` on those files loses the edits. Use `--diff`
 and merge.
 
+### Decision: text over imagery gets a scrim
+
+**Decision**
+
+The hero and listing bands lay a left-to-right `--scrim` gradient under their white
+text.
+
+**Reason**
+
+The mockup's white text on pale beige photography measures well under 3:1. The
+scrim holds contrast whatever image the merchant eventually supplies.
+
+**Consequence**
+
+The hero reads darker and cooler than the mockup; recorded in design-alignment.md.
+
 ---
 
 ## Gotchas
 
-- `components/ui/toggle.tsx` has no `"use client"`. The filter rail is a Server
-  Component and calls `toggleVariants` to style its links; with the directive the
-  call fails at render ("Attempted to call toggleVariants() from the server").
+- `components/ui/toggle.tsx` has no `"use client"`, and the radius lives in each
+  variant, not the base: filter links call `toggleVariants()` without `cn`, so a base
+  `rounded-none` and a swatch's `rounded-full` would both land and CSS order would
+  pick.
 - The Open Graph image (`app/opengraph-image.tsx`) repeats the light theme's hex
   values, because `ImageResponse` cannot read CSS variables. Change both together.
-- `Alert` always renders `role="alert"`. Use it for failures only; the checkout's
-  cash-on-delivery note is a `Card` for that reason.
+- `Alert` always renders `role="alert"`. Use it for failures only.
+- `prettier-plugin-tailwindcss` has no `tailwindStylesheet` configured, so it sorts
+  theme classes such as `text-muted-foreground` as unknown and puts them first.
 
 ---
 
 ## Tests
 
-Visual design is not unit-tested. The tokens were checked by rendering the home,
-listing, product, brand, cart and checkout pages in light, dark and at 375px against
-a local mock of the API.
+Visual design is not unit-tested. The pages were compared against the renders with
+Playwright screenshots at 1400px and 375px, against a local stub of the API; see
+design-alignment.md.
 
 ---
 
@@ -182,5 +212,5 @@ app/globals.css
 app/layout.tsx
 app/opengraph-image.tsx
 components/ui/
-public/home/
+public/art/
 ```

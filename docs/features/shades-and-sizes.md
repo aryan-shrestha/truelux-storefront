@@ -2,7 +2,7 @@
 
 Status: Implemented
 
-Last updated: 2026-09-25
+Last updated: 2026-09-26
 
 ---
 
@@ -23,7 +23,7 @@ What is included in this implementation?
 - A product whose variants all have `shade: null` shows the size picker only. A
   product with a single variant shows neither picker and adds that variant.
 - Out-of-stock combinations stay visible but are disabled, with a strikethrough.
-- `FilterRail`: a **Shade** group (swatches from `GET /api/v1/shades/`) and a
+- `FilterPanel` (was `FilterRail`): a **Shade** group (swatches from `GET /api/v1/shades/`) and a
   **Size** group (from `GET /api/v1/sizes/`). This closes the gap the old
   `FilterRail` comment recorded, where the API had no such endpoints.
 - Cart lines and the order summary show `Size · Shade`, or size alone.
@@ -64,7 +64,7 @@ variant payload is `shade: { name, slug, hex_code } | null`.
   single-variant product needs no choice. Unavailable options are disabled, struck
   through, and their accessible name says "Sold out" or "Not available in this
   combination".
-- `components/catalog/FilterRail.tsx` — Shade (swatch links) and Size (toggle-styled
+- `components/catalog/FilterPanel.tsx` — Shade (swatch links) and Size (toggle-styled
   links) groups from `GET /shades/` and `GET /sizes/`, each link toggling its value.
 - `lib/cart/storage.ts` — the cart line holds `shade: string | null`; the storage
   key moved to `tl.cart.v2`.
@@ -141,7 +141,7 @@ None of its own. It changes `/products`, `/brands/[slug]` and `/products/[slug]`
 ```text
 GET /api/v1/shades/            server, revalidate 3600
 GET /api/v1/sizes/             server, revalidate 3600
-GET /api/v1/products/?shade=…&size=…   server, revalidate 300
+GET /api/v1/products/?shade=…&size=…   server, revalidate 600
 ```
 
 ### Errors handled
@@ -167,7 +167,7 @@ GET /api/v1/products/?shade=…&size=…   server, revalidate 300
   its size; a single-variant product needs no selection; out-of-stock and never-made
   combinations are disabled and say why.
 - `lib/catalog/variants.test.ts` — option states, the shadeless path, `describeVariant`.
-- `components/catalog/FilterRail.test.tsx` — swatch and size links carry `?shade=` and
+- `components/catalog/FilterPanel.test.tsx` — swatch and size links carry `?shade=` and
   `?size=`, and toggle off.
 - `lib/api/catalog.test.ts` — `shade` and `hex_code` map, `null` stays `null`,
   `listShades` and `listSizes`.
@@ -181,7 +181,7 @@ GET /api/v1/products/?shade=…&size=…   server, revalidate 300
 ## Files
 
 ```text
-components/catalog/{VariantPicker,FilterRail}.tsx
+components/catalog/{VariantPicker,FilterPanel}.tsx
 components/ui/toggle.tsx
 lib/api/{catalog,orders,types}.ts
 lib/catalog/{variants,query,navigation}.ts
