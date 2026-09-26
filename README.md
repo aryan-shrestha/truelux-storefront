@@ -1,4 +1,4 @@
-# TrueLux — Storefront
+# TrueLux — Storefront (test dev deployment)
 
 Next.js 16 storefront for TrueLux, a multi-brand cosmetics shop in Nepal:
 skincare, makeup and fragrance, paid in cash on delivery. It consumes the Django
