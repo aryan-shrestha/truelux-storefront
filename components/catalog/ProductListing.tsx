@@ -49,11 +49,11 @@ export function ProductListing({
       <div className="max-w-page mx-auto px-4 pt-10 md:px-8 md:pt-14">
         <div className="relative">
           {/* Stays mounted across filters, so the new count is announced. */}
-          <p aria-live="polite" className="text-muted-foreground absolute top-3.5 right-12 text-sm">
+          <div aria-live="polite" className="text-muted-foreground absolute top-3.5 right-12 text-sm">
             <Suspense key={boundaryKey} fallback={<Skeleton className="inline-block h-4 w-16" />}>
               <ProductCount query={apiQuery} />
             </Suspense>
-          </p>
+          </div>
           <h2 className="sr-only">Filters</h2>
           <FilterPanel
             facets={facets}

@@ -22,7 +22,7 @@ test("browse to a product, pick a shade, and open the bag", async ({ page }) => 
 
   await page.getByRole("link", { name: "Silk Foundation" }).first().click();
   await expect(page).toHaveURL(new RegExp(`${FOUNDATION}$`));
-  await expect(page.getByRole("link", { name: "Lumière" })).toHaveAttribute(
+  await expect(page.getByRole("link", { name: "Lumière" }).first()).toHaveAttribute(
     "href",
     "/brands/lumiere",
   );
@@ -42,9 +42,7 @@ test("browse to a product, pick a shade, and open the bag", async ({ page }) => 
   await expect(page).toHaveURL(new RegExp(`${FOUNDATION}$`));
 });
 
-test("a shadeless product needs only a size, and follows its price override", async ({
-  page,
-}) => {
+test("a shadeless product needs only a size, and follows its price override", async ({ page }) => {
   await page.goto(SERUM);
 
   await expect(page.getByText("Shade")).toHaveCount(0);
@@ -53,14 +51,35 @@ test("a shadeless product needs only a size, and follows its price override", as
   await expect(page.getByRole("button", { name: "Add to bag" })).toBeEnabled();
 });
 
-test("filters the catalogue by brand and shade through links", async ({ page }) => {
+test("filters the catalogue by brand, shade and skin type through links", async ({ page }) => {
   await page.goto("/products");
 
-  await page.getByRole("link", { name: "Lumière" }).first().click();
+  await page.getByRole("button", { name: "Filter and sort" }).click();
+  const brands = page.getByRole("region", { name: "Brand" });
+  await brands.getByRole("link", { name: "Lumière" }).click();
   await expect(page).toHaveURL(/\/products\?brand=lumiere$/);
 
   await page.getByRole("link", { name: "Porcelain" }).click();
   await expect(page).toHaveURL(/\/products\?brand=lumiere&shade=porcelain$/);
+
+  await page.getByRole("region", { name: "Skin type" }).getByRole("link", { name: "Dry" }).click();
+  await expect(page).toHaveURL(/\/products\?brand=lumiere&shade=porcelain&skin_type=dry$/);
+});
+
+test("the mega-menu opens a skin type and a whole root category", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Shop" }).click();
+  await page.getByRole("region", { name: "Skin type" }).getByRole("link", { name: "Dry" }).click();
+  await expect(page).toHaveURL(/\/products\?skin_type=dry$/);
+
+  await page.getByRole("button", { name: "Shop" }).click();
+  await page
+    .getByRole("region", { name: "Skincare" })
+    .getByRole("link", { name: "Shop all" })
+    .click();
+  await expect(page).toHaveURL(/\/products\?category=skincare$/);
+  await expect(page.getByRole("heading", { name: "Skincare", level: 1 })).toBeVisible();
 });
 
 test("the bag survives a reload, because it lives on the device", async ({ page }) => {
@@ -91,7 +110,7 @@ test("check out with cash on delivery", async ({ page }) => {
   await addFoundation(page);
   await page.goto("/checkout");
 
-  await expect(page.getByText("Cash on delivery")).toBeVisible();
+  await expect(page.getByText("Cash on delivery", { exact: true })).toBeVisible();
   await page.getByLabel("Full name").fill("Sita Rai");
   await page.getByLabel("Email").fill("sita@example.com");
   await page.getByLabel("Phone").fill("9800000000");
