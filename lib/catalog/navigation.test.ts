@@ -106,9 +106,7 @@ describe("shopMenu", () => {
   it("gives a root with no children only its Shop all link", () => {
     const fragrance = shopMenu(categoryTree, skinTypes).at(-1);
 
-    expect(fragrance?.links).toEqual([
-      { label: "Shop all", href: "/products?category=fragrance" },
-    ]);
+    expect(fragrance?.links).toEqual([{ label: "Shop all", href: "/products?category=fragrance" }]);
   });
 
   it("leaves the skin-type column out when the API lists none, and is empty with no categories", () => {

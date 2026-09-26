@@ -8,7 +8,10 @@ import { brands, shades, sizes, skinTypes } from "@/tests/fixtures/catalog";
 
 const facets = { brands, shades, sizes, skinTypes };
 
-async function renderOpen(query: ProductQuery, props: { pathname?: string; showBrands?: boolean } = {}) {
+async function renderOpen(
+  query: ProductQuery,
+  props: { pathname?: string; showBrands?: boolean } = {},
+) {
   render(<FilterPanel facets={facets} query={query} {...props} />);
   const trigger = screen.getByRole("button", { name: /Filter and sort/ });
   if (trigger.getAttribute("aria-expanded") === "false") await userEvent.click(trigger);
@@ -100,9 +103,7 @@ describe("FilterPanel", () => {
   });
 
   it("leaves out a group the API returned nothing for", async () => {
-    render(
-      <FilterPanel facets={{ ...facets, shades: [], sizes: [], skinTypes: [] }} query={{}} />,
-    );
+    render(<FilterPanel facets={{ ...facets, shades: [], sizes: [], skinTypes: [] }} query={{}} />);
     await userEvent.click(screen.getByRole("button", { name: "Filter and sort" }));
 
     expect(screen.queryByRole("heading", { name: "Shade" })).not.toBeInTheDocument();

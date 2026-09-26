@@ -1,20 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 import { Gallery } from "@/components/catalog/Gallery";
 import { VariantPicker } from "@/components/catalog/VariantPicker";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { ProductBreadcrumb } from "@/components/catalog/ProductBreadcrumb";
+import { ProductCare } from "@/components/catalog/ProductCare";
+import { ProductDetails } from "@/components/catalog/ProductDetails";
+import { RelatedProducts } from "@/components/catalog/RelatedProducts";
+import { SkinRoutine } from "@/components/catalog/SkinRoutine";
 import { getProduct, listProducts } from "@/lib/api/catalog";
 import { hasCode } from "@/lib/api/errors";
 import type { Product } from "@/lib/api/types";
+import { navigationCategories } from "@/lib/catalog/navigation";
 
 // Returns nothing rather than failing the build when the API is down; pages then render on demand.
 export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
@@ -66,59 +65,45 @@ export async function generateMetadata({
 
 export default async function ProductPage({ params }: PageProps<"/products/[slug]">) {
   const { slug } = await params;
-  const product = await load(slug);
+  // The category read is the header's, deduplicated within the render.
+  const [product, categories] = await Promise.all([load(slug), navigationCategories()]);
 
   return (
-    <article className="mx-auto max-w-7xl px-4 py-8 md:px-8">
-      <Breadcrumb className="mb-8">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link href="/products">Shop</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link href={`/products?category=${product.category.slug}`}>
-                {product.category.name}
-              </Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>{product.name}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-
-      <div className="flex flex-col gap-10 md:flex-row md:gap-12 lg:gap-16">
-        <div className="md:w-3/5">
+    <div className="flex flex-col gap-24 md:gap-32">
+      <div className="flex flex-col">
+        <article className="grid pb-16 md:grid-cols-[69fr_31fr] md:pb-0">
           <Gallery images={product.images} name={product.name} />
-        </div>
 
-        <div className="md:flex-1">
-          <div className="flex flex-col gap-8 md:sticky md:top-[calc(var(--header-offset)+1.5rem)]">
-            <header className="flex flex-col gap-2">
-              <Link
-                href={`/brands/${product.brand.slug}`}
-                className="w-fit text-sm tracking-wide text-muted-foreground hover:text-foreground"
-              >
-                {product.brand.name}
-              </Link>
-              <h1 className="text-title">{product.name}</h1>
-            </header>
+          <div className="px-4 pt-10 md:px-11 md:pt-28 lg:pr-18">
+            <div className="flex flex-col gap-7 md:sticky md:top-[calc(var(--header-offset)+2rem)]">
+              <header className="flex flex-col gap-4">
+                <ProductBreadcrumb categories={categories} category={product.category} />
+                <h1 className="text-heading">{product.name}</h1>
+                <Link
+                  href={`/brands/${product.brand.slug}`}
+                  className="text-muted-foreground hover:text-foreground w-fit text-sm hover:underline"
+                >
+                  {product.brand.name}
+                </Link>
+              </header>
 
-            <VariantPicker product={product} />
+              {product.description && (
+                <p className="text-sm leading-relaxed">{product.description}</p>
+              )}
 
-            {product.description && (
-              <p className="max-w-prose leading-relaxed text-muted-foreground">
-                {product.description}
-              </p>
-            )}
+              <VariantPicker product={product} />
+
+              <ProductDetails product={product} />
+            </div>
           </div>
-        </div>
+        </article>
+        <SkinRoutine />
+        <ProductCare />
       </div>
-    </article>
+
+      <Suspense>
+        <RelatedProducts product={product} />
+      </Suspense>
+    </div>
   );
 }

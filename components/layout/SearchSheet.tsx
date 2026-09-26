@@ -28,7 +28,9 @@ export function SearchSheet() {
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 pt-10 pb-12">
           <SheetHeader className="p-0">
             <SheetTitle className="font-heading text-title">Search</SheetTitle>
-            <SheetDescription>Matches words in a product&apos;s name or description.</SheetDescription>
+            <SheetDescription>
+              Matches words in a product&apos;s name or description.
+            </SheetDescription>
           </SheetHeader>
           <SearchForm onSubmit={() => setOpen(false)} />
         </div>

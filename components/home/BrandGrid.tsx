@@ -19,19 +19,25 @@ export function BrandGrid({ brands }: { brands: Brand[] }) {
           <li key={brand.slug}>
             <Link
               href={`/brands/${brand.slug}`}
-              className="group relative flex aspect-square flex-col items-center justify-center gap-2 bg-background p-4 text-center transition-colors hover:bg-secondary"
+              className="group bg-background hover:bg-secondary relative flex aspect-square flex-col items-center justify-center gap-2 p-4 text-center transition-colors"
             >
               {brand.logoUrl === null ? (
                 <span className="font-heading text-2xl md:text-3xl">{brand.name}</span>
               ) : (
                 <>
                   <span className="relative h-1/3 w-2/3">
-                    <Image src={brand.logoUrl} alt="" fill sizes="160px" className="object-contain" />
+                    <Image
+                      src={brand.logoUrl}
+                      alt=""
+                      fill
+                      sizes="160px"
+                      className="object-contain"
+                    />
                   </span>
                   <span className="text-sm">{brand.name}</span>
                 </>
               )}
-              <span className="text-xs text-muted-foreground">
+              <span className="text-muted-foreground text-xs">
                 {brand.productCount === 1 ? "1 product" : `${brand.productCount} products`}
               </span>
             </Link>

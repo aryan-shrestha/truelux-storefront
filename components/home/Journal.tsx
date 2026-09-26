@@ -50,7 +50,7 @@ export function Journal() {
     <section
       id="journal"
       aria-labelledby="journal-heading"
-      className="mx-auto w-full max-w-page scroll-mt-(--header-offset) px-4 md:px-8"
+      className="max-w-page mx-auto w-full scroll-mt-(--header-offset) px-4 md:px-8"
     >
       <SectionHeading id="journal-heading" eyebrow="Notes on skin and care" title="Our journal" />
       <Carousel opts={{ align: "start" }} aria-label="Journal notes" className="mt-10">
@@ -67,7 +67,7 @@ export function Journal() {
                     className="object-cover"
                   />
                 </div>
-                <p className="text-sm text-muted-foreground uppercase">{note.topic}</p>
+                <p className="text-muted-foreground text-sm uppercase">{note.topic}</p>
                 <h3 className="font-semibold">{note.title}</h3>
                 <p className="text-sm leading-relaxed">{note.body}</p>
                 <Button asChild variant="link" size="inline" className="mt-auto self-start pt-4">

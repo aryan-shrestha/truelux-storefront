@@ -29,7 +29,7 @@ export function ProductRail({ id, eyebrow, title, description, products, more }:
   const headingId = `${id}-heading`;
 
   return (
-    <section aria-labelledby={headingId} className="mx-auto w-full max-w-page px-4 md:px-8">
+    <section aria-labelledby={headingId} className="max-w-page mx-auto w-full px-4 md:px-8">
       <SectionHeading id={headingId} eyebrow={eyebrow} title={title} description={description} />
       <Carousel opts={{ align: "start" }} aria-label={`${title}: products`} className="mt-10">
         <CarouselContent className="-ml-2 md:-ml-0.5">

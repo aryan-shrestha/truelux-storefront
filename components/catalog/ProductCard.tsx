@@ -19,7 +19,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
     // The product link stretches over the card; the brand link sits above it,
     // because one anchor cannot contain another.
     <article className="group relative flex flex-col gap-5 pb-4 text-center">
-      <div className="relative aspect-4/5 overflow-hidden bg-muted">
+      <div className="bg-muted relative aspect-4/5 overflow-hidden">
         {image !== null && (
           <Image
             src={image.url}
@@ -45,7 +45,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
         </h3>
         <Link
           href={`/brands/${product.brand.slug}`}
-          className="relative z-10 text-sm text-muted-foreground hover:text-foreground hover:underline"
+          className="text-muted-foreground hover:text-foreground relative z-10 text-sm hover:underline"
         >
           {product.brand.name}
         </Link>

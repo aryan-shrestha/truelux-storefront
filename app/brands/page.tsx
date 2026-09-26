@@ -16,12 +16,14 @@ export default async function BrandsPage() {
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-10 md:px-8">
-      <h1 className="mb-10 text-title">Brands</h1>
+      <h1 className="text-title mb-10">Brands</h1>
       {brands.length === 0 ? (
         <Empty className="border">
           <EmptyHeader>
             <EmptyTitle>No brands to show yet</EmptyTitle>
-            <EmptyDescription>Brands appear here once they have products in the shop.</EmptyDescription>
+            <EmptyDescription>
+              Brands appear here once they have products in the shop.
+            </EmptyDescription>
           </EmptyHeader>
         </Empty>
       ) : (

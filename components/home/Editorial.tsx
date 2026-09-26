@@ -9,7 +9,7 @@ export function Editorial({ href }: { href: string }) {
   return (
     <section
       aria-labelledby="editorial-heading"
-      className="mx-auto grid w-full max-w-page items-center gap-10 px-4 md:grid-cols-[45fr_55fr] md:gap-0 md:px-20"
+      className="max-w-page mx-auto grid w-full items-center gap-10 px-4 md:grid-cols-[45fr_55fr] md:gap-0 md:px-20"
     >
       <div className="relative aspect-[562/530]">
         <Image

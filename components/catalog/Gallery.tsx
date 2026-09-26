@@ -30,8 +30,8 @@ export function Gallery({ images, name }: { images: ProductImage[]; name: string
 
   if (images.length === 0) {
     return (
-      <div className="flex aspect-4/5 items-center justify-center rounded-2xl bg-muted">
-        <p className="text-sm text-muted-foreground">No photographs of {name} yet</p>
+      <div className="bg-muted flex aspect-9/10 items-center justify-center">
+        <p className="text-muted-foreground text-sm">No photographs of {name} yet</p>
       </div>
     );
   }
@@ -48,12 +48,12 @@ export function Gallery({ images, name }: { images: ProductImage[]; name: string
               aria-roledescription="slide"
               aria-label={`${index + 1} of ${count}`}
             >
-              <div className="relative aspect-4/5 overflow-hidden rounded-2xl bg-muted">
+              <div className="bg-muted relative aspect-9/10 overflow-hidden">
                 <Image
                   src={image.url}
                   alt={image.altText}
                   fill
-                  sizes="(min-width: 1024px) 50vw, (min-width: 768px) 60vw, 100vw"
+                  sizes="(min-width: 768px) 70vw, 100vw"
                   // Only the first: several priorities slow the one that is the LCP.
                   priority={index === 0}
                   className="object-cover"
@@ -71,7 +71,7 @@ export function Gallery({ images, name }: { images: ProductImage[]; name: string
       </Carousel>
 
       {count > 1 && (
-        <ul aria-label="Choose a photograph" className="flex gap-2 overflow-x-auto">
+        <ul aria-label="Choose a photograph" className="flex gap-2 overflow-x-auto px-4 md:px-8">
           {images.map((image, index) => (
             <li key={image.url} className="shrink-0">
               <Button
@@ -80,7 +80,7 @@ export function Gallery({ images, name }: { images: ProductImage[]; name: string
                 aria-current={index === active ? "true" : undefined}
                 onClick={() => api?.scrollTo(index)}
                 className={cn(
-                  "relative aspect-4/5 h-auto w-16 overflow-hidden rounded-lg p-0",
+                  "relative aspect-9/10 h-auto w-16 overflow-hidden p-0",
                   index === active ? "border-foreground" : "opacity-60 hover:opacity-100",
                 )}
               >

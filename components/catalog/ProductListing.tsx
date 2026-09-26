@@ -29,7 +29,13 @@ type ProductListingProps = {
   lockedBrand?: string;
 };
 
-export function ProductListing({ hero, query, facets, pathname, lockedBrand }: ProductListingProps) {
+export function ProductListing({
+  hero,
+  query,
+  facets,
+  pathname,
+  lockedBrand,
+}: ProductListingProps) {
   const apiQuery = lockedBrand === undefined ? query : { ...query, brand: [lockedBrand] };
   // Keyed on the canonical query, so every filter change shows the skeleton
   // instead of leaving the previous results on screen.
@@ -40,10 +46,10 @@ export function ProductListing({ hero, query, facets, pathname, lockedBrand }: P
       {hero}
       <CategoryBand categories={facets.categories} query={query} pathname={pathname} />
 
-      <div className="mx-auto max-w-page px-4 pt-10 md:px-8 md:pt-14">
+      <div className="max-w-page mx-auto px-4 pt-10 md:px-8 md:pt-14">
         <div className="relative">
           {/* Stays mounted across filters, so the new count is announced. */}
-          <p aria-live="polite" className="absolute top-3.5 right-12 text-sm text-muted-foreground">
+          <p aria-live="polite" className="text-muted-foreground absolute top-3.5 right-12 text-sm">
             <Suspense key={boundaryKey} fallback={<Skeleton className="inline-block h-4 w-16" />}>
               <ProductCount query={apiQuery} />
             </Suspense>

@@ -25,8 +25,8 @@ export function CategoryBand({ categories, query, pathname }: CategoryBandProps)
 
   return (
     <nav aria-label="Categories" className="bg-muted">
-      <ul className="mx-auto flex max-w-page items-center gap-x-6 overflow-x-auto px-4 py-7 whitespace-nowrap md:px-10 md:py-10">
-        <li className="border-r border-input pr-6">
+      <ul className="max-w-page mx-auto flex items-center gap-x-6 overflow-x-auto px-4 py-7 whitespace-nowrap md:px-10 md:py-10">
+        <li className="border-input border-r pr-6">
           <BandLink
             href={href(trail?.root.slug)}
             active={trail === null ? query.category === undefined : trail.child === null}
@@ -46,7 +46,15 @@ export function CategoryBand({ categories, query, pathname }: CategoryBandProps)
   );
 }
 
-function BandLink({ href, active, children }: { href: string; active: boolean; children: ReactNode }) {
+function BandLink({
+  href,
+  active,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  children: ReactNode;
+}) {
   return (
     <Link
       href={href}

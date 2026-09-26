@@ -1,4 +1,10 @@
-import { listBrands, listCategories, listShades, listSizes, listSkinTypes } from "@/lib/api/catalog";
+import {
+  listBrands,
+  listCategories,
+  listShades,
+  listSizes,
+  listSkinTypes,
+} from "@/lib/api/catalog";
 import type { Brand, Category, CategoryRef, ShadeRef, SizeRef, SkinTypeRef } from "@/lib/api/types";
 import { hrefWith } from "@/lib/catalog/query";
 
@@ -78,7 +84,10 @@ export function shopMenu(categories: Category[], skinTypes: SkinTypeRef[]): Menu
 export type CategoryTrail = { root: Category; child: CategoryRef | null };
 
 /** Where a category slug sits in the one-level tree; null when it is not in it. */
-export function findCategory(categories: Category[], slug: string | undefined): CategoryTrail | null {
+export function findCategory(
+  categories: Category[],
+  slug: string | undefined,
+): CategoryTrail | null {
   if (slug === undefined) return null;
   for (const root of categories) {
     if (root.slug === slug) return { root, child: null };

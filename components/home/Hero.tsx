@@ -49,8 +49,8 @@ export function Hero() {
                 sizes="100vw"
                 className="object-cover"
               />
-              <div className="absolute inset-0 bg-linear-to-r from-scrim via-scrim/40 to-transparent" />
-              <div className="relative mx-auto flex h-full max-w-page flex-col justify-center px-4 md:px-15">
+              <div className="from-scrim via-scrim/40 absolute inset-0 bg-linear-to-r to-transparent" />
+              <div className="max-w-page relative mx-auto flex h-full flex-col justify-center px-4 md:px-15">
                 <div className="flex max-w-md flex-col items-start gap-5">
                   <p className="text-sm">{slide.eyebrow}</p>
                   <Title className="text-display">{slide.title}</Title>

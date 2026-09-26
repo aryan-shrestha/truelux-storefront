@@ -115,7 +115,10 @@ describe("brand filters", () => {
   });
 
   it("caps the number of brands so a URL cannot mint unbounded cache keys", () => {
-    const many = Array.from({ length: 15 }, (_, index) => `brand-${String(index).padStart(2, "0")}`);
+    const many = Array.from(
+      { length: 15 },
+      (_, index) => `brand-${String(index).padStart(2, "0")}`,
+    );
 
     expect(toProductQuery({ brand: many }).brand).toHaveLength(10);
   });
@@ -277,9 +280,9 @@ describe("hrefWith", () => {
   });
 
   it("builds links under another path, for the brand pages", () => {
-    expect(hrefWith(toProductQuery({}), { shade: "porcelain" }, { pathname: "/brands/lumiere" })).toBe(
-      "/brands/lumiere?shade=porcelain",
-    );
+    expect(
+      hrefWith(toProductQuery({}), { shade: "porcelain" }, { pathname: "/brands/lumiere" }),
+    ).toBe("/brands/lumiere?shade=porcelain");
   });
 
   it("returns the bare path when nothing is applied", () => {

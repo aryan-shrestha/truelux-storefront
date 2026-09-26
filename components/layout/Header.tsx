@@ -17,7 +17,7 @@ export async function Header() {
 
   return (
     <HeaderFrame>
-      <div className="mx-auto grid h-16 max-w-page grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 md:h-20 md:px-8">
+      <div className="max-w-page mx-auto grid h-16 grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 md:h-20 md:px-8">
         <div className="flex h-full items-center">
           <MobileNav columns={columns} />
           <ShopMenu columns={columns} />

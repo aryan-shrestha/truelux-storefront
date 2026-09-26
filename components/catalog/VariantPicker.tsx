@@ -63,7 +63,7 @@ export function VariantPicker({ product }: { product: Product }) {
   return (
     <div className="flex flex-col gap-6">
       {/* The variant's own price once resolved: price overrides are real. */}
-      <p aria-live="polite" className="font-heading text-3xl">
+      <p aria-live="polite" className="text-2xl">
         <Price amount={selected?.price ?? product.basePrice} />
       </p>
 
@@ -76,6 +76,7 @@ export function VariantPicker({ product }: { product: Product }) {
         <div className="flex flex-col gap-3">
           <Button
             size="lg"
+            className="w-full"
             disabled={selected === undefined || !selected.inStock || full}
             onClick={handleAdd}
           >
@@ -163,7 +164,7 @@ function SizeChoice({
 
   return (
     <div className="flex flex-col gap-3">
-      <p id={labelId} className="text-sm text-muted-foreground">
+      <p id={labelId} className="text-muted-foreground text-sm">
         Size
       </p>
       <ToggleGroup
@@ -209,7 +210,7 @@ function Hint({
 }) {
   if (full) {
     return (
-      <p className="text-sm text-muted-foreground">
+      <p className="text-muted-foreground text-sm">
         Your bag is full. Remove something to add more.
       </p>
     );
@@ -218,5 +219,5 @@ function Hint({
 
   const missing =
     missingSize && missingShade ? "a shade and a size" : missingShade ? "a shade" : "a size";
-  return <p className="text-sm text-muted-foreground">Choose {missing} to add this to your bag.</p>;
+  return <p className="text-muted-foreground text-sm">Choose {missing} to add this to your bag.</p>;
 }

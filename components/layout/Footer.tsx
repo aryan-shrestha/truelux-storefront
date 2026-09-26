@@ -27,14 +27,14 @@ export async function Footer() {
   ].filter((column) => column.links.length > 0);
 
   return (
-    <footer className="mt-20 bg-ink text-ink-foreground">
-      <div className="mx-auto flex max-w-page flex-col gap-12 px-4 pt-16 pb-10 md:px-10">
+    <footer className="bg-ink text-ink-foreground mt-20">
+      <div className="max-w-page mx-auto flex flex-col gap-12 px-4 pt-16 pb-10 md:px-10">
         <div className="grid gap-10 md:grid-cols-[1fr_2fr]">
           <div className="flex max-w-xs flex-col gap-4">
             <p className="text-2xl font-bold tracking-[0.2em] uppercase">{env.brandName}</p>
-            <p className="text-sm text-ink-muted">
-              Authentic skincare, makeup and fragrance, delivered across Nepal. You pay in cash
-              when your order arrives.
+            <p className="text-ink-muted text-sm">
+              Authentic skincare, makeup and fragrance, delivered across Nepal. You pay in cash when
+              your order arrives.
             </p>
           </div>
 
@@ -48,14 +48,14 @@ export async function Footer() {
           </nav>
 
           <nav aria-label="Footer" className="md:hidden">
-            <Accordion type="multiple" className="border-t border-ink-muted/40">
+            <Accordion type="multiple" className="border-ink-muted/40 border-t">
               {columns.map((column) => (
                 <AccordionItem
                   key={column.title}
                   value={column.title}
                   className="border-ink-muted/40"
                 >
-                  <AccordionTrigger className="text-base **:data-[slot=accordion-trigger-icon]:text-ink-foreground">
+                  <AccordionTrigger className="**:data-[slot=accordion-trigger-icon]:text-ink-foreground text-base">
                     {column.title}
                   </AccordionTrigger>
                   <AccordionContent>
@@ -67,7 +67,7 @@ export async function Footer() {
           </nav>
         </div>
 
-        <p className="text-xs text-ink-muted">
+        <p className="text-ink-muted text-xs">
           © {new Date().getFullYear()} {env.brandName}. Prices in Nepalese rupees.
         </p>
       </div>

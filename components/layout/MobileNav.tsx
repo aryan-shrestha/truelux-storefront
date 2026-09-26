@@ -31,8 +31,11 @@ export function MobileNav({ columns }: { columns: MenuColumn[] }) {
           <MenuIcon />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="gap-0 overflow-y-auto p-0 data-[side=left]:w-full data-[side=left]:sm:max-w-sm">
-        <SheetHeader className="h-16 justify-center border-b border-foreground px-4">
+      <SheetContent
+        side="left"
+        className="gap-0 overflow-y-auto p-0 data-[side=left]:w-full data-[side=left]:sm:max-w-sm"
+      >
+        <SheetHeader className="border-foreground h-16 justify-center border-b px-4">
           <SheetTitle>Menu</SheetTitle>
         </SheetHeader>
 
@@ -57,7 +60,7 @@ export function MobileNav({ columns }: { columns: MenuColumn[] }) {
                   </li>
                 ))}
               </ul>
-              <ul className="flex flex-col px-4 py-3 text-muted-foreground">
+              <ul className="text-muted-foreground flex flex-col px-4 py-3">
                 {ORDER_LINKS.map((link) => (
                   <li key={link.href}>
                     <Link href={link.href} onClick={close} className="block py-2.5">

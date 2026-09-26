@@ -83,7 +83,7 @@ function BrandHero({ brand }: { brand: Brand }) {
       eyebrow={
         <div className="flex flex-col items-start gap-6">
           {brand.logoUrl !== null && (
-            <div className="relative size-20 bg-background">
+            <div className="bg-background relative size-20">
               <Image src={brand.logoUrl} alt="" fill sizes="80px" className="object-contain p-3" />
             </div>
           )}

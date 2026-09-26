@@ -18,7 +18,11 @@ describe("CategoryBand", () => {
 
   it("inside a root, lists its children, with Shop all meaning the whole root", () => {
     render(
-      <CategoryBand categories={categoryTree} query={{ category: "skincare" }} pathname="/products" />,
+      <CategoryBand
+        categories={categoryTree}
+        query={{ category: "skincare" }}
+        pathname="/products"
+      />,
     );
 
     const all = screen.getByRole("link", { name: "Shop all" });
