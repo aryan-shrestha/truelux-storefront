@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
-import { BrandStrip } from "@/components/home/BrandStrip";
-import { CategoryShowcase } from "@/components/home/CategoryShowcase";
+import { ProductRail } from "@/components/catalog/ProductRail";
+import { About } from "@/components/home/About";
+import { BrandGrid } from "@/components/home/BrandGrid";
+import { CategoryRail } from "@/components/home/CategoryRail";
+import { Editorial } from "@/components/home/Editorial";
 import { Hero } from "@/components/home/Hero";
-import { NewArrivals } from "@/components/home/NewArrivals";
-import { Promises } from "@/components/home/Promises";
-import { Ritual } from "@/components/home/Ritual";
-import { latestProducts } from "@/lib/catalog/latest";
-import { navigationBrands, navigationCategories } from "@/lib/catalog/navigation";
+import { ImageBand } from "@/components/home/ImageBand";
+import { Journal } from "@/components/home/Journal";
+import { categoryHref, navigationBrands, navigationCategories } from "@/lib/catalog/navigation";
+import { latestProducts } from "@/lib/catalog/rails";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
@@ -15,20 +18,36 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   // The category read is the header's, deduplicated within the render.
-  const [products, categories, brands] = await Promise.all([
+  const [latest, categories, brands] = await Promise.all([
     latestProducts(),
     navigationCategories(),
     navigationBrands(),
   ]);
+  const [featured] = categories;
 
   return (
-    <div className="mx-auto flex max-w-7xl flex-col gap-20 px-4 py-10 md:gap-28 md:px-8 md:py-16">
+    <div className="flex flex-col gap-24 md:gap-36">
       <Hero />
-      <Promises />
-      <CategoryShowcase categories={categories} />
-      <NewArrivals products={products} />
-      <BrandStrip brands={brands} />
-      <Ritual />
+      <Editorial href={featured === undefined ? "/products" : categoryHref(featured.slug)} />
+      <ProductRail
+        id="new-arrivals"
+        eyebrow="Just in"
+        title="New arrivals"
+        description="The newest products from every brand we stock."
+        products={latest}
+        more={{ href: "/products?ordering=-created_at", label: "All new arrivals" }}
+      />
+      <ImageBand />
+      {featured !== undefined && (
+        <Suspense>
+          <CategoryRail category={featured} />
+        </Suspense>
+      )}
+      <div className="flex flex-col">
+        <About />
+        <BrandGrid brands={brands} />
+      </div>
+      <Journal />
     </div>
   );
 }

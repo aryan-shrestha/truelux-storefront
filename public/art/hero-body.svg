@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 840" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ece4dc"/><stop offset="1" stop-color="#dfd4c9"/></linearGradient></defs><rect width="1600" height="840" fill="url(#w)"/>
+<rect x="0" y="781.2" width="1600" height="58.800000000000004" fill="#d2c6b8" opacity=".6"/>
+<rect x="480" y="722.4" width="1120" height="117.60000000000002" fill="#d2c6b8"/>
+<rect x="480" y="714.4" width="1120" height="12" fill="#e6ddd2"/>
+<ellipse cx="992" cy="722.4" rx="416" ry="10" fill="#3b332b" opacity=".08"/>
+<rect x="560" y="552.4" width="130" height="170" rx="15.6" fill="#efe3cf"/>
+<rect x="602.9" y="516" width="44.2" height="39" fill="#f7f6f2"/>
+<rect x="612.845" y="471.79999999999995" width="24.310000000000002" height="46.8" rx="11.934000000000001" fill="#fbfbf8"/><path d="M700 362.4h130l-10.4 302.4h-109.2z" fill="#f8f8f5"/>
+<rect x="715.6" y="664.8" width="98.8" height="57.6" rx="4" fill="#efeee9"/><rect x="860" y="422.4" width="115" height="300" rx="9.200000000000001" fill="#f3eadc"/>
+<rect x="860" y="318.9" width="115" height="105.80000000000001" rx="9.200000000000001" fill="#f7f6f2"/><rect x="1010" y="392.4" width="110" height="330" rx="8.8" fill="#ede4d6"/>
+<rect x="1010" y="293.4" width="110" height="101.2" rx="8.8" fill="#f7f6f2"/><rect x="1150" y="595.9" width="230" height="126.50000000000001" rx="13.799999999999999" fill="#e9e8e3"/>
+<rect x="1146" y="554.5" width="238" height="46" rx="11.5" fill="#f7f7f4"/></svg>
