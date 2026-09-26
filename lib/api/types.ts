@@ -148,12 +148,7 @@ export type CheckoutResult = {
 };
 
 export type ProductOrdering =
-  | "name"
-  | "-name"
-  | "base_price"
-  | "-base_price"
-  | "created_at"
-  | "-created_at";
+  "name" | "-name" | "base_price" | "-base_price" | "created_at" | "-created_at";
 
 export type ProductQuery = {
   category?: string;

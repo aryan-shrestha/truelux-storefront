@@ -107,7 +107,6 @@ Worth raising with the backend first, because each removes a compromise recorded
 above:
 
 - **A shipping quote before placement** (#7).
-- **Child-category filtering**: `?category=` matches one category exactly (#4).
 - **An image field on categories**, so the home page's category tiles can show the
   category rather than a placeholder by position (#9).
 

@@ -135,7 +135,13 @@ describe("getProduct", () => {
       images: [],
       ...noSkinCare,
       variants: [
-        { id: "v1", size: { name: "15 ml", slug: "15-ml" }, shade: null, price: "2900.00", in_stock: true },
+        {
+          id: "v1",
+          size: { name: "15 ml", slug: "15-ml" },
+          shade: null,
+          price: "2900.00",
+          in_stock: true,
+        },
       ],
     });
 
