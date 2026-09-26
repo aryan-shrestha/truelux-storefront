@@ -2,7 +2,7 @@
 
 Status: Reference
 
-Last updated: 2026-09-25
+Last updated: 2026-09-26
 
 ---
 
@@ -25,7 +25,7 @@ into a design document.
 Transcribed from, and verified against:
 
 ```text
-back-end/docs/features/{brands,shades-and-sizes,admin-api}.md
+back-end/docs/features/{brands,shades-and-sizes,skin-types,admin-api}.md
 back-end/docs/decisions/0011-cash-on-delivery-only.md
 back-end/config/urls.py
 back-end/config/settings/base.py
@@ -103,8 +103,8 @@ request's own host, so a server-side call and a browser call receive different
 hosts in them. Do not follow them blindly from the other side; recompute
 `limit`/`offset` instead.
 
-**The reference lists are the exception**: `categories/`, `brands/`, `shades/`
-and `sizes/` return bare arrays with no envelope. See below.
+**The reference lists are the exception**: `categories/`, `brands/`, `shades/`,
+`sizes/` and `skin-types/` return bare arrays with no envelope. See below.
 
 There is no cursor pagination.
 
@@ -202,10 +202,11 @@ Query parameters:
 
 | Parameter | Value | Notes |
 | --- | --- | --- |
-| `category` | category slug | Exact match. **Does not descend into children**. An unknown slug is an empty page |
+| `category` | category slug | The category **and its direct children**: a root's slug matches products in any of its children. An unknown slug is an empty page |
 | `brand` | brand slug, **repeatable** | `?brand=a&brand=b` is the union. **An unknown slug is `400 validation_error`**; an inactive brand's slug is accepted and matches nothing |
 | `size` | size slug | Joins variants |
 | `shade` | shade slug | Joins variants; shadeless products never match |
+| `skin_type` | skin-type slug, **repeatable** | `?skin_type=a&skin_type=b` is the union. **An unknown slug is `400 validation_error`**, like `?brand=` |
 | `min_price` | number | Against `base_price`, not the resolved variant price |
 | `max_price` | number | Against `base_price` |
 | `in_stock` | boolean | True when *any* variant has stock |
@@ -282,6 +283,18 @@ volume or weight (`15 ml`, `100 g`, `One size`). The API never sends a colour.
 
 `variant.id` is the only identifier checkout accepts.
 
+The detail also carries the product's care details (`back-end/docs/features/skin-types.md`):
+
+```json
+"skin_types": [{ "name": "Combination", "slug": "combination" }],
+"skin_feel": "Soothed, balanced, refreshed",
+"key_ingredients": "Water (Aqua), Hamamelis Virginiana (Witch Hazel) Water, Niacinamide"
+```
+
+All three are always present: `skin_types` is `[]`, and `skin_feel` and
+`key_ingredients` are `""`, when the merchant has not set them. `key_ingredients`
+is one free-text line, not a structured list. None of the three is on the list item.
+
 **`stock_quantity` is never serialised anywhere.** The API publishes a boolean
 `in_stock` on the product and on each variant, and nothing more. There is no way to
 show "only 2 left"; do not try to derive it.
@@ -310,9 +323,9 @@ list's envelope will not read it unchanged.
 Root categories only, each with its immediate children. The tree is exactly **one
 level deep** — a child never has a `children` key.
 
-The nesting is presentational only. Filtering the product list by a parent's slug
-returns products attached directly to that parent and **not** products in its
-children. A navigation menu that implies otherwise will show an empty category.
+Filtering the product list by a root's slug returns products attached to that root
+**and** to its direct children, so a "Shop all" link under a root lists the whole
+branch. A child's slug matches that child only.
 
 ### `GET /api/v1/brands/`
 
@@ -354,6 +367,18 @@ Public. Throttle scope `catalog`. Bare arrays in `sort_order`.
 
 **These are facets, not the lookup tables.** Only values used by at least one
 variant of a visible product (published, active brand) are listed.
+
+### `GET /api/v1/skin-types/`
+
+Public. Throttle scope `catalog`. A bare array in `sort_order`.
+
+```json
+[{ "name": "Combination", "slug": "combination" }]
+```
+
+A facet like `/shades/`: only skin types used by at least one visible product are
+listed. The slugs are exactly the values `?skin_type=` takes. The seed has Normal,
+Dry, Oily, Combination, Sensitive and Mature.
 
 ---
 
@@ -610,11 +635,14 @@ first.
   address has the order number and the lookup, and nothing else.
 - **No stock counts.** Only the `in_stock` boolean, and no available quantity in
   the `insufficient_stock` error.
-- **No child-category filtering.** `?category=` matches one category exactly.
+- **No deeper category descent.** `?category=<root>` includes its direct
+  children, and the tree is only one level deep, so there is nothing deeper to
+  reach.
 - **No cursor pagination**, only limit/offset.
 - **No discounts, coupons, gift cards, sale prices, or tax.** `base_price` is the
   only price concept, and `shipping_fee` the only addition to it.
-- **No product reviews, ratings, related products, or recommendations.**
+- **No product reviews, ratings, related products, or recommendations.** The
+  storefront's "combine with" rail is simply other products in the same category.
 - **No wishlist, no restock notification, no abandoned-cart anything.**
 - **No fuzzy search.** `?search=` is a case-insensitive substring match over name
   and description, so "tshirt" does not find "t-shirt". No ranking, no stemming, no
@@ -625,6 +653,8 @@ first.
   sane one anyway.
 - **No refunds** and no cancellation endpoint. Both are merchant actions performed
   outside the API.
-- **No write access to the catalogue.** Products, brands, shades and sizes
-  are written only through the staff API.
+- **No write access to the catalogue.** Products, brands, shades, sizes and skin
+  types are written only through the staff API.
+- **No category descriptions or images**, and no per-skin-type copy. Listing
+  headers and menu imagery are the storefront's own static content.
 - **No multi-currency.** NPR is implicit everywhere.

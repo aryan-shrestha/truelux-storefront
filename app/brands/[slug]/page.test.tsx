@@ -23,6 +23,7 @@ vi.mock("@/lib/api/catalog", () => ({
   listBrands: vi.fn().mockResolvedValue([]),
   listShades: vi.fn().mockResolvedValue([]),
   listSizes: vi.fn().mockResolvedValue([]),
+  listSkinTypes: vi.fn().mockResolvedValue([]),
 }));
 vi.mock("next/navigation", () => ({ redirect, notFound }));
 

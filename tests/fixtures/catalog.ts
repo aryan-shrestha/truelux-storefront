@@ -5,6 +5,7 @@ import type {
   ProductSummary,
   ShadeRef,
   SizeRef,
+  SkinTypeRef,
 } from "@/lib/api/types";
 
 // Typed with the lib/api types, so a contract change breaks these at compile
@@ -108,6 +109,9 @@ export const silkFoundation: Product = {
       inStock: false,
     },
   ],
+  skinTypes: [],
+  skinFeel: "",
+  keyIngredients: "",
 };
 
 export const hydratingSerum: Product = {
@@ -137,6 +141,12 @@ export const hydratingSerum: Product = {
       inStock: false,
     },
   ],
+  skinTypes: [
+    { name: "Dry", slug: "dry" },
+    { name: "Combination", slug: "combination" },
+  ],
+  skinFeel: "Plump, dewy, comfortable",
+  keyIngredients: "Water (Aqua), Sodium Hyaluronate, Niacinamide, Panthenol",
 };
 
 export const categoryTree: Category[] = [
@@ -169,4 +179,10 @@ export const shades: ShadeRef[] = [
 export const sizes: SizeRef[] = [
   { name: "30 ml", slug: "30-ml" },
   { name: "50 ml", slug: "50-ml" },
+];
+
+export const skinTypes: SkinTypeRef[] = [
+  { name: "Dry", slug: "dry" },
+  { name: "Oily", slug: "oily" },
+  { name: "Combination", slug: "combination" },
 ];

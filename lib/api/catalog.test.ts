@@ -6,8 +6,10 @@ import {
   listBrands,
   listCategories,
   listProducts,
+  listRelatedProducts,
   listShades,
   listSizes,
+  listSkinTypes,
 } from "@/lib/api/catalog";
 
 function stubJson(body: unknown) {
@@ -23,6 +25,8 @@ function stubJson(body: unknown) {
 function requestedUrl(fetchMock: ReturnType<typeof stubJson>): URL {
   return new URL(String(fetchMock.mock.calls[0]?.[0]));
 }
+
+const noSkinCare = { skin_types: [], skin_feel: "", key_ingredients: "" };
 
 const rawSummary = {
   id: "abc",
@@ -72,6 +76,14 @@ describe("listProducts", () => {
     expect(params.has("color")).toBe(false);
   });
 
+  it("repeats ?skin_type= once per skin type", async () => {
+    const fetchMock = stubJson({ count: 0, next: null, previous: null, results: [] });
+
+    await listProducts({ skinType: ["dry", "oily"] });
+
+    expect(requestedUrl(fetchMock).searchParams.getAll("skin_type")).toEqual(["dry", "oily"]);
+  });
+
   it("keeps a null primary_image as null", async () => {
     stubJson({
       count: 1,
@@ -93,6 +105,7 @@ describe("getProduct", () => {
       base_price: "3200.00",
       description: "Satin finish.",
       images: [],
+      ...noSkinCare,
       variants: [
         {
           id: "v1",
@@ -120,6 +133,7 @@ describe("getProduct", () => {
       ...rawSummary,
       description: "",
       images: [],
+      ...noSkinCare,
       variants: [
         { id: "v1", size: { name: "15 ml", slug: "15-ml" }, shade: null, price: "2900.00", in_stock: true },
       ],
@@ -128,6 +142,46 @@ describe("getProduct", () => {
     const product = await getProduct({ slug: "hydrating-serum" });
 
     expect(product.variants[0]?.shade).toBeNull();
+  });
+
+  it("maps skin types, skin feel and key ingredients", async () => {
+    stubJson({
+      ...rawSummary,
+      description: "",
+      images: [],
+      variants: [],
+      skin_types: [{ name: "Combination", slug: "combination" }],
+      skin_feel: "Soothed, balanced, refreshed",
+      key_ingredients: "Water (Aqua), Niacinamide",
+    });
+
+    const product = await getProduct({ slug: "balancing-toner" });
+
+    expect(product.skinTypes).toEqual([{ name: "Combination", slug: "combination" }]);
+    expect(product.skinFeel).toBe("Soothed, balanced, refreshed");
+    expect(product.keyIngredients).toBe("Water (Aqua), Niacinamide");
+  });
+});
+
+describe("listRelatedProducts", () => {
+  it("asks for one category with a limit, revalidating hourly", async () => {
+    const fetchMock = stubJson({ count: 1, next: null, previous: null, results: [rawSummary] });
+
+    const page = await listRelatedProducts({ category: "lips", limit: 8 });
+
+    const url = requestedUrl(fetchMock);
+    expect(url.searchParams.toString()).toBe("category=lips&limit=8");
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ next: { revalidate: 3600 } });
+    expect(page.results[0]?.basePrice).toBe("1800.00");
+  });
+});
+
+describe("listSkinTypes", () => {
+  it("reads the facet as a bare array", async () => {
+    const fetchMock = stubJson([{ name: "Dry", slug: "dry" }]);
+
+    await expect(listSkinTypes()).resolves.toEqual([{ name: "Dry", slug: "dry" }]);
+    expect(requestedUrl(fetchMock).pathname).toBe("/api/v1/skin-types/");
   });
 });
 

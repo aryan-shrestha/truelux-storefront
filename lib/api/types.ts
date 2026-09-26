@@ -39,6 +39,11 @@ export type ShadeRef = {
   hexCode: string;
 };
 
+export type SkinTypeRef = {
+  name: string;
+  slug: string;
+};
+
 export type ProductImage = {
   url: string;
   /** An empty string means the image is decorative. */
@@ -69,6 +74,11 @@ export type Product = ProductSummary & {
   description: string;
   images: ProductImage[];
   variants: ProductVariant[];
+  skinTypes: SkinTypeRef[];
+  /** An empty string when the merchant has not written one. */
+  skinFeel: string;
+  /** An empty string when the merchant has not written one. */
+  keyIngredients: string;
 };
 
 export const ORDER_STATUSES = [
@@ -150,6 +160,7 @@ export type ProductQuery = {
   brand?: string[];
   size?: string;
   shade?: string;
+  skinType?: string[];
   minPrice?: string;
   maxPrice?: string;
   inStock?: boolean;

@@ -13,6 +13,7 @@ import type {
   ProductVariant,
   ShadeRef,
   SizeRef,
+  SkinTypeRef,
 } from "@/lib/api/types";
 
 // Terms in the catalogue request budget (docs/architecture.md). Change one only
@@ -20,6 +21,7 @@ import type {
 const LIST_REVALIDATE = 300;
 const DETAIL_REVALIDATE = 1800;
 const REFERENCE_REVALIDATE = 3600;
+const RELATED_REVALIDATE = 3600;
 
 type RawRef = { name: string; slug: string };
 type RawShade = { name: string; slug: string; hex_code: string };
@@ -45,6 +47,9 @@ type RawProduct = RawProductSummary & {
   description: string;
   images: RawImage[];
   variants: RawVariant[];
+  skin_types: RawRef[];
+  skin_feel: string;
+  key_ingredients: string;
 };
 type RawCategory = RawRef & { children: RawRef[] };
 type RawBrand = RawRef & {
@@ -53,7 +58,7 @@ type RawBrand = RawRef & {
   product_count: number;
 };
 
-function toRef(raw: RawRef): CategoryRef & BrandRef & SizeRef {
+function toRef(raw: RawRef): CategoryRef & BrandRef & SizeRef & SkinTypeRef {
   return { name: raw.name, slug: raw.slug };
 }
 
@@ -94,6 +99,9 @@ function toProduct(raw: RawProduct): Product {
     description: raw.description,
     images: raw.images.map(toImage),
     variants: raw.variants.map(toVariant),
+    skinTypes: raw.skin_types.map(toRef),
+    skinFeel: raw.skin_feel,
+    keyIngredients: raw.key_ingredients,
   };
 }
 
@@ -111,6 +119,15 @@ function toBrand(raw: RawBrand): Brand {
   };
 }
 
+function toPage(page: Page<RawProductSummary>): Page<ProductSummary> {
+  return {
+    count: page.count,
+    next: page.next,
+    previous: page.previous,
+    results: page.results.map(toSummary),
+  };
+}
+
 export async function listProducts(query: ProductQuery = {}): Promise<Page<ProductSummary>> {
   const page = await request<Page<RawProductSummary>>("/api/v1/products/", {
     revalidate: LIST_REVALIDATE,
@@ -119,6 +136,7 @@ export async function listProducts(query: ProductQuery = {}): Promise<Page<Produ
       brand: query.brand,
       size: query.size,
       shade: query.shade,
+      skin_type: query.skinType,
       min_price: query.minPrice,
       max_price: query.maxPrice,
       in_stock: query.inStock,
@@ -128,13 +146,25 @@ export async function listProducts(query: ProductQuery = {}): Promise<Page<Produ
       offset: query.offset,
     },
   });
+  return toPage(page);
+}
 
-  return {
-    count: page.count,
-    next: page.next,
-    previous: page.previous,
-    results: page.results.map(toSummary),
-  };
+/**
+ * The product page's "combine with" rail. Its own function because it keys one
+ * list per category and revalidates like reference data, not like the listing.
+ */
+export async function listRelatedProducts({
+  category,
+  limit,
+}: {
+  category: string;
+  limit: number;
+}): Promise<Page<ProductSummary>> {
+  const page = await request<Page<RawProductSummary>>("/api/v1/products/", {
+    revalidate: RELATED_REVALIDATE,
+    query: { category, limit },
+  });
+  return toPage(page);
 }
 
 export async function getProduct({ slug }: { slug: string }): Promise<Product> {
@@ -174,6 +204,13 @@ export async function listShades(): Promise<ShadeRef[]> {
 
 export async function listSizes(): Promise<SizeRef[]> {
   const raw = await request<RawRef[]>("/api/v1/sizes/", {
+    revalidate: REFERENCE_REVALIDATE,
+  });
+  return raw.map(toRef);
+}
+
+export async function listSkinTypes(): Promise<SkinTypeRef[]> {
+  const raw = await request<RawRef[]>("/api/v1/skin-types/", {
     revalidate: REFERENCE_REVALIDATE,
   });
   return raw.map(toRef);

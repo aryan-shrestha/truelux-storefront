@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 
 import { FilterRail } from "@/components/catalog/FilterRail";
 import type { ListingFacets } from "@/lib/catalog/navigation";
-import { brands, categoryTree, shades, sizes } from "@/tests/fixtures/catalog";
+import { brands, categoryTree, shades, sizes, skinTypes } from "@/tests/fixtures/catalog";
 
-const facets: ListingFacets = { categories: categoryTree, brands, shades, sizes };
+const facets: ListingFacets = { categories: categoryTree, brands, shades, sizes, skinTypes };
 
 describe("FilterRail", () => {
   it("links categories and their children, marking the applied one", () => {

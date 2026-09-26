@@ -14,7 +14,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { toggleVariants } from "@/components/ui/toggle";
 import type { ProductOrdering, ProductQuery } from "@/lib/api/types";
 import type { ListingFacets } from "@/lib/catalog/navigation";
-import { hrefWith, withBrandToggled } from "@/lib/catalog/query";
+import { hrefWith, withToggled } from "@/lib/catalog/query";
 
 // Filters are links (ADR 0004): they work by keyboard, middle-click, the back
 // button and before JavaScript loads. Fixed price bands rather than free inputs,
@@ -47,7 +47,7 @@ export function FilterRail({
   showBrands = true,
 }: FilterRailProps) {
   const href = (change: Partial<ProductQuery>) => hrefWith(query, change, { pathname });
-  const groups = ["category", "brand", "shade", "size", "price", "availability"];
+  const groups = ["category", "skin-type", "brand", "shade", "size", "price", "availability"];
 
   return (
     <div className="flex flex-col gap-6">
@@ -87,13 +87,30 @@ export function FilterRail({
           </ul>
         </FilterGroup>
 
+        {facets.skinTypes.length > 0 && (
+          <FilterGroup value="skin-type" title="Skin type">
+            <ul className="flex flex-wrap gap-2">
+              {facets.skinTypes.map((skinType) => (
+                <li key={skinType.slug}>
+                  <ToggleFilter
+                    href={href({ skinType: withToggled(query.skinType, skinType.slug) })}
+                    active={query.skinType?.includes(skinType.slug) ?? false}
+                  >
+                    {skinType.name}
+                  </ToggleFilter>
+                </li>
+              ))}
+            </ul>
+          </FilterGroup>
+        )}
+
         {showBrands && facets.brands.length > 0 && (
           <FilterGroup value="brand" title="Brand">
             <ul className="flex flex-wrap gap-2">
               {facets.brands.map((brand) => (
                 <li key={brand.slug}>
                   <ToggleFilter
-                    href={href({ brand: withBrandToggled(query, brand.slug) })}
+                    href={href({ brand: withToggled(query.brand, brand.slug) })}
                     active={query.brand?.includes(brand.slug) ?? false}
                   >
                     {brand.name}
@@ -255,6 +272,9 @@ function SortForm({ query, pathname }: { query: ProductQuery; pathname: string }
       ))}
       {query.size && <input type="hidden" name="size" value={query.size} />}
       {query.shade && <input type="hidden" name="shade" value={query.shade} />}
+      {query.skinType?.map((skinType) => (
+        <input key={skinType} type="hidden" name="skin_type" value={skinType} />
+      ))}
       {query.minPrice && <input type="hidden" name="min_price" value={query.minPrice} />}
       {query.maxPrice && <input type="hidden" name="max_price" value={query.maxPrice} />}
       {query.inStock && <input type="hidden" name="in_stock" value="true" />}

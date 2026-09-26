@@ -4,7 +4,7 @@ import type { ProductOrdering, ProductQuery } from "@/lib/api/types";
 // (ADR 0001), so anything not recognised here is dropped rather than forwarded.
 
 export const PAGE_SIZE = 25;
-const MAX_BRANDS = 10;
+const MAX_REPEATED = 10;
 
 const ORDERINGS: readonly ProductOrdering[] = [
   "name",
@@ -43,7 +43,7 @@ function slugs(values: string[]): string[] | undefined {
     if (normalised !== undefined) valid.add(normalised);
   }
   if (valid.size === 0) return undefined;
-  return [...valid].sort().slice(0, MAX_BRANDS);
+  return [...valid].sort().slice(0, MAX_REPEATED);
 }
 
 function price(value: string | undefined): string | undefined {
@@ -81,6 +81,7 @@ export function toProductQuery(raw: RawSearchParams): ProductQuery {
     brand: slugs(all(raw.brand)),
     size: slug(first(raw.size)),
     shade: slug(first(raw.shade)),
+    skinType: slugs(all(raw.skin_type)),
     minPrice: price(first(raw.min_price)),
     maxPrice: price(first(raw.max_price)),
     inStock: flag(first(raw.in_stock)),
@@ -97,6 +98,7 @@ export function toCanonicalSearch(query: ProductQuery): string {
   for (const brand of query.brand ?? []) params.append("brand", brand);
   if (query.size) params.set("size", query.size);
   if (query.shade) params.set("shade", query.shade);
+  for (const skinType of query.skinType ?? []) params.append("skin_type", skinType);
   if (query.minPrice) params.set("min_price", query.minPrice);
   if (query.maxPrice) params.set("max_price", query.maxPrice);
   if (query.inStock) params.set("in_stock", "true");
@@ -120,17 +122,19 @@ export function hasFilters(query: ProductQuery): boolean {
     query.brand ??
     query.size ??
     query.shade ??
+    query.skinType ??
     query.minPrice ??
     query.maxPrice ??
     query.inStock,
   );
 }
 
-export function withBrandToggled(query: ProductQuery, brand: string): string[] | undefined {
-  const current = query.brand ?? [];
-  const next = current.includes(brand)
-    ? current.filter((slug) => slug !== brand)
-    : [...current, brand].sort();
+/** For the repeatable filters, `?brand=` and `?skin_type=`. */
+export function withToggled(current: string[] | undefined, value: string): string[] | undefined {
+  const values = current ?? [];
+  const next = values.includes(value)
+    ? values.filter((slug) => slug !== value)
+    : [...values, value].sort();
   return next.length === 0 ? undefined : next;
 }
 

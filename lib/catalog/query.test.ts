@@ -7,7 +7,7 @@ import {
   toCanonicalSearch,
   toProductQuery,
   toRequestedSearch,
-  withBrandToggled,
+  withToggled,
 } from "@/lib/catalog/query";
 
 describe("toProductQuery", () => {
@@ -130,8 +130,45 @@ describe("brand filters", () => {
   it("toggles a brand on and off", () => {
     const query = toProductQuery({ brand: "lumiere" });
 
-    expect(withBrandToggled(query, "verde")).toEqual(["lumiere", "verde"]);
-    expect(withBrandToggled(query, "lumiere")).toBeUndefined();
+    expect(withToggled(query.brand, "verde")).toEqual(["lumiere", "verde"]);
+    expect(withToggled(query.brand, "lumiere")).toBeUndefined();
+  });
+});
+
+describe("skin type filters", () => {
+  it("reads ?skin_type= as a repeatable filter, sorted and deduplicated", () => {
+    expect(toProductQuery({ skin_type: ["oily", "dry", "oily"] }).skinType).toEqual([
+      "dry",
+      "oily",
+    ]);
+    expect(toProductQuery({ skin_type: "Sensitive" }).skinType).toEqual(["sensitive"]);
+  });
+
+  it("drops a value that is not a slug, and the whole filter when none is left", () => {
+    expect(toProductQuery({ skin_type: ["dry", "<script>"] }).skinType).toEqual(["dry"]);
+    expect(toProductQuery({ skin_type: "" }).skinType).toBeUndefined();
+  });
+
+  it("caps the number of skin types so a URL cannot mint unbounded cache keys", () => {
+    const many = Array.from({ length: 15 }, (_, index) => `type-${String(index).padStart(2, "0")}`);
+
+    expect(toProductQuery({ skin_type: many }).skinType).toHaveLength(10);
+  });
+
+  it("writes skin types after the shade in the canonical search, and counts as a filter", () => {
+    const query = toProductQuery({ skin_type: ["oily", "dry"], shade: "ivory", brand: "verde" });
+
+    expect(toCanonicalSearch(query)).toBe("brand=verde&shade=ivory&skin_type=dry&skin_type=oily");
+    expect(hasFilters(toProductQuery({ skin_type: "dry" }))).toBe(true);
+  });
+
+  it("toggles a skin type on and off, returning to page one", () => {
+    const query = toProductQuery({ skin_type: "dry", offset: "25" });
+
+    expect(hrefWith(query, { skinType: withToggled(query.skinType, "oily") })).toBe(
+      "/products?skin_type=dry&skin_type=oily",
+    );
+    expect(hrefWith(query, { skinType: withToggled(query.skinType, "dry") })).toBe("/products");
   });
 });
 
