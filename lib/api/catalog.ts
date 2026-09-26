@@ -18,7 +18,7 @@ import type {
 
 // Terms in the catalogue request budget (docs/architecture.md). Change one only
 // after redoing that arithmetic.
-const LIST_REVALIDATE = 300;
+const LIST_REVALIDATE = 600;
 const DETAIL_REVALIDATE = 1800;
 const REFERENCE_REVALIDATE = 3600;
 const RELATED_REVALIDATE = 3600;

@@ -1,6 +1,6 @@
 # Architecture
 
-Last updated: 2026-09-25
+Last updated: 2026-09-26
 
 This document describes the current architecture of the storefront.
 
@@ -81,7 +81,7 @@ app/
 components/
     ui/                     shadcn/ui components (ADR 0009), plus Price
     layout/                 Header, Footer, MobileNav, CartButton
-    catalog/                ProductCard, ProductListing, FilterRail, VariantPicker, Gallery
+    catalog/                ProductCard, ProductListing, FilterPanel, VariantPicker, Gallery
     brands/                 BrandCard
     home/                   the home page sections
     cart/
@@ -247,9 +247,10 @@ policy is incomplete.
 
 | Read | `revalidate` | Why |
 | --- | --- | --- |
-| `GET /categories/`, `/brands/`, `/shades/`, `/sizes/` | 3600 | Navigation and filter facets. They change when the merchant restructures the shop |
+| `GET /categories/`, `/brands/`, `/shades/`, `/sizes/`, `/skin-types/` | 3600 | Navigation, the mega-menu and filter facets. They change when the merchant restructures the shop |
 | `GET /brands/{slug}/` | 3600 | The brand page header |
-| `GET /products/` | 300 | The listing. Five minutes is short enough that a new product appears promptly |
+| `GET /products/` | 600 | The listing and the home rails. Ten minutes is still prompt for a new product, and every menu destination is now a hot key |
+| `GET /products/?category=…&limit=9` (related) | 3600 | The product page's "Combine with" rail; a suggestion an hour stale is harmless |
 | `GET /products/{slug}/` | 1800 | Detail. `in_stock` can be up to thirty minutes stale, which is acceptable because it is not authoritative anyway |
 
 **The revalidation numbers are a throttle budget, not a taste.** The catalogue scope
@@ -263,26 +264,39 @@ every request leaves from one address. The worst case is
 upstream calls per hour  =  Σ (hot cache keys × 3600 / revalidate)
 ```
 
-At the current numbers, for a hundred products and ten brands:
+At the current numbers, for a hundred products, ten brands, the seeded category
+tree (five roots, seventeen children) and six skin types:
 
 ```text
-four reference lists (categories, brands, shades, sizes)     4 × 1   =   4
+five reference lists (categories, brands, shades, sizes,     5 × 1   =   5
+  skin types)
 ten brand detail keys                                        10 × 1   =  10
-ten hot listing keys, ten brand listings, the home page's    21 × 12  = 252
-  own (ordering=-created_at&limit=8)
-the sitemap's one key per hundred products                    1 × 12  =  12
+listing keys reachable in one click: 22 categories from      42 × 6   = 252
+  the mega-menu and band, 6 skin types, the unfiltered
+  listing, new-in, ten brand listings, the home page's
+  two rails (newest, first root category)
+the sitemap's one key per hundred products                    1 × 6   =   6
+related-product keys, one per category a product sits in     20 × 1   =  20
 a hundred product detail keys                               100 × 2   = 200
                                                                         ----
-                                                                        478 / 600
+                                                                        493 / 600
 ```
 
 Revalidation is lazy, so the real figure is far lower, but the worst case is what
 matters. The detail read is 1800 seconds rather than 900 because, at 900, the brand
 listings and facet reads would take the sum past the ceiling.
 
-**At roughly 160 products, or with many more brands, this budget breaks.** The fix
-is to lengthen `revalidate` on the detail read or to raise `DJANGO_THROTTLE_CATALOG`
-on the backend, a deliberate choice either way, made before the 429s appear.
+**The listing read went from 300 to 600 seconds on 2026-09-26.** The previous sum
+counted "ten hot listing keys"; the mega-menu and the category band make every
+category and skin type a one-click listing, which is 42 keys, and at 300 seconds
+the total was 751. The related read is its own function at 3600 for the same
+reason: at the listing's interval its twenty keys alone would cost 120.
+
+**At roughly 150 products, or with many more categories or brands, this budget
+breaks.** Each product adds two calls an hour and each category or brand six. The
+fix is to lengthen `revalidate` on the detail or listing read, or to raise
+`DJANGO_THROTTLE_CATALOG` on the backend, a deliberate choice either way, made
+before the 429s appear.
 
 Two rules follow from that arithmetic:
 
@@ -468,7 +482,7 @@ components sit rather than by what they look like.
   states its own `sizes` and aspect ratio. Without them the grid reflows as photos
   arrive, which is the single largest layout-shift risk in the store.
 - **Focus, keyboard and contrast are requirements, not review comments.** The
-  variant picker, the filter rail and the cart are the three places where a
+  variant picker, the filter panel and the cart are the three places where a
   hand-rolled control can quietly become unusable by keyboard.
 
 ---
