@@ -245,7 +245,7 @@ Tailwind v4, configured entirely in CSS, with **shadcn/ui** as the only componen
 library ([ADR 0009](decisions/0009-shadcn-ui-is-the-component-library.md)).
 
 The theme is shadcn's CSS variables (`--background`, `--primary`, `--muted`, …)
-declared once in `app/globals.css`, for light and for dark, and mapped to Tailwind
+declared once in `app/globals.css`, light only, and mapped to Tailwind
 colours under `@theme inline`. The TrueLux values and their roles are recorded in
 [features/design-system.md](features/design-system.md).
 
@@ -274,9 +274,9 @@ Conventions:
 - **No inline `style`**, except for a value that is computed at runtime and cannot be
   a class, such as a swatch colour from the API.
 - Class lists are ordered by Prettier's Tailwind plugin. Do not hand-order them.
-- Dark mode is `prefers-color-scheme` only: `@custom-variant dark` is a media query,
-  and the variables are redefined once in a `@media (prefers-color-scheme: dark)`
-  block. There is no theme toggle and no `.dark` class.
+- **Light theme only** ([ADR 0012](decisions/0012-the-storefront-is-light-only.md)).
+  No dark palette, no `dark:` utilities; strip them from any newly added shadcn
+  component, because Tailwind's built-in `dark` variant follows the operating system.
 - **`sr-only` is not a substitute for a label.** It is for text that is genuinely
   redundant visually, not for skipping the work.
 

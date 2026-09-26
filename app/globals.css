@@ -2,9 +2,6 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* Dark mode follows the operating system, with no toggle (design-system.md). */
-@custom-variant dark (@media (prefers-color-scheme: dark));
-
 :root {
   color-scheme: light;
 
@@ -44,41 +41,6 @@
   /* How far below the viewport's top a sticky element sits: the header's height
      while it shows, nothing once it has slid away (HeaderFrame sets the attribute). */
   --header-offset: 4rem;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-
-    --background: #1b1b1a;
-    --foreground: #ecebe6;
-    --card: #232322;
-    --card-foreground: #ecebe6;
-    --popover: #1b1b1a;
-    --popover-foreground: #ecebe6;
-    --primary: #ecebe6;
-    --primary-foreground: #1b1b1a;
-    --secondary: #2e2d2a;
-    --secondary-foreground: #ecebe6;
-    --muted: #252523;
-    --muted-foreground: #a9a8a1;
-    --accent: #2e2d2a;
-    --accent-foreground: #ecebe6;
-    --destructive: #e0776b;
-    --border: #3a3936;
-    --input: #7d7c76;
-    --ring: #ecebe6;
-    --ink: #111110;
-    --ink-foreground: #ecebe6;
-    --ink-muted: #a9a8a1;
-    --scrim: rgb(0 0 0 / 0.5);
-
-    --chart-1: #ecebe6;
-    --chart-2: #a9a8a1;
-    --chart-3: #7d7c76;
-    --chart-4: #4d4c48;
-    --chart-5: #2e2d2a;
-  }
 }
 
 @media (min-width: 48rem) {
@@ -160,7 +122,7 @@
     @apply font-normal text-balance;
   }
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-ring;
+    @apply outline-ring outline-2 outline-offset-2;
   }
 }
 

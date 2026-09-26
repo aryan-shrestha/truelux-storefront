@@ -19,7 +19,7 @@ What is included in this implementation?
 
 - `shadcn init` (Radix base, CSS variables, Tailwind v4), with `components.json`
   committed
-- Theme tokens in `app/globals.css` as shadcn variables, in light and dark,
+- Theme tokens in `app/globals.css` as shadcn variables, light only,
   expressing the TrueLux direction (ADR 0010)
 - The inherited `components/ui/*` replaced by shadcn components
 - Further components added as features need them

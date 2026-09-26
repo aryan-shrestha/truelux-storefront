@@ -22,7 +22,7 @@ What is included in this implementation?
   the client's mockups in `docs/design/`, re-expressed as shadcn theme variables.
   A near-white ground, charcoal text and primary, a greige and a stone band, square
   controls, thin rules
-- The token set as shadcn CSS variables in `app/globals.css`, light and dark
+- The token set as shadcn CSS variables in `app/globals.css`, light theme only
 - Two typefaces through `next/font`
 - The component vocabulary, which is shadcn/ui
   ([ADR 0009](../decisions/0009-shadcn-ui-is-the-component-library.md)); see
@@ -30,7 +30,7 @@ What is included in this implementation?
 
 What is explicitly outside the scope?
 
-- A theme toggle. Dark mode follows `prefers-color-scheme` only.
+- Dark mode and a theme toggle. The storefront is light only ([ADR 0012](../decisions/0012-the-storefront-is-light-only.md)).
 - Real photography. Imagery is generated SVG placeholder art in `public/art/`; the
   mockups' embedded photographs are another brand's assets and are not used.
 
@@ -51,35 +51,34 @@ for the page-by-page mapping and deviations.
 Defined once in `app/globals.css` and mapped to Tailwind colours under
 `@theme inline`. No component holds a hex value.
 
-| Token | Light | Dark | Role |
-| --- | --- | --- | --- |
-| `--background` | `#fdfdfb` near-white | `#1b1b1a` | Page |
-| `--foreground` | `#333333` charcoal | `#ecebe6` | Text, the header's bottom rule, the open-menu bar |
-| `--card` | `#ffffff` | `#232322` | Cards, the routine steps |
-| `--popover` | `#fdfdfb` | `#1b1b1a` | Sheets, the mega-menu |
-| `--primary` | `#333333` | `#ecebe6` | Primary buttons (Add to bag, Checkout), the focus ring |
-| `--primary-foreground` | `#ffffff` | `#1b1b1a` | Text on primary |
-| `--secondary` | `#e8e6dd` stone | `#2e2d2a` | The stone bands: About, the product care panel |
-| `--muted` | `#f3f2ee` greige | `#252523` | The greige bands (category band, brands, routine), image tiles, skeletons |
-| `--muted-foreground` | `#66655f` | `#a9a8a1` | Secondary text |
-| `--accent` | `#f3f2ee` | `#2e2d2a` | Hover backgrounds |
-| `--destructive` | `#a3392f` | `#e0776b` | Checkout and lookup failures |
-| `--border` | `#d6d5cf` | `#3a3936` | Hairlines |
-| `--input` | `#8a8983` | `#7d7c76` | Control borders and the outlined CTA, 3:1 against the page |
-| `--ring` | `#333333` | `#ecebe6` | Focus |
-| `--ink`, `--ink-foreground` | `#333333`, `#ffffff` | `#111110`, `#ecebe6` | The announcement bar and the footer |
-| `--ink-muted` | `#c9c8c2` | `#a9a8a1` | Secondary text on ink |
-| `--on-image` | `#ffffff` | `#ffffff` | Text and outlined buttons over imagery |
-| `--scrim` | `rgb(40 36 30 / 0.45)` | `rgb(0 0 0 / 0.5)` | The gradient behind text on the hero and listing images |
-| `--chart-1`…`5` | charcoal to stone | lighter equivalents | Reserved for the admin's charts |
+| Token | Value | Role |
+| --- | --- | --- |
+| `--background` | `#fdfdfb` near-white | Page |
+| `--foreground` | `#333333` charcoal | Text, the header's bottom rule, the open-menu bar |
+| `--card` | `#ffffff` | Cards, the routine steps |
+| `--popover` | `#fdfdfb` | Sheets, the mega-menu |
+| `--primary` | `#333333` | Primary buttons (Add to bag, Checkout), the focus ring |
+| `--primary-foreground` | `#ffffff` | Text on primary |
+| `--secondary` | `#e8e6dd` stone | The stone bands: About, the product care panel |
+| `--muted` | `#f3f2ee` greige | The greige bands (category band, brands, routine), image tiles, skeletons |
+| `--muted-foreground` | `#66655f` | Secondary text |
+| `--accent` | `#f3f2ee` | Hover backgrounds |
+| `--destructive` | `#a3392f` | Checkout and lookup failures |
+| `--border` | `#d6d5cf` | Hairlines |
+| `--input` | `#8a8983` | Control borders and the outlined CTA, 3:1 against the page |
+| `--ring` | `#333333` | Focus |
+| `--ink`, `--ink-foreground` | `#333333`, `#ffffff` | The announcement bar and the footer |
+| `--ink-muted` | `#c9c8c2` | Secondary text on ink |
+| `--on-image` | `#ffffff` | Text and outlined buttons over imagery |
+| `--scrim` | `rgb(40 36 30 / 0.45)` | The gradient behind text on the hero and listing images |
+| `--chart-1`…`5` | charcoal to stone | Reserved for the admin's charts |
 
 Removed: `--gold` and `--shade-1`…`8` (the old accent and the hero's shade ribbon).
 
 Measured contrast (WCAG): foreground on background 12.4:1; muted-foreground on
 background 5.7:1, on greige 5.2:1, on stone 4.7:1; ink-foreground on ink 12.6:1;
 ink-muted on ink 7.5:1; input border on background 3.4:1 and on greige 3.1:1;
-destructive on background 6.5:1. Dark: foreground 14.4:1, muted-foreground 7.2:1,
-input 4.1:1.
+destructive on background 6.5:1.
 
 ### Type
 
@@ -115,12 +114,11 @@ Only in response to the customer: sheet, accordion and mega-menu transitions, th
 image scale on product cards. The hero carousel does not autoplay. Everything stops
 under `prefers-reduced-motion`.
 
-### Dark mode
+### Light only
 
-`@custom-variant dark (@media (prefers-color-scheme: dark))` and one media block
-redefining the variables. The mockups have no dark mode; the dark set keeps their
-structure (charcoal and stone become near-black and warm greys). The SVG art keeps
-its light palette.
+There is no dark palette and no `dark:` utility anywhere. `:root` sets
+`color-scheme: light`, so native controls and scrollbars stay light when the
+operating system is dark ([ADR 0012](../decisions/0012-the-storefront-is-light-only.md)).
 
 ---
 
@@ -133,21 +131,6 @@ its light palette.
 ---
 
 ## Decisions
-
-### Decision: dark mode is a media query, not shadcn's `.dark` class
-
-**Decision**
-
-The `dark` variant is `prefers-color-scheme`, and the variables are redefined in a
-media block.
-
-**Reason**
-
-No theme provider or client state is needed, and the storefront has neither.
-
-**Consequence**
-
-shadcn's `dark:` utilities inside the generated components work unchanged.
 
 ### Decision: brand tailoring lives in `components/ui`
 

@@ -144,7 +144,6 @@ Nothing on the page claims something the shop does not have.
 - Journal links are searches ("spf", "serum", "foundation", "cleans"), which never
   400, unlike a guessed category or skin-type slug.
 - The category read is the header's, deduplicated within the render.
-- The SVG art keeps its light palette in dark mode.
 
 ---
 
