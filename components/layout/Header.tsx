@@ -7,11 +7,13 @@ import { SearchSheet } from "@/components/layout/SearchSheet";
 import { ShopMenu } from "@/components/layout/ShopMenu";
 import { navigationCategories, navigationSkinTypes, shopMenu } from "@/lib/catalog/navigation";
 import { env } from "@/lib/env";
+import { shippingNote } from "@/lib/shipping/note";
 
 export async function Header() {
-  const [categories, skinTypes] = await Promise.all([
+  const [categories, skinTypes, note] = await Promise.all([
     navigationCategories(),
     navigationSkinTypes(),
+    shippingNote(),
   ]);
   const columns = shopMenu(categories, skinTypes);
 
@@ -33,7 +35,7 @@ export async function Header() {
 
         <div className="flex items-center justify-end">
           <SearchSheet />
-          <CartButton />
+          <CartButton shippingNote={note} />
         </div>
       </div>
     </HeaderFrame>

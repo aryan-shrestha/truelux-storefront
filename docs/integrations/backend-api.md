@@ -2,7 +2,7 @@
 
 Status: Reference
 
-Last updated: 2026-09-26
+Last updated: 2026-09-27
 
 ---
 
@@ -26,6 +26,7 @@ Transcribed from, and verified against:
 
 ```text
 back-end/docs/features/{brands,shades-and-sizes,skin-types,admin-api}.md
+back-end/docs/features/checkout-quote-and-shipping.md   (implemented 2026-09-27)
 back-end/docs/decisions/0011-cash-on-delivery-only.md
 back-end/config/urls.py
 back-end/config/settings/base.py
@@ -456,6 +457,64 @@ Errors:
 **A failed checkout is all or nothing**: no partial order is ever created, and no
 stock moves.
 
+Since the quote landed, the placed order's figures come from the same backend
+pricing function as the quote, so they equal the quote for the same cart and
+district unless prices or shipping settings changed in between.
+
+### `POST /api/v1/checkout/quote/`
+
+Public. Throttle scope **`quote`**, 600/hour per IP, separate from `checkout`, so
+quoting never spends the budget for placing an order. Writes nothing, sends no
+email.
+
+```json
+{ "items": [{ "variant_id": "…", "quantity": 2 }], "district": "Lalitpur" }
+```
+
+`district` is optional; `""` and `null` are treated exactly as omitting it. `items`
+follows the checkout rules above.
+
+Response `200`:
+
+```json
+{
+  "subtotal": "6400.00",
+  "shipping_fee": "150.00",
+  "discount": "0.00",
+  "total": "6550.00",
+  "free_shipping_remaining": "1600.00",
+  "lines": [
+    { "variant_id": "…", "quantity": 2, "unit_price": "3200.00", "line_total": "6400.00" }
+  ]
+}
+```
+
+| Field | Rule |
+| --- | --- |
+| `shipping_fee` | `0.00` when a threshold is set and the subtotal reaches it; otherwise the district's fee. **`null` without a district**, unless the threshold is reached |
+| `total` | `null` exactly when `shipping_fee` is |
+| `discount` | always `"0.00"` until discount codes exist |
+| `free_shipping_remaining` | threshold minus subtotal while above zero; `null` with no threshold or once reached |
+
+Errors are identical to `POST /checkout/`: `400 validation_error`,
+`422 variant_unavailable`, `422 insufficient_stock`, `429 throttled`. Variants are
+resolved without locks, so a quote can succeed and the order still fail.
+
+### `GET /api/v1/shipping/`
+
+Public, `catalog` throttle scope, cacheable.
+
+```json
+{ "inside_valley_fee": "150.00", "outside_valley_fee": "250.00", "free_shipping_threshold": "8000.00" }
+```
+
+`free_shipping_threshold` is `null` when the merchant has not set one. The response
+carries **no `Cache-Control`**: the storefront's server-side `revalidate` is the only
+caching it gets. The merchant
+edits these through the staff API (`/api/v1/admin/settings/shipping/`); they
+replace the backend's `SHIPPING_FEE_*` env vars (backend ADR 0017). The storefront
+no longer carries its own shipping copy: `NEXT_PUBLIC_SHIPPING_NOTE` was removed.
+
 ---
 
 ## Orders
@@ -550,9 +609,10 @@ rather than fallbacks the code would use:
 
 | Scope | Default | Applies to |
 | --- | --- | --- |
-| `catalog` | 600/hour | products list and detail, categories, brands, shades, sizes |
+| `catalog` | 600/hour | products list and detail, categories, brands, shades, sizes, `/shipping/` |
 | `anon` | 60/hour | order detail by access token, and anything with no scope of its own |
 | `checkout` | 30/hour | `POST /checkout/` |
+| `quote` | 600/hour | `POST /checkout/quote/` |
 | `order_lookup` | 20/hour | `POST /orders/lookup/` |
 
 The catalogue scope is counted **separately** from `anon`, so browsing does not
@@ -639,8 +699,9 @@ first.
   children, and the tree is only one level deep, so there is nothing deeper to
   reach.
 - **No cursor pagination**, only limit/offset.
-- **No discounts, coupons, gift cards, sale prices, or tax.** `base_price` is the
-  only price concept, and `shipping_fee` the only addition to it.
+- **No discounts, coupons, gift cards, sale prices, or tax** yet. `base_price` is
+  the only price concept and `shipping_fee` the only addition to it; the quote's
+  `discount` is always `"0.00"`.
 - **No product reviews, ratings, related products, or recommendations.** The
   storefront's "combine with" rail is simply other products in the same category.
 - **No wishlist, no restock notification, no abandoned-cart anything.**

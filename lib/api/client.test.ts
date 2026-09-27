@@ -85,6 +85,20 @@ describe("request", () => {
     expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ cache: "no-store", method: "POST" });
   });
 
+  it("passes an abort signal through", async () => {
+    const fetchMock = stubFetch(jsonResponse({}));
+    const controller = new AbortController();
+
+    await request("/api/v1/checkout/quote/", {
+      cache: "no-store",
+      method: "POST",
+      body: {},
+      signal: controller.signal,
+    });
+
+    expect(fetchMock.mock.calls[0]?.[1]?.signal).toBe(controller.signal);
+  });
+
   it("throws an ApiError carrying the code for a non-2xx", async () => {
     stubFetch(
       jsonResponse({ error: { code: "not_found", message: "Not found.", details: {} } }, 404),

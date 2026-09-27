@@ -20,13 +20,21 @@ type DistrictPickerProps = {
   name: string;
   invalid: boolean;
   describedBy: string | undefined;
+  value: string | null;
+  onChange: (district: string) => void;
 };
 
 // Searchable, because 77 districts is too long to scroll; and constrained to the
 // list, because a misspelt valley district is silently charged the outside rate.
-export function DistrictPicker({ id, name, invalid, describedBy }: DistrictPickerProps) {
+export function DistrictPicker({
+  id,
+  name,
+  invalid,
+  describedBy,
+  value: district,
+  onChange,
+}: DistrictPickerProps) {
   const [open, setOpen] = useState(false);
-  const [district, setDistrict] = useState<string | null>(null);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -57,7 +65,7 @@ export function DistrictPicker({ id, name, invalid, describedBy }: DistrictPicke
                   value={option}
                   data-checked={option === district}
                   onSelect={() => {
-                    setDistrict(option);
+                    onChange(option);
                     setOpen(false);
                   }}
                 >

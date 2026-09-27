@@ -2,7 +2,7 @@
 
 Status: Implemented
 
-Last updated: 2026-09-26
+Last updated: 2026-09-27
 
 ---
 
@@ -20,7 +20,7 @@ What is included in this implementation?
 
 - `app/layout.tsx`: fonts, root metadata, `CartProvider`, skip link, announcement
   bar, header, footer
-- `components/layout/`: `Header`, `HeaderFrame`, `ShopMenu`, `MobileNav`,
+- `components/layout/`: `AnnouncementBar`, `Header`, `HeaderFrame`, `ShopMenu`, `MobileNav`,
   `SearchSheet`, `SearchForm`, `CartButton`, `Footer`, `PageShell`,
   `SectionHeading`, `site-links.ts`, `promises.ts`
 - `app/error.tsx`, `app/not-found.tsx`, `app/loading.tsx`
@@ -45,12 +45,14 @@ render on the server (ADR 0002). The Shop menu is built from `/categories/` and
 
 ## Implemented
 
-- `app/layout.tsx` — Noto Sans and Belleza via `next/font`; the announcement bar, a
-  dark `bg-ink` strip carrying `env.shippingNote` (no invented offers); root
+- `app/layout.tsx` — Noto Sans and Belleza via `next/font`; `AnnouncementBar`, a
+  dark `bg-ink` strip carrying `shippingNote()` — "Free shipping over Rs 8,000 ·
+  Cash on delivery", the two fees without a threshold, or "Cash on delivery" when
+  `/shipping/` cannot be read (see [checkout-quote.md](checkout-quote.md)); root
   metadata as before.
 - `components/layout/Header.tsx` — a Server Component inside `HeaderFrame`: reads
   categories and skin types in parallel, builds the columns with `shopMenu()`, and
-  lays out a three-column grid: the menus on the left, the wordmark centred (bold,
+  reads the shipping copy for the bag, and lays out a three-column grid: the menus on the left, the wordmark centred (bold,
   tracked, uppercase, `translate="no"`), search and the bag on the right. 64px tall,
   80px from `md`, with a charcoal rule underneath.
 - `components/layout/ShopMenu.tsx` — shadcn `NavigationMenu`, from `md`: a Shop
@@ -66,8 +68,9 @@ render on the server (ADR 0002). The Shop menu is built from `/categories/` and
 - `components/layout/SearchSheet.tsx` + `SearchForm.tsx` — the header's search icon
   opens a top `Sheet` holding a `next/form` GET form to `/products?search=`, which
   navigates client-side and closes the sheet.
-- `components/layout/CartButton.tsx` — unchanged behaviour; the count now sits as
-  text beside the bag icon, as in the design, instead of a badge.
+- `components/layout/CartButton.tsx` — the count sits as text beside the bag icon,
+  as in the design; passes the server's shipping copy to the bag sheet, which
+  quotes the bag while open (checkout-quote.md).
 - `components/layout/Footer.tsx` — `bg-ink`: the wordmark and one line about the
   shop, then Shop, Categories (the root categories) and Orders columns from `md`,
   and the same columns as a plus/minus `Accordion` below `md`; the year.
@@ -170,6 +173,7 @@ None of its own beyond the boundaries.
 ```text
 GET /api/v1/categories/    server, revalidate 3600 (navigationCategories, degrades to [])
 GET /api/v1/skin-types/    server, revalidate 3600 (navigationSkinTypes, degrades to [])
+GET /api/v1/shipping/      server, revalidate 3600 (shippingNote, degrades to "Cash on delivery")
 ```
 
 ---
@@ -200,6 +204,8 @@ GET /api/v1/skin-types/    server, revalidate 3600 (navigationSkinTypes, degrade
 - `lib/catalog/navigation.test.ts` — `shopMenu`: a column per root opening with
   Shop all, the skin-type column after the first root with `?skin_type=` links, a
   childless root, no skin-type column when the API lists none; `findCategory`.
+- `lib/shipping/note.test.ts` — the announcement copy with and without a
+  threshold, and a failed read.
 - `components/layout/CartButton.test.tsx` — the count after hydration, the announced
   name, no zero, the sheet on a plain click, a modified click left to the browser,
   focus returned on close.

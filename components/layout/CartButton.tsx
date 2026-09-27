@@ -11,7 +11,7 @@ import { useCart } from "@/lib/cart/use-cart";
 
 // A real link to /cart, so it works without JavaScript and in a new tab; only a
 // plain click opens the sheet.
-export function CartButton() {
+export function CartButton({ shippingNote }: { shippingNote: string }) {
   const { count, ready } = useCart();
   const [open, setOpen] = useState(false);
   const linkRef = useRef<HTMLAnchorElement>(null);
@@ -56,7 +56,7 @@ export function CartButton() {
               {hasCount ? `Your bag (${count})` : "Your bag"}
             </SheetTitle>
           </SheetHeader>
-          <CartDrawer onNavigate={() => setOpen(false)} />
+          <CartDrawer shippingNote={shippingNote} onNavigate={() => setOpen(false)} />
         </SheetContent>
       </Sheet>
     </>

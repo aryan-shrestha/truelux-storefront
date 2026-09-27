@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatPrice } from "@/lib/format/money";
+import { formatPrice, isZeroAmount } from "@/lib/format/money";
 
 describe("formatPrice", () => {
   it("groups thousands the way a Nepali price is written", () => {
@@ -30,5 +30,15 @@ describe("formatPrice", () => {
 
   it("formats zero", () => {
     expect(formatPrice("0.00")).toBe("Rs 0");
+  });
+});
+
+describe("isZeroAmount", () => {
+  it.each(["0.00", "0", "00.0"])("treats %s as zero", (amount) => {
+    expect(isZeroAmount(amount)).toBe(true);
+  });
+
+  it.each(["0.01", "150.00", "10", ""])("does not treat %s as zero", (amount) => {
+    expect(isZeroAmount(amount)).toBe(false);
   });
 });

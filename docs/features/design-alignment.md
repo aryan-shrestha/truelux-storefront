@@ -84,7 +84,7 @@ rule. All inside `components/ui/*` and `app/globals.css`.
 
 ### Shell
 
-- Announcement bar: the dark strip, carrying `NEXT_PUBLIC_SHIPPING_NOTE`.
+- Announcement bar: the dark strip, carrying the shipping copy from `GET /shipping/` (checkout-quote.md).
 - Header (80px, charcoal bottom rule): Shop, Brands, Journal, About on the left;
   the wordmark centred; search and the bag with its count on the right. Matches
   `Landing-desktop-1.png` and `Menu dropdown- desktop.png` in height, spacing and

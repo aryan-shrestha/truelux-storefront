@@ -147,6 +147,29 @@ export type CheckoutResult = {
   total: Money;
 };
 
+export type QuoteInput = {
+  items: CheckoutItem[];
+  district?: string;
+};
+
+export type CartQuote = {
+  subtotal: Money;
+  /** Null when no district was sent, unless the free-shipping threshold is reached. */
+  shippingFee: Money | null;
+  discount: Money;
+  /** Null exactly when `shippingFee` is. */
+  total: Money | null;
+  /** Null when no threshold is set or it has been reached. */
+  freeShippingRemaining: Money | null;
+};
+
+export type ShippingSettings = {
+  insideValleyFee: Money;
+  outsideValleyFee: Money;
+  /** Null when the merchant offers no free shipping. */
+  freeShippingThreshold: Money | null;
+};
+
 export type ProductOrdering =
   "name" | "-name" | "base_price" | "-base_price" | "created_at" | "-created_at";
 

@@ -5,7 +5,7 @@
  *
  * **Each field is a getter, so a variable is validated when it is read rather
  * than when this module loads.** A client component importing `env` for the
- * shipping note would otherwise evaluate `API_BASE_URL` too, which is
+ * brand name would otherwise evaluate `API_BASE_URL` too, which is
  * server-only and therefore `undefined` in the browser bundle — the whole page
  * fails, and it fails at import, which is hard to trace back to the one field
  * nobody meant to touch.
@@ -44,9 +44,5 @@ export const env = {
   /** Public. The wordmark and every page title. Configuration, not a constant (ADR 0007). */
   get brandName(): string {
     return required("NEXT_PUBLIC_BRAND_NAME", process.env.NEXT_PUBLIC_BRAND_NAME);
-  },
-  /** Public. Display copy only; the backend computes the authoritative fee. */
-  get shippingNote(): string {
-    return required("NEXT_PUBLIC_SHIPPING_NOTE", process.env.NEXT_PUBLIC_SHIPPING_NOTE);
   },
 } as const;

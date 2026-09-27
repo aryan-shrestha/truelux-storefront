@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Belleza, Noto_Sans } from "next/font/google";
 
+import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { CartProvider } from "@/lib/cart/use-cart";
@@ -50,9 +51,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           >
             Skip to content
           </a>
-          <p className="bg-ink px-4 py-3 text-center text-sm text-ink-foreground">
-            {env.shippingNote}
-          </p>
+          <AnnouncementBar />
           <Header />
           <main id="main" className="flex-1">
             {children}

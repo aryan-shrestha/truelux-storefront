@@ -1,9 +1,11 @@
 import { request } from "@/lib/api/client";
 import type {
+  CartQuote,
   CheckoutInput,
   CheckoutResult,
   Order,
   OrderItem,
+  QuoteInput,
   ShippingAddress,
 } from "@/lib/api/types";
 
@@ -110,6 +112,39 @@ export async function submitCheckout(input: CheckoutInput): Promise<CheckoutResu
     subtotal: raw.subtotal,
     shippingFee: raw.shipping_fee,
     total: raw.total,
+  };
+}
+
+/** Exported for fixtures, so a stubbed response breaks when the wire shape does. */
+export type RawQuote = {
+  subtotal: string;
+  shipping_fee: string | null;
+  discount: string;
+  total: string | null;
+  free_shipping_remaining: string | null;
+  lines: Array<{ variant_id: string; quantity: number; unit_price: string; line_total: string }>;
+};
+
+export async function quoteCart(
+  { items, district }: QuoteInput,
+  { signal }: { signal?: AbortSignal } = {},
+): Promise<CartQuote> {
+  const raw = await request<RawQuote>("/api/v1/checkout/quote/", {
+    method: "POST",
+    cache: "no-store",
+    signal,
+    body: {
+      items: items.map((item) => ({ variant_id: item.variantId, quantity: item.quantity })),
+      ...(district === undefined ? {} : { district }),
+    },
+  });
+
+  return {
+    subtotal: raw.subtotal,
+    shippingFee: raw.shipping_fee,
+    discount: raw.discount,
+    total: raw.total,
+    freeShippingRemaining: raw.free_shipping_remaining,
   };
 }
 
