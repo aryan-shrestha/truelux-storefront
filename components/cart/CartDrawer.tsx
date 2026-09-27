@@ -3,16 +3,24 @@
 import Link from "next/link";
 import type { MouseEvent } from "react";
 
+import { BagSummary } from "@/components/cart/BagSummary";
 import { CartLine } from "@/components/cart/CartLine";
 import { CartLinesSkeleton } from "@/components/cart/CartLinesSkeleton";
 import { EmptyBag } from "@/components/cart/EmptyBag";
+import { useQuote } from "@/components/cart/use-quote";
 import { Button } from "@/components/ui/button";
 import { SheetFooter } from "@/components/ui/sheet";
 import { useCart } from "@/lib/cart/use-cart";
-import { env } from "@/lib/env";
 
-export function CartDrawer({ onNavigate }: { onNavigate: () => void }) {
+export function CartDrawer({
+  shippingNote,
+  onNavigate,
+}: {
+  shippingNote: string;
+  onNavigate: () => void;
+}) {
   const { lines, ready } = useCart();
+  const quote = useQuote(lines, null);
 
   // Any link in the sheet leaves the page it was opened over, so the sheet closes with it.
   function handleClickCapture(event: MouseEvent<HTMLDivElement>) {
@@ -35,12 +43,15 @@ export function CartDrawer({ onNavigate }: { onNavigate: () => void }) {
         <>
           <ul className="min-h-0 flex-1 overflow-y-auto border-t px-4">
             {lines.map((line) => (
-              <CartLine key={line.variantId} line={line} />
+              <CartLine
+                key={line.variantId}
+                line={line}
+                problem={quote.status === "problems" ? quote.problems[line.variantId] : undefined}
+              />
             ))}
           </ul>
           <SheetFooter className="border-t">
-            <p className="text-sm">Shipping and the total are confirmed at checkout.</p>
-            <p className="text-sm text-muted-foreground">{env.shippingNote}</p>
+            <BagSummary quote={quote} shippingNote={shippingNote} />
             <Button asChild className="mt-2 w-full">
               <Link href="/checkout">Checkout</Link>
             </Button>

@@ -86,7 +86,6 @@ connection.
 | `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:8000` | Used by the browser for checkout and the order routes. **Public** |
 | `NEXT_PUBLIC_SITE_URL` | `http://localhost:3000` | The storefront's own origin, for canonical URLs and Open Graph |
 | `NEXT_PUBLIC_BRAND_NAME` | `TrueLux` | The wordmark and every page title. See ADR 0007 |
-| `NEXT_PUBLIC_SHIPPING_NOTE` | `Rs 150 inside the Kathmandu valley, Rs 250 elsewhere. Cash on delivery.` | Display copy only. Must be kept in agreement with the backend's shipping settings by hand |
 
 Every variable is read in `lib/env.ts` and nowhere else, so that one file lists
 the whole configuration surface.
@@ -117,7 +116,6 @@ it):
 | `NEXT_PUBLIC_API_BASE_URL` | The same origin. Must be HTTPS, or the browser blocks checkout as mixed content |
 | `NEXT_PUBLIC_SITE_URL` | The storefront's own origin, e.g. `https://shop.example.com`, with no trailing slash |
 | `NEXT_PUBLIC_BRAND_NAME` | The brand name |
-| `NEXT_PUBLIC_SHIPPING_NOTE` | The shipping copy, matching the backend's fees |
 | `ENABLE_EXPERIMENTAL_COREPACK` | `1` — makes Vercel use the Yarn 4 pinned in `packageManager` rather than Yarn 1, which cannot read this lockfile |
 
 - **`API_BASE_URL` cannot be a private address on Vercel.** Functions run

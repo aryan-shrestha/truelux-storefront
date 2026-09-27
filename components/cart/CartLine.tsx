@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { QuantityStepper } from "@/components/cart/QuantityStepper";
+import { LINE_PROBLEM_COPY, type LineProblem } from "@/components/cart/use-quote";
 import { Button } from "@/components/ui/button";
 import { Price } from "@/components/ui/price";
 import { MAX_UNITS_PER_LINE } from "@/lib/cart/reducer";
@@ -11,7 +12,7 @@ import type { CartLine as Line } from "@/lib/cart/storage";
 import { useCart } from "@/lib/cart/use-cart";
 import { describeVariant } from "@/lib/catalog/variants";
 
-export function CartLine({ line }: { line: Line }) {
+export function CartLine({ line, problem }: { line: Line; problem?: LineProblem }) {
   const { setQuantity, remove } = useCart();
 
   return (
@@ -36,6 +37,9 @@ export function CartLine({ line }: { line: Line }) {
           <Price amount={line.unitPrice} className="text-muted-foreground" />
         </div>
         <p className="text-muted-foreground text-sm">{describeVariant(line.size, line.shade)}</p>
+        {problem !== undefined && (
+          <p className="text-destructive text-sm font-medium">{LINE_PROBLEM_COPY[problem]}</p>
+        )}
 
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <QuantityStepper

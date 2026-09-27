@@ -7,13 +7,13 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { PROMISES } from "@/components/layout/promises";
-import { env } from "@/lib/env";
+import { shippingNote } from "@/lib/shipping/note";
 
 // The design's Benefits / How to use / Ingredients panel. The API has no benefits
 // or usage copy, so the panel carries what the shop does know for every product.
-export function ProductCare() {
+export async function ProductCare() {
   const items = [
-    { title: "Delivery", body: env.shippingNote },
+    { title: "Delivery", body: await shippingNote() },
     { title: "Payment", body: PROMISES.cashOnDelivery.body },
     { title: "Authenticity", body: PROMISES.authentic.body },
   ];

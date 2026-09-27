@@ -1,13 +1,22 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CartButton } from "@/components/layout/CartButton";
 import { CART_STORAGE_KEY } from "@/lib/cart/storage";
 import { CartProvider } from "@/lib/cart/use-cart";
+import { districtlessQuote, quoteResponse } from "@/tests/fixtures/quote";
+
+beforeEach(() => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(() => Promise.resolve(quoteResponse(districtlessQuote))),
+  );
+});
 
 afterEach(() => {
   window.localStorage.clear();
+  vi.unstubAllGlobals();
 });
 
 describe("CartButton", () => {
@@ -25,7 +34,7 @@ describe("CartButton", () => {
 
     render(
       <CartProvider>
-        <CartButton />
+        <CartButton shippingNote="Cash on delivery" />
       </CartProvider>,
     );
 
@@ -40,7 +49,7 @@ describe("CartButton", () => {
 
     render(
       <CartProvider>
-        <CartButton />
+        <CartButton shippingNote="Cash on delivery" />
       </CartProvider>,
     );
 
@@ -50,7 +59,7 @@ describe("CartButton", () => {
   it("shows no count badge for an empty bag, not a zero", async () => {
     render(
       <CartProvider>
-        <CartButton />
+        <CartButton shippingNote="Cash on delivery" />
       </CartProvider>,
     );
 
@@ -120,7 +129,7 @@ function storeLine() {
 function renderButton() {
   render(
     <CartProvider>
-      <CartButton />
+      <CartButton shippingNote="Cash on delivery" />
     </CartProvider>,
   );
 }

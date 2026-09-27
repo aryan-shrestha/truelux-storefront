@@ -1,20 +1,33 @@
+import { cn } from "cn";
 import Link from "next/link";
+import type { ReactNode } from "react";
 
+import { FreeShippingLine } from "@/components/cart/FreeShippingLine";
+import { LINE_PROBLEM_COPY, type QuoteState } from "@/components/cart/use-quote";
 import { Button } from "@/components/ui/button";
-import { Card, CardAction, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Price } from "@/components/ui/price";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { CartQuote } from "@/lib/api/types";
 import type { CartLine } from "@/lib/cart/storage";
 import { describeVariant } from "@/lib/catalog/variants";
-import { env } from "@/lib/env";
+import { isZeroAmount } from "@/lib/format/money";
 
-// No total: the first total the customer sees is the one the API returns (ADR 0003).
-export function OrderSummary({ lines }: { lines: CartLine[] }) {
+export function OrderSummary({ lines, quote }: { lines: CartLine[]; quote: QuoteState }) {
+  const problems = quote.status === "problems" ? quote.problems : {};
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>
-          Your bag
-        </CardTitle>
+        <CardTitle>Your bag</CardTitle>
         <CardAction>
           <Button asChild variant="link" size="sm">
             <Link href="/cart">Edit bag</Link>
@@ -23,27 +36,122 @@ export function OrderSummary({ lines }: { lines: CartLine[] }) {
       </CardHeader>
       <CardContent>
         <ul className="border-t">
-          {lines.map((line) => (
-            <li key={line.variantId} className="flex justify-between gap-4 border-b py-3">
-              <div className="flex flex-col gap-0.5">
-                <span className="font-medium">{line.productName}</span>
-                <span className="text-sm text-muted-foreground">
-                  {describeVariant(line.size, line.shade)}
+          {lines.map((line) => {
+            const problem = problems[line.variantId];
+            return (
+              <li key={line.variantId} className="flex justify-between gap-4 border-b py-3">
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-medium">{line.productName}</span>
+                  <span className="text-muted-foreground text-sm">
+                    {describeVariant(line.size, line.shade)}
+                  </span>
+                  {problem !== undefined && (
+                    <span className="text-destructive text-sm font-medium">
+                      {LINE_PROBLEM_COPY[problem]}
+                    </span>
+                  )}
+                </div>
+                <span className="text-muted-foreground shrink-0 tabular-nums">
+                  {line.quantity} × <Price amount={line.unitPrice} />
                 </span>
-              </div>
-              <span className="shrink-0 text-muted-foreground tabular-nums">
-                {line.quantity} × <Price amount={line.unitPrice} />
-              </span>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       </CardContent>
-      <CardFooter className="flex-col items-start gap-1 text-sm">
-        <p>Shipping: {env.shippingNote}</p>
+      <CardFooter aria-live="polite" className="flex-col items-stretch gap-2 text-sm">
+        <Totals quote={quote} />
+      </CardFooter>
+    </Card>
+  );
+}
+
+function Totals({ quote }: { quote: QuoteState }) {
+  switch (quote.status) {
+    case "pending":
+      return (
+        <div aria-busy className="flex flex-col gap-2">
+          <dl className="flex flex-col gap-2">
+            <Row label="Subtotal">
+              <Skeleton className="h-4 w-20" />
+            </Row>
+            <Row label="Shipping">
+              <Skeleton className="h-4 w-16" />
+            </Row>
+          </dl>
+          <Separator />
+          <dl>
+            <Row label="Total" strong>
+              <Skeleton className="h-5 w-24" />
+            </Row>
+          </dl>
+        </div>
+      );
+    case "ready":
+      return <QuotedTotals quote={quote.quote} />;
+    case "problems":
+      return <p>Remove or change the marked items to see your total.</p>;
+    case "failed":
+      return (
         <p className="text-muted-foreground">
           The total, including shipping, is confirmed when your order is placed.
         </p>
-      </CardFooter>
-    </Card>
+      );
+  }
+}
+
+function QuotedTotals({ quote }: { quote: CartQuote }) {
+  return (
+    <>
+      <dl className="flex flex-col gap-2">
+        <Row label="Subtotal">
+          <Price amount={quote.subtotal} />
+        </Row>
+        {!isZeroAmount(quote.discount) && (
+          <Row label="Discount">
+            −<Price amount={quote.discount} />
+          </Row>
+        )}
+        <Row label="Shipping">
+          {quote.shippingFee === null ? (
+            <span className="text-muted-foreground">Choose a district</span>
+          ) : isZeroAmount(quote.shippingFee) ? (
+            "Free"
+          ) : (
+            <Price amount={quote.shippingFee} />
+          )}
+        </Row>
+      </dl>
+      <Separator />
+      <dl>
+        <Row label="Total" strong>
+          {quote.total === null ? (
+            <span className="text-muted-foreground">After shipping</span>
+          ) : (
+            <Price amount={quote.total} />
+          )}
+        </Row>
+      </dl>
+      <FreeShippingLine quote={quote} />
+    </>
+  );
+}
+
+function Row({
+  label,
+  strong = false,
+  children,
+}: {
+  label: string;
+  strong?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className={cn("flex items-center justify-between gap-4", strong && "text-base font-medium")}
+    >
+      <dt>{label}</dt>
+      <dd className="tabular-nums">{children}</dd>
+    </div>
   );
 }
