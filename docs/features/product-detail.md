@@ -70,7 +70,7 @@ unset.
 - `components/catalog/SkinRoutine.tsx` — static: Cleanse, Treat, Protect, as an
   ordered list of numbered cards joined by plus signs on the greige band.
 - `components/catalog/ProductCare.tsx` — on the stone band, an `Accordion` with
-  Delivery (`env.shippingNote`), Payment and Authenticity (from
+  Delivery (`shippingNote()`, from `GET /shipping/`; see checkout-quote.md), Payment and Authenticity (from
   `components/layout/promises.ts`), and `public/art/texture.svg` beside it from `md`.
 - `components/catalog/RelatedProducts.tsx` — "Combine with": `relatedProducts()`
   asks for nine from the product's category, drops the product itself, keeps eight,
