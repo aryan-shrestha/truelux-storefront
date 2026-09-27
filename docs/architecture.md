@@ -298,7 +298,7 @@ reason: at the listing's interval its twenty keys alone would cost 120.
 **`/shipping/` added one call an hour on 2026-09-27.** It is read by the root
 layout, the header, `/cart` and the product page, all the same cache key. The
 checkout quote is not in this sum: it is a browser call on the customer's IP, in
-the backend's `checkout` scope, not the storefront's `catalog` one.
+the backend's `quote` scope (600/hour), not the storefront's `catalog` one.
 
 **At roughly 150 products, or with many more categories or brands, this budget
 breaks.** Each product adds two calls an hour and each category or brand six. The

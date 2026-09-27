@@ -41,6 +41,6 @@ function Subtotal({ quote }: { quote: QuoteState }) {
     case "problems":
       return <p>Remove or change the marked items to see your subtotal.</p>;
     case "failed":
-      return <p>Shipping and the total are confirmed at checkout.</p>;
+      return <p className="text-muted-foreground text-sm">Shipping calculated at checkout</p>;
   }
 }

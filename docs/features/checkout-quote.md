@@ -47,8 +47,8 @@ What is explicitly outside the scope?
 
 ## Context
 
-Backend contract: `../back-end/docs/features/checkout-quote-and-shipping.md`,
-transcribed in [backend-api.md](../integrations/backend-api.md#post-apiv1checkoutquote).
+Backend contract: `../back-end/docs/features/checkout-quote-and-shipping.md`
+(implemented by the backend on 2026-09-27), transcribed in [backend-api.md](../integrations/backend-api.md#post-apiv1checkoutquote).
 Money is a string end to end, and only `lib/format/money.ts` formats or inspects it.
 Every component is shadcn (ADR 0009); the storefront is light only (ADR 0012).
 
@@ -87,7 +87,8 @@ Every component is shadcn (ADR 0009); the storefront is light only (ADR 0012).
   Shipping (fee, "Free", or "Choose a district" before one is chosen), Total (or
   "After shipping"), the free-shipping line; skeletons while pending; the marked
   lines and "Remove or change the marked items to see your total" on a line
-  problem; the old "confirmed when your order is placed" copy on any other failure.
+  problem; "The total, including shipping, is confirmed when your order is placed"
+  on any other failure.
 - `components/checkout/DistrictPicker.tsx` — now controlled (`value`, `onChange`);
   `CheckoutForm` owns the district and passes it to `useQuote`.
 - `components/layout/AnnouncementBar.tsx` — the bar, from `shippingNote()`.
@@ -99,12 +100,9 @@ Every component is shadcn (ADR 0009); the storefront is light only (ADR 0012).
 
 ## Remaining
 
-- **Verify against the live backend** once its quote and `/shipping/` ship. On
-  2026-09-27 the local backend served `/shipping/` but its dev database had no
-  `shipping_settings` table (500), so the bar showed the degraded "Cash on
-  delivery"; the quote was only ever stubbed.
-- **The quote shares the `checkout` throttle scope (30/hour per IP).** Raise with
-  the backend before launch; see Gotchas.
+- **Verify against the live backend.** On 2026-09-27 the local backend served
+  `/shipping/` but its dev database had no `shipping_settings` table yet (500), so
+  the bar showed the degraded "Cash on delivery"; the quote was only ever stubbed.
 
 ---
 
@@ -149,33 +147,37 @@ settings are cached for an hour and may disagree with a live quote.
 The bag needs no shipping settings to choose its line; they only feed the copy
 beneath it.
 
-### Decision: any other quote failure falls back to the old copy
+### Decision: a failed quote shows no figures and never blocks the order
 
 **Decision**
 
-`throttled`, a transport failure or any other code shows "Shipping and the total
-are confirmed at checkout" (bag) or "…confirmed when your order is placed"
-(checkout), and never retries.
+`throttled` (the `quote` scope, 600/hour, so rare), a transport failure or any
+other code shows no figures: "Shipping calculated at checkout" in the bag, "The
+total, including shipping, is confirmed when your order is placed" at checkout.
+Nothing retries, and Place order is never held back.
 
 **Reason**
 
-A quote is advisory; the order response is authoritative, and a retry spends the
-customer's checkout budget.
+A quote is advisory and the order response is authoritative. Keeping the last good
+figures would show a subtotal for lines that have since changed, and a skeleton
+left in place reads as loading forever.
 
 **Consequence**
 
-A throttled customer can still place an order, if the order itself is not also
-throttled.
+A failed quote costs the customer the preview, never the order. The quote has its
+own throttle scope, so it cannot spend the 30/hour checkout budget.
 
 ---
 
 ## Gotchas
 
-- **The quote and `POST /checkout/` share the `checkout` throttle scope, 30/hour
-  per IP.** Each settled edit of the bag, each drawer opening and each district
-  change costs one. A customer who edits a lot can be throttled out of placing the
-  order. The debounce and the drawer only quoting while open keep it down, but it
-  is a backend decision: a scope of its own for the quote.
+- **The quote has its own `quote` throttle scope, 600/hour per IP**, separate from
+  checkout's 30/hour. Each settled edit of the bag, each drawer opening and each
+  district change costs one.
+- **An empty `district` (`""` or `null`) is the same as omitting it**; `quoteCart`
+  omits it.
+- **`/shipping/` sends no `Cache-Control`**; `revalidate: 3600` is its only
+  caching.
 - **A districtless quote has `shipping_fee` and `total` null** unless the threshold
   is reached. They are `Money | null` in `CartQuote`.
 - **`page.route` cannot stub `/shipping/`**: it is read by Server Components in the
@@ -211,7 +213,7 @@ GET  /api/v1/shipping/         server, revalidate 3600 (shippingNote, degrades)
 | --- | --- |
 | `variant_unavailable` | Each id in `details.variant_ids` marks its line "This is no longer available."; no figures |
 | `insufficient_stock` | `details.variant_id` marks its line "There is not enough stock for this quantity."; no quantity, no figures |
-| `throttled`, `validation_error`, anything else, no response | The pre-quote copy; no retry |
+| `throttled`, `validation_error`, anything else, no response | No figures; "Shipping calculated at checkout" (bag) or "confirmed when your order is placed" (checkout); no retry |
 
 ---
 
@@ -243,7 +245,8 @@ GET  /api/v1/shipping/         server, revalidate 3600 (shippingNote, degrades)
 - `lib/shipping/note.test.ts` — threshold, no threshold, and a failed read.
 - `components/cart/CartContents.test.tsx` — skeleton and no figure before the
   quote; the three free-shipping states; a debounced re-quote; a stale answer
-  ignored; each line problem on the right line; throttled fallback.
+  ignored; each line problem on the right line; a throttled quote shows no
+  figures.
 - `components/checkout/CheckoutForm.test.tsx` — re-quote with the district and the
   API's total; Place order enabled while a quote is in flight; a line marked by the
   quote; the existing placement cases, counting checkout calls apart from quotes.

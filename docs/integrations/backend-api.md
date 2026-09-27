@@ -26,7 +26,7 @@ Transcribed from, and verified against:
 
 ```text
 back-end/docs/features/{brands,shades-and-sizes,skin-types,admin-api}.md
-back-end/docs/features/checkout-quote-and-shipping.md   (planned contract, 2026-09-27)
+back-end/docs/features/checkout-quote-and-shipping.md   (implemented 2026-09-27)
 back-end/docs/decisions/0011-cash-on-delivery-only.md
 back-end/config/urls.py
 back-end/config/settings/base.py
@@ -463,14 +463,16 @@ district unless prices or shipping settings changed in between.
 
 ### `POST /api/v1/checkout/quote/`
 
-Public. Throttle scope **`checkout`** — the same 30/hour per IP as placing an
-order. Writes nothing, sends no email.
+Public. Throttle scope **`quote`**, 600/hour per IP, separate from `checkout`, so
+quoting never spends the budget for placing an order. Writes nothing, sends no
+email.
 
 ```json
 { "items": [{ "variant_id": "…", "quantity": 2 }], "district": "Lalitpur" }
 ```
 
-`district` is optional. `items` follows the checkout rules above.
+`district` is optional; `""` and `null` are treated exactly as omitting it. `items`
+follows the checkout rules above.
 
 Response `200`:
 
@@ -506,7 +508,9 @@ Public, `catalog` throttle scope, cacheable.
 { "inside_valley_fee": "150.00", "outside_valley_fee": "250.00", "free_shipping_threshold": "8000.00" }
 ```
 
-`free_shipping_threshold` is `null` when the merchant has not set one. The merchant
+`free_shipping_threshold` is `null` when the merchant has not set one. The response
+carries **no `Cache-Control`**: the storefront's server-side `revalidate` is the only
+caching it gets. The merchant
 edits these through the staff API (`/api/v1/admin/settings/shipping/`); they
 replace the backend's `SHIPPING_FEE_*` env vars (backend ADR 0017). The storefront
 no longer carries its own shipping copy: `NEXT_PUBLIC_SHIPPING_NOTE` was removed.
@@ -607,7 +611,8 @@ rather than fallbacks the code would use:
 | --- | --- | --- |
 | `catalog` | 600/hour | products list and detail, categories, brands, shades, sizes, `/shipping/` |
 | `anon` | 60/hour | order detail by access token, and anything with no scope of its own |
-| `checkout` | 30/hour | `POST /checkout/` and `POST /checkout/quote/`, one shared counter |
+| `checkout` | 30/hour | `POST /checkout/` |
+| `quote` | 600/hour | `POST /checkout/quote/` |
 | `order_lookup` | 20/hour | `POST /orders/lookup/` |
 
 The catalogue scope is counted **separately** from `anon`, so browsing does not

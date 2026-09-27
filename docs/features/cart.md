@@ -91,7 +91,8 @@ which the bag does not know.
 **Consequence**
 
 The first total is checkout's quote. Until a quote arrives the subtotal is a
-skeleton; if it fails the page says the figures are confirmed at checkout.
+skeleton; if it fails the bag shows no figures and "Shipping calculated at
+checkout".
 
 ### Decision: lines merge by variant id
 
@@ -131,8 +132,8 @@ Another tab's change arrives through the `storage` event.
   them instead of migrating.
 - **Typing a zero must not delete the line**; the stepper ignores values below one
   and Remove deletes.
-- **The bag's only API call is the quote**, and it shares the checkout throttle
-  scope. A sold-out variant can still be added; the quote marks it.
+- **The bag's only API call is the quote** (its own `quote` throttle scope,
+  600/hour). A sold-out variant can still be added; the quote marks it.
 - **`localStorage` can throw on read**, not only return null.
 - **The cart renders empty on the server**, and the page shows a skeleton rather
   than "empty" until storage is read.

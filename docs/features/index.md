@@ -74,9 +74,8 @@ Things worth knowing, each recorded in its feature document:
 **Phase 2, Increment 1 (#15)** shows the API's quote — subtotal, shipping, total
 and a free-shipping nudge — in the bag and at checkout, and builds all shipping
 copy from `GET /shipping/`; `NEXT_PUBLIC_SHIPPING_NOTE` is gone. Coded against the
-backend's planned contract; not yet verified live. **The quote shares the
-30/hour `checkout` throttle with placing an order**, which needs a backend
-decision before launch.
+backend's contract (the quote has its own `quote` throttle scope, 600/hour); not
+yet verified against a live backend.
 
 ## Architectural decisions
 

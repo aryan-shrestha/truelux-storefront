@@ -286,7 +286,7 @@ describe("the quoted subtotal", () => {
     ).toBeInTheDocument();
   });
 
-  it("falls back to checkout's figures when the quote is throttled", async () => {
+  it("shows no figures and leaves shipping to checkout when the quote is throttled", async () => {
     stubQuote(() =>
       Promise.resolve(
         new Response(JSON.stringify({ error: { code: "throttled", message: "", details: {} } }), {
@@ -298,6 +298,7 @@ describe("the quoted subtotal", () => {
 
     renderCart();
 
-    expect(await screen.findByText(/confirmed at checkout/)).toBeInTheDocument();
+    expect(await screen.findByText("Shipping calculated at checkout")).toBeInTheDocument();
+    expect(screen.queryByText("Subtotal")).not.toBeInTheDocument();
   });
 });
