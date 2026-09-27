@@ -183,10 +183,11 @@ sits outside `/api/v1/`, so it uses none of the per-IP throttle budget.
 
 ### What the build does
 
-- Prerenders the home page, the product pages, `robots.txt` and `sitemap.xml`,
-  calling the API. If the API is unreachable during the build, the build still
-  succeeds: the home page shows "not open yet" and product pages render on
-  first request, both refreshed within five minutes once the API answers.
+- Prerenders the home page, `robots.txt` and `sitemap.xml`, calling the API. If
+  the API is unreachable during the build, the build still succeeds: the home
+  page shows "not open yet", refreshed within five minutes once the API answers.
+  Product pages are never prerendered; each renders on first request and is
+  cached.
 - Sends security headers on every response (`next.config.ts`): `nosniff`,
   `DENY` framing, a `same-origin` referrer, a restrictive permissions policy and
   HSTS, plus `X-Robots-Tag: noindex` on `/orders/*`.
