@@ -10,19 +10,15 @@ import { ProductCare } from "@/components/catalog/ProductCare";
 import { ProductDetails } from "@/components/catalog/ProductDetails";
 import { RelatedProducts } from "@/components/catalog/RelatedProducts";
 import { SkinRoutine } from "@/components/catalog/SkinRoutine";
-import { getProduct, listProducts } from "@/lib/api/catalog";
+import { getProduct } from "@/lib/api/catalog";
 import { hasCode } from "@/lib/api/errors";
 import type { Product } from "@/lib/api/types";
 import { navigationCategories } from "@/lib/catalog/navigation";
 
-// Returns nothing rather than failing the build when the API is down; pages then render on demand.
+// Empty so every product renders on first request and is then cached (ISR). Prerendering them
+// all at build bursts the API from one address, which its host answers with 429s that fail the build.
 export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
-  try {
-    const page = await listProducts({ limit: 100 });
-    return page.results.map((product) => ({ slug: product.slug }));
-  } catch {
-    return [];
-  }
+  return [];
 }
 
 // An unknown and an unpublished product return the same 404; the page must not tell them apart.

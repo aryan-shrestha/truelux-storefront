@@ -144,8 +144,12 @@ The panel's length varies by product.
 - **`variant.price` is already resolved**; never fall back to `base_price` once a
   variant is selected.
 - **An unknown, an unpublished and an inactive-brand product return the same 404.**
-- **`yarn build` needs an API that answers honestly.** Only the list call in
-  `generateStaticParams` degrades.
+- **No product page is prerendered at build.** `generateStaticParams` returns `[]`,
+  so each page renders on first request and is cached for 1800s. Prerendering the
+  first hundred burst about two hundred API calls from the build machine at once,
+  and Render's edge answered with 429s (plain text, no `X-Request-ID`, so not the
+  Django throttle) that failed the deploy. Do not restore the list call without
+  throttling the build.
 - **The detail mapper expects `skin_types`, `skin_feel` and `key_ingredients`.** A
   backend that predates the skin-types migration fails every product page; deploy
   the backend first.
@@ -157,7 +161,7 @@ The panel's length varies by product.
 ## Routes
 
 ```text
-/products/[slug]    SSG for the first hundred products, on demand after; ISR at 1800s; indexed
+/products/[slug]    rendered on first request, never at build; ISR at 1800s; indexed
 ```
 
 ---
@@ -167,7 +171,6 @@ The panel's length varies by product.
 ### Calls
 
 ```text
-GET /api/v1/products/?limit=100                  server, revalidate 600 (generateStaticParams)
 GET /api/v1/products/{slug}/                     server, revalidate 1800
 GET /api/v1/products/?category=<slug>&limit=9    server, revalidate 3600 (related)
 GET /api/v1/categories/                          server, revalidate 3600 (breadcrumb, shared)
