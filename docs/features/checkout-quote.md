@@ -29,8 +29,10 @@ What is included in this implementation?
   shipping", "Free shipping" or "Shipping calculated at checkout"; the store's
   shipping copy beneath. Re-quoted, debounced, whenever the lines change.
 - **Checkout summary:** subtotal, shipping and total from a quote that includes the
-  selected district, re-quoted when the district or the lines change, with the same
-  free-shipping line. **Place order** stays enabled while a quote is in flight.
+  selected district, re-quoted when the district or the lines change. Below the
+  threshold it adds the "Add Rs X more" nudge; at or above it the Shipping row reads
+  "Free" and nothing repeats it. **Place order** stays enabled while a quote is in
+  flight.
 - **Quote errors** (`variant_unavailable`, `insufficient_stock`) are shown against
   the affected line.
 - **`NEXT_PUBLIC_SHIPPING_NOTE` is removed.** The announcement bar, the product
@@ -85,7 +87,8 @@ Every component is shadcn (ADR 0009); the storefront is light only (ADR 0012).
   `CartButton`).
 - `components/checkout/OrderSummary.tsx` — Subtotal, Discount (when non-zero),
   Shipping (fee, "Free", or "Choose a district" before one is chosen), Total (or
-  "After shipping"), the free-shipping line; skeletons while pending; the marked
+  "After shipping"), the free-shipping nudge only while `free_shipping_remaining` is
+  set; skeletons while pending; the marked
   lines and "Remove or change the marked items to see your total" on a line
   problem; "The total, including shipping, is confirmed when your order is placed"
   on any other failure.
@@ -100,9 +103,9 @@ Every component is shadcn (ADR 0009); the storefront is light only (ADR 0012).
 
 ## Remaining
 
-- **Verify against the live backend.** On 2026-09-27 the local backend served
-  `/shipping/` but its dev database had no `shipping_settings` table yet (500), so
-  the bar showed the degraded "Cash on delivery"; the quote was only ever stubbed.
+None. Verified against the live local backend on 2026-09-27: the bag, drawer and
+checkout show real quotes in all three free-shipping states, and orders placed
+through the UI matched their quotes (TL-2026-000176, TL-2026-000178).
 
 ---
 

@@ -125,7 +125,6 @@ export type RawQuote = {
   lines: Array<{ variant_id: string; quantity: number; unit_price: string; line_total: string }>;
 };
 
-/** Prices the bag without placing anything. */
 export async function quoteCart(
   { items, district }: QuoteInput,
   { signal }: { signal?: AbortSignal } = {},
