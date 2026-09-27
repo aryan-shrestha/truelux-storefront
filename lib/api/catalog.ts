@@ -12,6 +12,7 @@ import type {
   ProductSummary,
   ProductVariant,
   ShadeRef,
+  ShippingSettings,
   SizeRef,
   SkinTypeRef,
 } from "@/lib/api/types";
@@ -22,6 +23,7 @@ const LIST_REVALIDATE = 600;
 const DETAIL_REVALIDATE = 1800;
 const REFERENCE_REVALIDATE = 3600;
 const RELATED_REVALIDATE = 3600;
+const SHIPPING_REVALIDATE = 3600;
 
 type RawRef = { name: string; slug: string };
 type RawShade = { name: string; slug: string; hex_code: string };
@@ -50,6 +52,11 @@ type RawProduct = RawProductSummary & {
   skin_types: RawRef[];
   skin_feel: string;
   key_ingredients: string;
+};
+type RawShipping = {
+  inside_valley_fee: Money;
+  outside_valley_fee: Money;
+  free_shipping_threshold: Money | null;
 };
 type RawCategory = RawRef & { children: RawRef[] };
 type RawBrand = RawRef & {
@@ -214,4 +221,15 @@ export async function listSkinTypes(): Promise<SkinTypeRef[]> {
     revalidate: REFERENCE_REVALIDATE,
   });
   return raw.map(toRef);
+}
+
+export async function getShipping(): Promise<ShippingSettings> {
+  const raw = await request<RawShipping>("/api/v1/shipping/", {
+    revalidate: SHIPPING_REVALIDATE,
+  });
+  return {
+    insideValleyFee: raw.inside_valley_fee,
+    outsideValleyFee: raw.outside_valley_fee,
+    freeShippingThreshold: raw.free_shipping_threshold,
+  };
 }

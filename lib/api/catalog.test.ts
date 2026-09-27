@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   getBrand,
   getProduct,
+  getShipping,
   listBrands,
   listCategories,
   listProducts,
@@ -252,5 +253,33 @@ describe("shade and size lists", () => {
 
     await expect(listSizes()).resolves.toEqual([{ name: "50 ml", slug: "50-ml" }]);
     expect(requestedUrl(fetchMock).pathname).toBe("/api/v1/sizes/");
+  });
+});
+
+describe("getShipping", () => {
+  it("maps the fees and a threshold, revalidating hourly", async () => {
+    const fetchMock = stubJson({
+      inside_valley_fee: "150.00",
+      outside_valley_fee: "250.00",
+      free_shipping_threshold: "8000.00",
+    });
+
+    const shipping = await getShipping();
+
+    expect(requestedUrl(fetchMock).pathname).toBe("/api/v1/shipping/");
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ next: { revalidate: 3600 } });
+    expect(shipping.insideValleyFee).toBe("150.00");
+    expect(shipping.outsideValleyFee).toBe("250.00");
+    expect(shipping.freeShippingThreshold).toBe("8000.00");
+  });
+
+  it("keeps a missing threshold as null", async () => {
+    stubJson({
+      inside_valley_fee: "150.00",
+      outside_valley_fee: "250.00",
+      free_shipping_threshold: null,
+    });
+
+    await expect(getShipping()).resolves.toMatchObject({ freeShippingThreshold: null });
   });
 });
