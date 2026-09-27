@@ -53,12 +53,13 @@ categories and products; the Playwright spec is written against that seed.
 ### Stale data after a reseed
 
 Catalogue reads are cached for minutes to hours (`docs/architecture.md`), and
-Next keeps that cache in `.next/cache/fetch-cache` **across dev-server
-restarts**. After `make reseed` in the backend, or after pointing
+Next keeps that cache on disk **across restarts**: `.next/dev/cache/fetch-cache`
+for `yarn dev`, `.next/cache/fetch-cache` for `yarn start`. After `make reseed` in the backend, or after pointing
 `API_BASE_URL` at a stub, the storefront keeps serving the old categories,
 products and variant ids until the entries expire. A bag filled from stale data
 then fails at checkout with `variant_unavailable`. Stop `yarn dev`, run
-`rm -rf .next/cache/fetch-cache`, start it again, and clear the bag.
+`rm -rf .next/dev/cache/fetch-cache .next/cache/fetch-cache`, start it again,
+and clear the bag.
 
 ## Commands
 

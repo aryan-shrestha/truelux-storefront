@@ -132,7 +132,7 @@ function QuotedTotals({ quote }: { quote: CartQuote }) {
           )}
         </Row>
       </dl>
-      <FreeShippingLine quote={quote} />
+      {quote.freeShippingRemaining !== null && <FreeShippingLine quote={quote} />}
     </>
   );
 }

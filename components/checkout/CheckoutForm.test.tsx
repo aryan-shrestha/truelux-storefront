@@ -6,7 +6,12 @@ import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { CART_STORAGE_KEY, readCart, type CartLine } from "@/lib/cart/storage";
 import { CartProvider } from "@/lib/cart/use-cart";
 import { readOrderRecords } from "@/lib/orders/record";
-import { districtlessQuote, lalitpurQuote, quoteResponse } from "@/tests/fixtures/quote";
+import {
+  districtlessQuote,
+  freeShippingQuote,
+  lalitpurQuote,
+  quoteResponse,
+} from "@/tests/fixtures/quote";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
@@ -266,6 +271,18 @@ describe("CheckoutForm's quoted summary", () => {
     expect(screen.getByText(/more for free shipping/)).toHaveTextContent("Add Rs 1,600");
     const quotes = fetchMock.mock.calls.filter(([url]) => QUOTE_URL.test(String(url)));
     expect(sentDistrict(quotes.at(-1)?.[1])).toBe("Lalitpur");
+  });
+
+  it("says Free once when the order ships free", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(quoteResponse(freeShippingQuote))),
+    );
+
+    renderForm();
+
+    expect(await screen.findByText("Free")).toBeInTheDocument();
+    expect(screen.queryByText("Free shipping")).not.toBeInTheDocument();
   });
 
   it("keeps Place order available while a quote is in flight", async () => {
