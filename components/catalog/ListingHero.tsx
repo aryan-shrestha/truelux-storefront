@@ -10,7 +10,14 @@ type ListingHeroProps = {
 export function ListingHero({ eyebrow, title, description }: ListingHeroProps) {
   return (
     <div className="text-on-image relative">
-      <Image src="/art/listing.svg" alt="" fill priority sizes="100vw" className="object-cover" />
+      <Image
+        src="/images/listing.jpg"
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover"
+      />
       <div className="from-scrim absolute inset-0 bg-linear-to-r to-transparent" />
       <div className="max-w-page relative mx-auto flex min-h-64 flex-col justify-center gap-4 px-4 py-14 md:min-h-[26rem] md:px-15">
         {eyebrow}
