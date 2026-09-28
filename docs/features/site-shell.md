@@ -62,13 +62,14 @@ render on the server (ADR 0002). The Shop menu is built from `/categories/` and
   category ("Shop all", then its children), a Skin type column after the first
   root, and an editorial image (`public/art/menu.svg`) in the right 27%. Then
   a Brands trigger whose content is the same frame: "All brands" (`/brands`) then
-  every brand's page, in a wrapping grid. Then Journal (`/#journal`) as a plain
-  link. With no categories, Shop is a link to `/products`; with no brands, Brands is
+  every brand's page, in a wrapping grid. Then Sale (`/products?on_sale=true`,
+  `SALE_LINK`; see [sale-prices.md](sale-prices.md)) and Journal (`/#journal`) as
+  plain links. With no categories, Shop is a link to `/products`; with no brands, Brands is
   a link to `/brands`. The header has no About link (removed 2026-09-27).
 - `components/layout/MobileNav.tsx` — a full-width shadcn `Sheet` below `md` with
   drill-down panels built from `item` rows: Shop › (Shop everything, one row per
   column) › the column's links, with a back row at the top of each level; then
-  Brands › (All brands, one row per brand), Journal, and "Find an order" and "Your
+  Brands › (All brands, one row per brand), Sale, Journal, and "Find an order" and "Your
   bag" as small links.
 - `components/layout/SearchSheet.tsx` + `SearchForm.tsx` — the header's search icon
   opens a top `Sheet` holding a `next/form` GET form to `/products?search=`, which
@@ -229,6 +230,8 @@ GET /api/v1/shipping/      server, revalidate 3600 (shippingNote, degrades to "C
   name, no zero, the sheet on a plain click, a modified click left to the browser,
   focus returned on close.
 - `components/layout/header-scroll.test.ts`.
+- `components/layout/ShopMenu.test.tsx`, `components/layout/MobileNav.test.tsx` —
+  Sale links to `/products?on_sale=true` in both menus.
 - `tests/e2e/buy-flow.spec.ts` — the mega-menu opens a skin type and a whole root.
 
 ---

@@ -18,13 +18,14 @@ only, and there is no authentication anywhere.
 | 6   | cart               | Implemented | `features/cart.md`               | 5          | 2026-09-27   |
 | 7   | checkout           | Implemented | `features/checkout.md`           | 6          | 2026-09-27   |
 | 8   | order-status       | Implemented | `features/order-status.md`       | 7          | 2026-09-25   |
-| 9   | storefront-home    | Implemented | `features/storefront-home.md`    | 4, 12      | 2026-09-26   |
+| 9   | storefront-home    | Implemented | `features/storefront-home.md`    | 4, 12      | 2026-09-29   |
 | 10  | seo-and-metadata   | In progress | `features/seo-and-metadata.md`   | 4, 5, 9    | 2026-09-26   |
 | 11  | shadcn-foundation  | Implemented | `features/shadcn-foundation.md`  | —          | 2026-09-26   |
 | 12  | brands             | Implemented | `features/brands.md`             | 2, 4, 11   | 2026-09-26   |
 | 13  | shades-and-sizes   | Implemented | `features/shades-and-sizes.md`   | 2, 4, 5, 11 | 2026-09-26  |
 | 14  | design-alignment   | Implemented | `features/design-alignment.md`   | 1, 3, 4, 5, 9, 11 | 2026-09-27 |
 | 15  | checkout-quote     | Implemented | `features/checkout-quote.md`     | 2, 3, 6, 7 | 2026-09-27   |
+| 16  | sale-prices        | Implemented | `features/sale-prices.md`        | 2, 3, 4, 5, 9 | 2026-09-29 |
 
 `Depends on` refers to the `#` column of this table.
 
@@ -56,7 +57,8 @@ Things worth knowing, each recorded in its feature document:
   `/skin-types/` list only values in use by a visible product (#13, #14).
 - **The catalogue request budget was redone again** for the mega-menu, skin types
   and related products: the listing now revalidates every 10 minutes, related
-  products hourly, and the budget holds to roughly 150 products (`architecture.md`).
+  products hourly, and the budget holds to roughly 145 products (`architecture.md`,
+  506/600 after the sale listing and rail).
 - **Only categories are always visible on the listing**; the other facets are in a
   dropdown panel, the width of the grid, that needs JavaScript to open (#4, #14).
 - **The product page needs the backend's skin-types fields**; deploy the backend
@@ -76,6 +78,14 @@ and a free-shipping nudge — in the bag and at checkout, and builds all shippin
 copy from `GET /shipping/`; `NEXT_PUBLIC_SHIPPING_NOTE` is gone. Coded against the
 backend's contract (the quote has its own `quote` throttle scope, 600/hour) and
 verified against the live local backend.
+
+**Phase 2, Increment 2 (#16)** shows sales: the sale price, the struck "was" price
+and the API's `discount_percent` on cards and the product page (following the
+chosen variant), an "On sale" filter, a Sale link in both menus and a home rail.
+The storefront computes no percent; the API's sale fields are one nullable
+`sale` object in `lib/api`. Coded against back-end ADR 0018; the local API has the
+fields, but its database had no product on sale, so the visual check used a
+throwaway proxy marking three products on sale.
 
 ## Architectural decisions
 
