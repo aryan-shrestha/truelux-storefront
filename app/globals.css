@@ -133,6 +133,11 @@
   html {
     @apply font-sans;
   }
+  /* The open mega-menu locks the page; the gutter stays so the header does not shift. */
+  html:has([data-slot="navigation-menu-viewport"][data-state="open"]) {
+    overflow: hidden;
+    scrollbar-gutter: stable;
+  }
   body {
     @apply bg-background text-foreground antialiased;
   }

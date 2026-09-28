@@ -12,9 +12,9 @@ only, and there is no authentication anywhere.
 | --- | ------------------ | ----------- | -------------------------------- | ---------- | ------------ |
 | 1   | design-system      | Implemented | `features/design-system.md`      | 11         | 2026-09-26   |
 | 2   | api-client         | Implemented | `features/api-client.md`         | —          | 2026-09-26   |
-| 3   | site-shell         | Implemented | `features/site-shell.md`         | 1, 2, 12   | 2026-09-27   |
+| 3   | site-shell         | Implemented | `features/site-shell.md`         | 1, 2, 12   | 2026-09-29   |
 | 4   | catalog-browsing   | Implemented | `features/catalog-browsing.md`   | 2, 3       | 2026-09-26   |
-| 5   | product-detail     | Implemented | `features/product-detail.md`     | 4          | 2026-09-27   |
+| 5   | product-detail     | Implemented | `features/product-detail.md`     | 4          | 2026-09-29   |
 | 6   | cart               | Implemented | `features/cart.md`               | 5          | 2026-09-27   |
 | 7   | checkout           | Implemented | `features/checkout.md`           | 6          | 2026-09-27   |
 | 8   | order-status       | Implemented | `features/order-status.md`       | 7          | 2026-09-25   |

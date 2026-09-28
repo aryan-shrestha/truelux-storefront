@@ -2,7 +2,7 @@
 
 Status: Implemented
 
-Last updated: 2026-09-27
+Last updated: 2026-09-29
 
 ---
 
@@ -57,7 +57,7 @@ render on the server (ADR 0002). The Shop menu is built from `/categories/` and
   tracked, uppercase, `translate="no"`), search and the bag on the right. 64px tall,
   80px from `md`, with no rule underneath (removed 2026-09-27).
 - `components/layout/ShopMenu.tsx` — shadcn `NavigationMenu`, from `md`: a Shop
-  trigger whose content spans the header's full width: one column per root
+  trigger whose content spans the header's `max-w-page` column: one column per root
   category ("Shop all", then its children), a Skin type column after the first
   root, and an editorial image (`public/art/menu.svg`) in the right 27%. Then
   a Brands trigger whose content is the same frame: "All brands" (`/brands`) then
@@ -154,9 +154,15 @@ Removing either section's `id` breaks a header link.
 ## Gotchas
 
 - **The navigation menu's root is `static`** (in `components/ui/navigation-menu.tsx`),
-  so its viewport is positioned against the sticky header and spans its width. The
+  so its viewport is positioned against the header's `max-w-page` column (made
+  `relative` in `Header.tsx`) and spans that, not the screen. The
   viewport sits at `top-full`; the header has no bottom rule any more. Restoring the
   rule means moving the viewport to `top-[calc(100%+1px)]`, or the menu covers it.
+- **An open mega-menu locks the page's scroll** with a CSS rule in
+  `app/globals.css` (`html:has([data-slot="navigation-menu-viewport"][data-state="open"])`),
+  not with state: `ShopMenu` stays a Server Component. `scrollbar-gutter: stable`
+  keeps the header from shifting when the scrollbar goes. Renaming the viewport's
+  `data-slot` silently removes the lock.
 - **Radix wraps the menu list in an unstyled `div`**; the root gives its first child
   `h-full`, or the open trigger's underline sits under the text instead of on the
   header's bottom edge.
