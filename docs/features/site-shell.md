@@ -54,7 +54,8 @@ render on the server (ADR 0002). The Shop menu is built from `/categories/` and
   categories, skin types and brands in parallel, builds the columns with
   `shopMenu()` and the brand column with `brandMenu()`, and reads the shipping copy
   for the bag, and lays out a three-column grid: the menus on the left, the wordmark centred (bold,
-  tracked, uppercase, `translate="no"`), search and the bag on the right. 64px tall,
+  tracked, uppercase, `translate="no"`), search, an orders icon linking to
+  `/orders/lookup` (there is no `/orders` index), and the bag on the right. 64px tall,
   80px from `md`, with no rule underneath (removed 2026-09-27).
 - `components/layout/ShopMenu.tsx` — shadcn `NavigationMenu`, from `md`: a Shop
   trigger whose content spans the header's `max-w-page` column: one column per root
