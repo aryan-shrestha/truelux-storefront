@@ -81,6 +81,17 @@ export function shopMenu(categories: Category[], skinTypes: SkinTypeRef[]): Menu
   return [...columns.slice(0, 1), skinTypeColumn, ...columns.slice(1)];
 }
 
+export function brandMenu(brands: Brand[]): MenuColumn | null {
+  if (brands.length === 0) return null;
+  return {
+    title: "Brands",
+    links: [
+      { label: "All brands", href: "/brands" },
+      ...brands.map((brand) => ({ label: brand.name, href: `/brands/${brand.slug}` })),
+    ],
+  };
+}
+
 type CategoryTrail = { root: Category; child: CategoryRef | null };
 
 export function findCategory(

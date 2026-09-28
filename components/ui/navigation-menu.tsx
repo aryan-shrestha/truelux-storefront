@@ -100,7 +100,7 @@ function NavigationMenuViewport({
   return (
     <div
       className={cn(
-        "absolute inset-x-0 top-[calc(100%+1px)] isolate z-50 flex justify-center"
+        "absolute inset-x-0 top-full isolate z-50 flex justify-center"
       )}
     >
       <NavigationMenuPrimitive.Viewport

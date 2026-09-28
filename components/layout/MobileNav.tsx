@@ -4,15 +4,22 @@ import { ChevronLeftIcon, ChevronRightIcon, MenuIcon } from "lucide-react";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 
-import { ORDER_LINKS, SITE_LINKS } from "@/components/layout/site-links";
+import { BRANDS_LINK, JOURNAL_LINK, ORDER_LINKS } from "@/components/layout/site-links";
 import { Button } from "@/components/ui/button";
 import { Item } from "@/components/ui/item";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import type { MenuColumn } from "@/lib/catalog/navigation";
 
-type Panel = { kind: "root" } | { kind: "shop" } | { kind: "column"; index: number };
+type Panel =
+  { kind: "root" } | { kind: "shop" } | { kind: "brands" } | { kind: "column"; index: number };
 
-export function MobileNav({ columns }: { columns: MenuColumn[] }) {
+export function MobileNav({
+  columns,
+  brands,
+}: {
+  columns: MenuColumn[];
+  brands: MenuColumn | null;
+}) {
   const [open, setOpen] = useState(false);
   const [panel, setPanel] = useState<Panel>({ kind: "root" });
   const close = () => setOpen(false);
@@ -22,7 +29,13 @@ export function MobileNav({ columns }: { columns: MenuColumn[] }) {
     if (next) setPanel({ kind: "root" });
   }
 
-  const column = panel.kind === "column" ? columns[panel.index] : undefined;
+  const column =
+    panel.kind === "column"
+      ? (columns[panel.index] ?? null)
+      : panel.kind === "brands"
+        ? brands
+        : null;
+  const columnParent: Panel = panel.kind === "brands" ? { kind: "root" } : { kind: "shop" };
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
@@ -52,13 +65,22 @@ export function MobileNav({ columns }: { columns: MenuColumn[] }) {
                     <ForwardRow onClick={() => setPanel({ kind: "shop" })}>Shop</ForwardRow>
                   )}
                 </li>
-                {SITE_LINKS.map((link) => (
-                  <li key={link.href}>
-                    <LinkRow href={link.href} onNavigate={close}>
-                      {link.label}
+                <li>
+                  {brands === null ? (
+                    <LinkRow href={BRANDS_LINK.href} onNavigate={close}>
+                      {BRANDS_LINK.label}
                     </LinkRow>
-                  </li>
-                ))}
+                  ) : (
+                    <ForwardRow onClick={() => setPanel({ kind: "brands" })}>
+                      {brands.title}
+                    </ForwardRow>
+                  )}
+                </li>
+                <li>
+                  <LinkRow href={JOURNAL_LINK.href} onNavigate={close}>
+                    {JOURNAL_LINK.label}
+                  </LinkRow>
+                </li>
               </ul>
               <ul className="text-muted-foreground flex flex-col px-4 py-3">
                 {ORDER_LINKS.map((link) => (
@@ -92,10 +114,10 @@ export function MobileNav({ columns }: { columns: MenuColumn[] }) {
             </ul>
           )}
 
-          {column !== undefined && (
+          {column !== null && (
             <ul>
               <li>
-                <BackRow onClick={() => setPanel({ kind: "shop" })} label={column.title} />
+                <BackRow onClick={() => setPanel(columnParent)} label={column.title} />
               </li>
               {column.links.map((link) => (
                 <li key={link.href}>
