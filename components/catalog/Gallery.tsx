@@ -39,15 +39,15 @@ export function Gallery({ images, name }: { images: ProductImage[]; name: string
   const count = images.length;
 
   return (
-    <div className="flex gap-2 md:landscape:h-[calc(100svh-5rem)] md:landscape:max-w-[62%] md:landscape:shrink-0 md:landscape:gap-3">
-      {/* The strip takes the photograph's height and scrolls, rather than setting it. */}
-      <div className="relative w-16 shrink-0 md:w-21">
+    <div className="flex flex-col-reverse gap-2 md:landscape:h-[calc(100svh-5rem)] md:landscape:max-w-[62%] md:landscape:shrink-0 md:landscape:flex-row md:landscape:gap-3">
+      {/* Side by side, the strip takes the photograph's height and scrolls, rather than setting it. */}
+      <div className="relative shrink-0 md:landscape:w-21">
         <ul
           aria-label="Choose a photograph"
-          className="absolute inset-0 flex flex-col gap-2 overflow-y-auto pl-2 md:pl-3"
+          className="flex gap-2 overflow-x-auto md:landscape:absolute md:landscape:inset-0 md:landscape:flex-col md:landscape:overflow-x-hidden md:landscape:overflow-y-auto"
         >
           {images.map((image, index) => (
-            <li key={image.url} className="shrink-0">
+            <li key={image.url} className="w-16 shrink-0 md:w-21 md:landscape:w-auto">
               <Button
                 variant="outline"
                 aria-label={`Show photograph ${index + 1} of ${count}`}
@@ -82,7 +82,7 @@ export function Gallery({ images, name }: { images: ProductImage[]; name: string
                   src={image.url}
                   alt={image.altText}
                   fill
-                  sizes="(min-width: 768px) and (orientation: landscape) 60vw, 85vw"
+                  sizes="(min-width: 768px) and (orientation: landscape) 60vw, 100vw"
                   // Only the first: several priorities slow the one that is the LCP.
                   priority={index === 0}
                   className="object-cover"

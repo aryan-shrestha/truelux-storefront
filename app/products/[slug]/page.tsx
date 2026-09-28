@@ -66,11 +66,11 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
 
   return (
     <div className="flex flex-col gap-8">
-      <article className="flex flex-col md:landscape:flex-row">
+      <article className="max-w-page mx-auto flex w-full flex-col px-4 md:px-8 md:landscape:flex-row">
         <Gallery images={product.images} name={product.name} />
 
-        <div className="md:landscape:py-fit-8 flex px-4 pt-10 md:px-8 md:landscape:min-w-0 md:landscape:flex-1 xl:landscape:px-11 xl:landscape:pr-18">
-          <div className="gap-fit-7 my-auto flex w-full max-w-xl flex-col">
+        <div className="md:landscape:py-fit-8 flex pt-10 md:landscape:min-w-0 md:landscape:flex-1 md:landscape:pl-8 xl:landscape:pl-12">
+          <div className="gap-fit-7 my-auto flex w-full flex-col">
             <header className="gap-fit-4 flex flex-col">
               <ProductBreadcrumb categories={categories} category={product.category} />
               <h1 className="text-heading">{product.name}</h1>

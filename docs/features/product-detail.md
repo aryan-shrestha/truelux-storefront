@@ -2,7 +2,7 @@
 
 Status: Implemented
 
-Last updated: 2026-09-27
+Last updated: 2026-09-29
 
 ---
 
@@ -21,7 +21,7 @@ suits, and an add-to-bag that cannot produce an invalid line. Laid out as
 What is included in this implementation?
 
 - `/products/[slug]`, server-rendered from the detail endpoint
-- A full-bleed gallery beside a panel: the category breadcrumb (root, then the
+- A gallery beside a panel, inside the header's `max-w-page` column: the category breadcrumb (root, then the
   product's own category), the title, the brand, the description, the price, the
   shade and size pickers, and a full-width dark Add to bag
 - Ruled **Suited to** (`skin_types`), **Skin feel** and **Key ingredients** rows,
@@ -57,8 +57,10 @@ unset.
   parallel (the tree is the header's read, deduplicated). On a landscape viewport
   from `md` (`md:landscape:`) the gallery and panel sit side by side; the gallery is
   exactly `100svh - 5rem` tall (the viewport under the 80px header) and sets the
-  row's height. The panel never scrolls: it centres in the row, capped at
-  `max-w-xl`, and its spacing shrinks with the screen's height (`gap-fit-*` and
+  row's height. The article is the header's column (`max-w-page`, centred, `px-4`,
+  `md:px-8`), so the gallery's left edge and the panel's right edge line up with
+  the navbar at every width. The panel never scrolls: it centres vertically and
+  fills the rest of the row (stacked, the full column width), and its spacing shrinks with the screen's height (`gap-fit-*` and
   `py-fit-*`, below) so it fits; on a screen too short even then (a landscape phone)
   it grows the row instead. Everywhere else (phones, portrait tablets) they stack:
   gallery, then panel. Then the routine and care bands, then the related rail in
@@ -66,11 +68,12 @@ unset.
   `generateMetadata` as before.
 - `components/catalog/ProductBreadcrumb.tsx` — root, then the product's category,
   both linking to their listings; just the category when the tree is unavailable.
-- `components/catalog/Gallery.tsx` — a shadcn `Carousel` with a vertical thumbnail
-  strip on its left (56px, 72px from `md`) that takes the photograph's height and
-  scrolls, and round `floating` Previous/Next buttons (a `Button` variant, 44px,
+- `components/catalog/Gallery.tsx` — a shadcn `Carousel` with a thumbnail strip
+  (64px thumbnails, 84px from `md`). Stacked, the strip is a row under the
+  photograph that scrolls sideways; side by side, it is a column on the
+  photograph's left that takes the photograph's height and scrolls, and round `floating` Previous/Next buttons (a `Button` variant, 44px,
   chevrons) over the photograph. The strip and the buttons show even for one
-  photograph (one thumbnail, both buttons disabled), at the client's request. Stacked, the photograph is 9:10 at the remaining
+  photograph (one thumbnail, both buttons disabled), at the client's request. Stacked, the photograph is 9:10 at the column's full
   width; side by side it is the row's full height and 9:10 wide, the gallery capped
   at 62% of the row, past which the photograph is cropped (`object-cover`) rather
   than squeezing the panel.
@@ -87,8 +90,8 @@ unset.
 - `components/catalog/RelatedProducts.tsx` — "Combine with": `relatedProducts()`
   asks for nine from the product's category, drops the product itself, keeps eight,
   and renders a `ProductRail`, or nothing.
-- `app/products/[slug]/loading.tsx` — the same shape: thumbnails, photograph and
-  panel, height-locked on landscape.
+- `app/products/[slug]/loading.tsx` — the same shape: photograph, thumbnails
+  (under it stacked, beside it on landscape) and panel, height-locked on landscape.
 
 ---
 
@@ -184,8 +187,10 @@ The panel's length varies by product.
   against the seeded catalogue: the longest skincare panel (three detail rows) fits
   at 1920×1080, 1440×900, 1366×768, 1280×720, 1180×820 and 1024×768. Longer copy or
   more rows can still grow the row; nothing scrolls.
-- **The panel's side padding is `px-8` until `xl`**, so the narrow panel of a
-  1024px landscape wraps less.
+- **The panel has no side padding of its own**; the article's gutters are the
+  header's. Side by side it takes `pl-8` (`pl-12` from `xl`) as the gap to the
+  gallery. Do not cap it with a `max-w-*`: a cap left-aligns it and leaves an empty
+  band before the right gutter.
 - **`5rem` in the gallery's height is the header's `md:h-20`**, not `--header-offset`,
   which drops to 0 when the header hides and would resize the row on scroll. The
   announcement bar is not subtracted: the row fills the screen once it has scrolled

@@ -2,19 +2,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Loading() {
   return (
-    <div className="flex flex-col md:landscape:flex-row">
+    <div className="max-w-page mx-auto flex w-full flex-col px-4 md:px-8 md:landscape:flex-row">
       <span className="sr-only" role="status">
         Loading product
       </span>
-      <div className="flex gap-2 md:landscape:h-[calc(100svh-5rem)] md:landscape:max-w-[62%] md:landscape:gap-3">
-        <div className="flex w-16 shrink-0 flex-col gap-2 pl-2 md:w-21 md:pl-3">
+      <div className="flex flex-col-reverse gap-2 md:landscape:h-[calc(100svh-5rem)] md:landscape:max-w-[62%] md:landscape:flex-row md:landscape:gap-3">
+        <div className="flex shrink-0 gap-2 md:landscape:w-21 md:landscape:flex-col">
           {Array.from({ length: 3 }, (_, index) => (
-            <Skeleton key={index} className="aspect-9/10 w-full rounded-none" />
+            <Skeleton
+              key={index}
+              className="aspect-9/10 w-16 rounded-none md:w-21 md:landscape:w-full"
+            />
           ))}
         </div>
         <Skeleton className="aspect-9/10 min-w-0 flex-1 rounded-none md:landscape:h-full md:landscape:flex-initial" />
       </div>
-      <div className="flex flex-1 flex-col justify-center gap-6 px-4 pt-10 md:px-8 md:landscape:px-11 md:landscape:py-8">
+      <div className="flex flex-1 flex-col justify-center gap-6 pt-10 md:landscape:py-8 md:landscape:pl-8 xl:landscape:pl-12">
         <Skeleton className="h-4 w-32" />
         <Skeleton className="h-9 w-3/4" />
         <Skeleton className="h-4 w-20" />
