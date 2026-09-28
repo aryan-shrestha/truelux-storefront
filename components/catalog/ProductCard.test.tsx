@@ -2,7 +2,12 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { ProductCard } from "@/components/catalog/ProductCard";
-import { roseWaterToner, soldOutPerfume, velvetLipTint } from "@/tests/fixtures/catalog";
+import {
+  discountedCream,
+  roseWaterToner,
+  soldOutPerfume,
+  velvetLipTint,
+} from "@/tests/fixtures/catalog";
 
 describe("ProductCard", () => {
   it("links the product and, separately, its brand", () => {
@@ -22,6 +27,23 @@ describe("ProductCard", () => {
     render(<ProductCard product={velvetLipTint} />);
 
     expect(screen.getByText("Rs 1,800")).toBeInTheDocument();
+  });
+
+  it("shows the sale price, the struck price read as the old one, and the API's percent", () => {
+    render(<ProductCard product={discountedCream} />);
+
+    const article = screen.getByRole("article");
+    expect(article).toHaveTextContent("Rs 2,720Was Rs 3,200");
+    expect(article.querySelector("s")).toHaveTextContent("Was Rs 3,200");
+    expect(screen.getByText("−15%")).toHaveAttribute("aria-hidden");
+    expect(screen.getByText("15% off")).toBeInTheDocument();
+  });
+
+  it("leaves a product that is not on sale at its base price, with nothing struck", () => {
+    render(<ProductCard product={velvetLipTint} />);
+
+    expect(screen.getByRole("article").querySelector("s")).toBeNull();
+    expect(screen.queryByText(/% off/)).not.toBeInTheDocument();
   });
 
   it("says sold out in words, and nothing when the product is available", () => {

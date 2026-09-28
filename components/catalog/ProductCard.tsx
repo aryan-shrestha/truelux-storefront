@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { ProductPrice } from "@/components/catalog/ProductPrice";
 import { Badge } from "@/components/ui/badge";
-import { Price } from "@/components/ui/price";
 import type { ProductSummary } from "@/lib/api/types";
 
 const SIZES = "(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw";
@@ -49,7 +49,11 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
         >
           {product.brand.name}
         </Link>
-        <Price amount={product.basePrice} className="mt-3 text-[0.9375rem]" />
+        <ProductPrice
+          price={product.sale?.price ?? product.basePrice}
+          sale={product.sale}
+          className="mt-3 justify-center text-[0.9375rem]"
+        />
       </div>
     </article>
   );

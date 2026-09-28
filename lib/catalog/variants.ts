@@ -4,8 +4,10 @@ import type { ProductVariant, ShadeRef, SizeRef } from "@/lib/api/types";
 // the list itself. "sold-out" may come back; "not-made" never existed.
 export type OptionState = "available" | "sold-out" | "not-made";
 
-export type SizeOption = SizeRef & { state: OptionState };
-export type ShadeOption = ShadeRef & { state: OptionState };
+type OptionFlags = { state: OptionState; onSale: boolean };
+
+export type SizeOption = SizeRef & OptionFlags;
+export type ShadeOption = ShadeRef & OptionFlags;
 
 function distinctBySlug<T extends { slug: string }>(refs: T[]): T[] {
   const seen = new Map<string, T>();
@@ -15,9 +17,10 @@ function distinctBySlug<T extends { slug: string }>(refs: T[]): T[] {
   return [...seen.values()];
 }
 
-function stateOf(matching: ProductVariant[]): OptionState {
-  if (matching.length === 0) return "not-made";
-  return matching.some((variant) => variant.inStock) ? "available" : "sold-out";
+function flagsOf(matching: ProductVariant[]): OptionFlags {
+  const onSale = matching.some((variant) => variant.sale !== null);
+  if (matching.length === 0) return { state: "not-made", onSale };
+  return { state: matching.some((variant) => variant.inStock) ? "available" : "sold-out", onSale };
 }
 
 export function hasShades(variants: ProductVariant[]): boolean {
@@ -30,7 +33,7 @@ export function sizeOptions(variants: ProductVariant[], shade: string | null): S
       (variant) =>
         variant.size.slug === size.slug && (shade === null || variant.shade?.slug === shade),
     );
-    return { ...size, state: stateOf(matching) };
+    return { ...size, ...flagsOf(matching) };
   });
 }
 
@@ -41,7 +44,7 @@ export function shadeOptions(variants: ProductVariant[], size: string | null): S
       (variant) =>
         variant.shade?.slug === shade.slug && (size === null || variant.size.slug === size),
     );
-    return { ...shade, state: stateOf(matching) };
+    return { ...shade, ...flagsOf(matching) };
   });
 }
 
@@ -57,10 +60,10 @@ export function findVariant(
   );
 }
 
-export function statusOf(state: OptionState): string | undefined {
+export function statusOf({ state, onSale }: OptionFlags): string | undefined {
   if (state === "sold-out") return "Sold out";
   if (state === "not-made") return "Not available in this combination";
-  return undefined;
+  return onSale ? "On sale" : undefined;
 }
 
 export function isEntirelySoldOut(variants: ProductVariant[]): boolean {
