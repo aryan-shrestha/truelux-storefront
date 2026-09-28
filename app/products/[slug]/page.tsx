@@ -65,37 +65,35 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
   const [product, categories] = await Promise.all([load(slug), navigationCategories()]);
 
   return (
-    <div className="flex flex-col gap-24 md:gap-32">
-      <div className="flex flex-col">
-        <article className="grid pb-16 md:grid-cols-[69fr_31fr] md:pb-0">
-          <Gallery images={product.images} name={product.name} />
+    <div className="flex flex-col gap-8">
+      <article className="flex flex-col md:landscape:flex-row">
+        <Gallery images={product.images} name={product.name} />
 
-          <div className="px-4 pt-10 md:px-11 md:pt-28 lg:pr-18">
-            <div className="flex flex-col gap-7 md:sticky md:top-[calc(var(--header-offset)+2rem)]">
-              <header className="flex flex-col gap-4">
-                <ProductBreadcrumb categories={categories} category={product.category} />
-                <h1 className="text-heading">{product.name}</h1>
-                <Link
-                  href={`/brands/${product.brand.slug}`}
-                  className="text-muted-foreground hover:text-foreground w-fit text-sm hover:underline"
-                >
-                  {product.brand.name}
-                </Link>
-              </header>
+        <div className="md:landscape:py-fit-8 flex px-4 pt-10 md:px-8 md:landscape:min-w-0 md:landscape:flex-1 xl:landscape:px-11 xl:landscape:pr-18">
+          <div className="gap-fit-7 my-auto flex w-full max-w-xl flex-col">
+            <header className="gap-fit-4 flex flex-col">
+              <ProductBreadcrumb categories={categories} category={product.category} />
+              <h1 className="text-heading">{product.name}</h1>
+              <Link
+                href={`/brands/${product.brand.slug}`}
+                className="text-muted-foreground hover:text-foreground w-fit text-sm hover:underline"
+              >
+                {product.brand.name}
+              </Link>
+            </header>
 
-              {product.description && (
-                <p className="text-sm leading-relaxed">{product.description}</p>
-              )}
+            {product.description && (
+              <p className="text-sm leading-relaxed">{product.description}</p>
+            )}
 
-              <VariantPicker product={product} />
+            <VariantPicker product={product} />
 
-              <ProductDetails product={product} />
-            </div>
+            <ProductDetails product={product} />
           </div>
-        </article>
-        <SkinRoutine />
-        <ProductCare />
-      </div>
+        </div>
+      </article>
+
+      <SkinRoutine />
 
       <Suspense>
         <RelatedProducts product={product} />

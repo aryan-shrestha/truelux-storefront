@@ -61,7 +61,7 @@ export function VariantPicker({ product }: { product: Product }) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="gap-fit-6 flex flex-col">
       {/* The variant's own price once resolved: price overrides are real. */}
       <p aria-live="polite" className="text-2xl">
         <Price amount={selected?.price ?? product.basePrice} />

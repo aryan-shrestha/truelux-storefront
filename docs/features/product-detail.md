@@ -2,7 +2,7 @@
 
 Status: Implemented
 
-Last updated: 2026-09-26
+Last updated: 2026-09-27
 
 ---
 
@@ -54,18 +54,30 @@ unset.
 ## Implemented
 
 - `app/products/[slug]/page.tsx` — reads the product and the category tree in
-  parallel (the tree is the header's read, deduplicated), lays out a
-  `69fr / 31fr` grid from `md`, then the routine and care bands flush beneath it,
-  then the related rail in its own `Suspense`. `generateStaticParams`, `load` and
+  parallel (the tree is the header's read, deduplicated). On a landscape viewport
+  from `md` (`md:landscape:`) the gallery and panel sit side by side; the gallery is
+  exactly `100svh - 5rem` tall (the viewport under the 80px header) and sets the
+  row's height. The panel never scrolls: it centres in the row, capped at
+  `max-w-xl`, and its spacing shrinks with the screen's height (`gap-fit-*` and
+  `py-fit-*`, below) so it fits; on a screen too short even then (a landscape phone)
+  it grows the row instead. Everywhere else (phones, portrait tablets) they stack:
+  gallery, then panel. Then the routine and care bands, then the related rail in
+  its own `Suspense`. `generateStaticParams`, `load` and
   `generateMetadata` as before.
 - `components/catalog/ProductBreadcrumb.tsx` — root, then the product's category,
   both linking to their listings; just the category when the tree is unavailable.
-- `components/catalog/Gallery.tsx` — the carousel and thumbnails as before, square
-  and at 9:10, sized for 70% of the viewport.
+- `components/catalog/Gallery.tsx` — a shadcn `Carousel` with a vertical thumbnail
+  strip on its left (56px, 72px from `md`) that takes the photograph's height and
+  scrolls, and round `floating` Previous/Next buttons (a `Button` variant, 44px,
+  chevrons) over the photograph. The strip and the buttons show even for one
+  photograph (one thumbnail, both buttons disabled), at the client's request. Stacked, the photograph is 9:10 at the remaining
+  width; side by side it is the row's full height and 9:10 wide, the gallery capped
+  at 62% of the row, past which the photograph is cropped (`object-cover`) rather
+  than squeezing the panel.
 - `components/catalog/VariantPicker.tsx` — unchanged behaviour; the price in the
   sans at `text-2xl`, and Add to bag full width at 56px.
-- `components/catalog/ProductDetails.tsx` — a `dl` under a charcoal rule: Suited to
-  (the skin-type names joined), Skin feel, Key ingredients. Blank values are
+- `components/catalog/ProductDetails.tsx` — a `dl` under a charcoal rule at the foot
+  of the panel: Suited to (the skin-type names joined), Skin feel, Key ingredients. Blank values are
   dropped, and nothing renders when all three are blank.
 - `components/catalog/SkinRoutine.tsx` — static: Cleanse, Treat, Protect, as an
   ordered list of numbered cards joined by plus signs on the greige band.
@@ -75,7 +87,8 @@ unset.
 - `components/catalog/RelatedProducts.tsx` — "Combine with": `relatedProducts()`
   asks for nine from the product's category, drops the product itself, keeps eight,
   and renders a `ProductRail`, or nothing.
-- `app/products/[slug]/loading.tsx` — the gallery and panel's shape.
+- `app/products/[slug]/loading.tsx` — the same shape: thumbnails, photograph and
+  panel, height-locked on landscape.
 
 ---
 
@@ -154,7 +167,31 @@ The panel's length varies by product.
   backend that predates the skin-types migration fails every product page; deploy
   the backend first.
 - A category with one product shows no related rail: the product itself is dropped.
-- The API gives no image dimensions, so every image states its aspect ratio.
+- The API gives no image dimensions, so every image states its aspect ratio. In the
+  side-by-side layout the photograph's box is fixed by the row's height instead.
+- **The gallery's height chain needs `CarouselContent`'s viewport to be `h-full`**
+  (tailored in `components/ui/carousel.tsx`); without it the slides cannot fill the
+  height-locked gallery. It has no effect where the carousel's height is auto (the hero,
+  the rails).
+- **The gallery, not the article, carries the height** so a panel taller than the
+  screen grows the row rather than overflowing or scrolling.
+- **The panel's spacing is `--fit-step`** (`app/globals.css`): Tailwind's 4px step
+  everywhere except landscape from `md`, where it is
+  `clamp(1.5px, 1.25svh - 7.5px, 4px)` — full from 920px tall, the floor at 720px.
+  Only the panel's gaps and paddings use it (the panel, its header, `VariantPicker`'s
+  root, the detail rows); type, controls and 44px targets keep their size. Do not
+  scale `--spacing` itself, which would shrink every control. Tuned on 2026-09-27
+  against the seeded catalogue: the longest skincare panel (three detail rows) fits
+  at 1920×1080, 1440×900, 1366×768, 1280×720, 1180×820 and 1024×768. Longer copy or
+  more rows can still grow the row; nothing scrolls.
+- **The panel's side padding is `px-8` until `xl`**, so the narrow panel of a
+  1024px landscape wraps less.
+- **`5rem` in the gallery's height is the header's `md:h-20`**, not `--header-offset`,
+  which drops to 0 when the header hides and would resize the row on scroll. The
+  announcement bar is not subtracted: the row fills the screen once it has scrolled
+  away.
+- **A landscape phone is `md`** (844×390): it gets the side-by-side layout, with a
+  310px gallery and a panel that makes the row taller (390–620px).
 
 ---
 

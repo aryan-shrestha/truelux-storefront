@@ -13,7 +13,7 @@ export function ProductDetails({ product }: { product: Product }) {
   return (
     <dl className="border-foreground border-t">
       {rows.map((row) => (
-        <div key={row.label} className="flex flex-col gap-1.5 border-b py-5">
+        <div key={row.label} className="py-fit-5 flex flex-col gap-1.5 border-b">
           <dt className="text-sm font-semibold">{row.label}</dt>
           <dd className="text-muted-foreground text-sm leading-relaxed">{row.value}</dd>
         </div>
