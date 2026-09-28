@@ -27,7 +27,7 @@ Transcribed from, and verified against:
 ```text
 back-end/docs/features/{brands,shades-and-sizes,skin-types,admin-api}.md
 back-end/docs/features/checkout-quote-and-shipping.md   (implemented 2026-09-27)
-back-end/docs/features/sale-prices.md                   (planned 2026-09-29)
+back-end/docs/features/sale-prices.md                   (implemented 2026-09-29)
 back-end/docs/decisions/0018-a-sale-is-a-compare-at-price.md
 back-end/docs/decisions/0011-cash-on-delivery-only.md
 back-end/config/urls.py
