@@ -4,6 +4,7 @@ import {
   appliedFilterCount,
   hasFilters,
   hrefWith,
+  isSaleOnly,
   PAGE_SIZE,
   toCanonicalSearch,
   toProductQuery,
@@ -230,6 +231,23 @@ describe("hasFilters", () => {
     expect(hasFilters(toProductQuery({ shade: "porcelain" }))).toBe(true);
     expect(hasFilters(toProductQuery({ brand: "lumiere" }))).toBe(true);
     expect(hasFilters(toProductQuery({ in_stock: "true" }))).toBe(true);
+    expect(hasFilters(toProductQuery({ on_sale: "true" }))).toBe(true);
+  });
+});
+
+describe("isSaleOnly", () => {
+  it("is true for the header's Sale link, sorted or paged", () => {
+    expect(isSaleOnly(toProductQuery({ on_sale: "true" }))).toBe(true);
+    expect(isSaleOnly(toProductQuery({ on_sale: "true", ordering: "name", offset: "25" }))).toBe(
+      true,
+    );
+  });
+
+  it("is false once anything else narrows the view, or without the sale filter", () => {
+    expect(isSaleOnly(toProductQuery({}))).toBe(false);
+    expect(isSaleOnly(toProductQuery({ on_sale: "true", category: "serums" }))).toBe(false);
+    expect(isSaleOnly(toProductQuery({ on_sale: "true", brand: "verde" }))).toBe(false);
+    expect(isSaleOnly(toProductQuery({ on_sale: "true", search: "rose" }))).toBe(false);
   });
 });
 
@@ -241,9 +259,10 @@ describe("appliedFilterCount", () => {
       min_price: "2000",
       max_price: "5000",
       in_stock: "true",
+      on_sale: "true",
     });
 
-    expect(appliedFilterCount(query)).toBe(5);
+    expect(appliedFilterCount(query)).toBe(6);
   });
 
   it("leaves out the category, search and sort, which are not filters in the panel", () => {

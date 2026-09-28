@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { BRANDS_LINK, JOURNAL_LINK } from "@/components/layout/site-links";
+import { BRANDS_LINK, JOURNAL_LINK, SALE_LINK } from "@/components/layout/site-links";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -65,6 +65,13 @@ export function ShopMenu({
               </NavigationMenuContent>
             </>
           )}
+        </NavigationMenuItem>
+        <NavigationMenuItem className="h-full">
+          <NavigationMenuLink asChild>
+            <Link href={SALE_LINK.href} className="h-full">
+              {SALE_LINK.label}
+            </Link>
+          </NavigationMenuLink>
         </NavigationMenuItem>
         <NavigationMenuItem className="h-full">
           <NavigationMenuLink asChild>

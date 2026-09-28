@@ -164,6 +164,14 @@ export function FilterPanel({
                 In stock only
               </ToggleFilter>
             </li>
+            <li>
+              <ToggleFilter
+                href={href({ onSale: query.onSale ? undefined : true })}
+                active={Boolean(query.onSale)}
+              >
+                On sale
+              </ToggleFilter>
+            </li>
           </FilterGroup>
 
           <SortForm query={query} pathname={pathname} />
@@ -235,6 +243,7 @@ function SortForm({ query, pathname }: { query: ProductQuery; pathname: string }
       {query.minPrice && <input type="hidden" name="min_price" value={query.minPrice} />}
       {query.maxPrice && <input type="hidden" name="max_price" value={query.maxPrice} />}
       {query.inStock && <input type="hidden" name="in_stock" value="true" />}
+      {query.onSale && <input type="hidden" name="on_sale" value="true" />}
       {query.search && <input type="hidden" name="search" value={query.search} />}
 
       <Label htmlFor="ordering" className="text-sm font-semibold">

@@ -70,6 +70,23 @@ describe("FilterPanel", () => {
     expect(screen.getByRole("link", { name: "30 ml" })).toHaveAttribute("href", "/products");
   });
 
+  it("offers On sale as a link carrying ?on_sale=true, keeping the other filters", async () => {
+    await renderOpen({ category: "serums", skinType: ["dry"] });
+
+    const onSale = screen.getByRole("link", { name: "On sale" });
+    expect(onSale).toHaveAttribute("href", "/products?category=serums&skin_type=dry&on_sale=true");
+    expect(onSale).not.toHaveAttribute("aria-current");
+  });
+
+  it("marks an applied On sale and toggles it off, and carries it through the sort form", async () => {
+    await renderOpen({ onSale: true, inStock: true });
+
+    const onSale = screen.getByRole("link", { name: "On sale" });
+    expect(onSale).toHaveAttribute("aria-current", "true");
+    expect(onSale).toHaveAttribute("href", "/products?in_stock=true");
+    expect(document.querySelector('input[name="on_sale"]')).toHaveValue("true");
+  });
+
   it("clears every filter but keeps the category, search and sort", async () => {
     await renderOpen({ category: "serums", search: "rose", ordering: "name", skinType: ["dry"] });
 

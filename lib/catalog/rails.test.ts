@@ -1,7 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError, ApiUnreachableError } from "@/lib/api/errors";
-import { categoryProducts, latestProducts, relatedProducts } from "@/lib/catalog/rails";
+import {
+  categoryProducts,
+  latestProducts,
+  relatedProducts,
+  saleProducts,
+} from "@/lib/catalog/rails";
 import { hydratingSerum, soldOutPerfume, velvetLipTint } from "@/tests/fixtures/catalog";
 
 const { listProducts, listRelatedProducts } = vi.hoisted(() => ({
@@ -55,6 +60,21 @@ describe("latestProducts", () => {
     listProducts.mockRejectedValue(new TypeError("results is undefined"));
 
     await expect(latestProducts()).rejects.toThrow(TypeError);
+  });
+});
+
+describe("saleProducts", () => {
+  it("asks for eight products on sale", async () => {
+    listProducts.mockResolvedValue(pageOf([velvetLipTint]));
+
+    await expect(saleProducts()).resolves.toEqual([velvetLipTint]);
+    expect(listProducts).toHaveBeenCalledWith({ onSale: true, limit: 8 });
+  });
+
+  it("degrades to no rail when the API fails", async () => {
+    listProducts.mockRejectedValue(new ApiError("throttled", 429, {}, null, "Slow down."));
+
+    await expect(saleProducts()).resolves.toEqual([]);
   });
 });
 
