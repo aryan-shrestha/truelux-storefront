@@ -2,7 +2,7 @@
 
 Status: Reference
 
-Last updated: 2026-09-27
+Last updated: 2026-09-29
 
 ---
 
@@ -27,6 +27,8 @@ Transcribed from, and verified against:
 ```text
 back-end/docs/features/{brands,shades-and-sizes,skin-types,admin-api}.md
 back-end/docs/features/checkout-quote-and-shipping.md   (implemented 2026-09-27)
+back-end/docs/features/sale-prices.md                   (planned 2026-09-29)
+back-end/docs/decisions/0018-a-sale-is-a-compare-at-price.md
 back-end/docs/decisions/0011-cash-on-delivery-only.md
 back-end/config/urls.py
 back-end/config/settings/base.py
@@ -211,6 +213,7 @@ Query parameters:
 | `min_price` | number | Against `base_price`, not the resolved variant price |
 | `max_price` | number | Against `base_price` |
 | `in_stock` | boolean | True when *any* variant has stock |
+| `on_sale` | `true` or `false` | `true`: only products with at least one on-sale published variant. **Any other value is `400 validation_error`** |
 | `search` | string | Case-insensitive substring over `name` and `description` |
 | `ordering` | `name`, `base_price`, `created_at` | Prefix `-` to reverse. Nothing else is accepted |
 | `limit`, `offset` | integers | `limit` caps at 100 |
@@ -233,11 +236,28 @@ error.
       "brand": { "name": "Lumière", "slug": "lumiere" },
       "category": { "name": "Face", "slug": "face" },
       "primary_image": { "url": "https://res.cloudinary.com/...", "alt_text": "..." },
-      "in_stock": true
+      "in_stock": true,
+      "on_sale": true,
+      "sale_price": "2720.00",
+      "compare_at_price": "3200.00",
+      "discount_percent": 15
     }
   ]
 }
 ```
+
+**Sale fields** (back-end ADR 0018). A sale is a variant's `compare_at_price`, the
+"was" price, above its resolved `price`. On a product:
+
+- `on_sale` is true when any published variant is on sale.
+- `sale_price`, `compare_at_price` and `discount_percent` describe the **sale
+  variant**: the on-sale variant with the lowest price, ties going to size order.
+  All three are `null` exactly when `on_sale` is false.
+- `discount_percent` is an integer, floored (`3200 → 2720` is 15), so it never
+  overstates the saving. The storefront never computes it.
+- `base_price` is unchanged and is still what `min_price`, `max_price` and
+  `ordering=base_price` read, so a product on sale sorts and filters by its full
+  price.
 
 `brand` is on every item and is never null: `Product.brand` is required, and a
 product of an inactive brand is hidden from every public endpoint.
@@ -262,12 +282,21 @@ Everything from the list item, plus:
       "id": "1b7d...",
       "size": { "name": "30 ml", "slug": "30-ml" },
       "shade": { "name": "Warm Beige", "slug": "warm-beige", "hex_code": "#D8A47F" },
-      "price": "3200.00",
-      "in_stock": true
+      "price": "2720.00",
+      "in_stock": true,
+      "compare_at_price": "3200.00",
+      "on_sale": true,
+      "discount_percent": 15
     }
   ]
 }
 ```
+
+A variant's `on_sale` is `compare_at_price > price`. A variant whose compare-at is
+at or below its price still returns that `compare_at_price`, with `on_sale` false
+and `discount_percent` `null`; only `on_sale` says whether it is a sale. The
+compare-at is display-only: checkout and the quote charge `price`, and it never
+reaches an order.
 
 `images` is ordered by the merchant's sort order. `variants` is ordered by size
 sort order.
@@ -699,9 +728,9 @@ first.
   children, and the tree is only one level deep, so there is nothing deeper to
   reach.
 - **No cursor pagination**, only limit/offset.
-- **No discounts, coupons, gift cards, sale prices, or tax** yet. `base_price` is
-  the only price concept and `shipping_fee` the only addition to it; the quote's
-  `discount` is always `"0.00"`.
+- **No discounts, coupons, gift cards, or tax** yet, and **no scheduled sales**:
+  a sale has no start or end date, so there is nothing to count down to. The
+  quote's `discount` is always `"0.00"`.
 - **No product reviews, ratings, related products, or recommendations.** The
   storefront's "combine with" rail is simply other products in the same category.
 - **No wishlist, no restock notification, no abandoned-cart anything.**

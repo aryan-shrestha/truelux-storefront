@@ -50,6 +50,12 @@ export type ProductImage = {
   altText: string;
 };
 
+/** Null on a product or variant that is not on sale; every figure is the API's. */
+export type Sale = {
+  compareAtPrice: Money;
+  discountPercent: number;
+};
+
 export type ProductVariant = {
   id: string;
   size: SizeRef;
@@ -57,7 +63,11 @@ export type ProductVariant = {
   /** Already resolved: the variant's override, or its product's base price. */
   price: Money;
   inStock: boolean;
+  sale: Sale | null;
 };
+
+/** The on-sale variant with the lowest price, as the API chose it. */
+export type ProductSale = Sale & { price: Money };
 
 export type ProductSummary = {
   id: string;
@@ -68,6 +78,7 @@ export type ProductSummary = {
   category: CategoryRef;
   primaryImage: ProductImage | null;
   inStock: boolean;
+  sale: ProductSale | null;
 };
 
 export type Product = ProductSummary & {
@@ -182,6 +193,7 @@ export type ProductQuery = {
   minPrice?: string;
   maxPrice?: string;
   inStock?: boolean;
+  onSale?: boolean;
   search?: string;
   ordering?: ProductOrdering;
   limit?: number;

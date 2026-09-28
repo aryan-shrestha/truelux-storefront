@@ -27,6 +27,7 @@ export const velvetLipTint: ProductSummary = {
     altText: "Velvet lip tint, uncapped",
   },
   inStock: true,
+  sale: null,
 };
 
 export const roseWaterToner: ProductSummary = {
@@ -38,6 +39,7 @@ export const roseWaterToner: ProductSummary = {
   category: { name: "Skincare", slug: "skincare" },
   primaryImage: null,
   inStock: true,
+  sale: null,
 };
 
 export const soldOutPerfume: ProductSummary = {
@@ -52,6 +54,7 @@ export const soldOutPerfume: ProductSummary = {
     altText: "Santal eau de parfum bottle",
   },
   inStock: false,
+  sale: null,
 };
 
 // Sparse: 50 ml exists in Warm Beige only and costs more, and Deep Mocha is sold
@@ -68,6 +71,7 @@ export const silkFoundation: Product = {
     altText: "Silk skin foundation bottle",
   },
   inStock: true,
+  sale: null,
   description: "A weightless, satin-finish foundation with buildable coverage.",
   images: [
     {
@@ -86,6 +90,7 @@ export const silkFoundation: Product = {
       shade: { name: "Porcelain", slug: "porcelain", hexCode: "#F3DCC8" },
       price: "3200.00",
       inStock: true,
+      sale: null,
     },
     {
       id: "v-30-warm-beige",
@@ -93,6 +98,7 @@ export const silkFoundation: Product = {
       shade: { name: "Warm Beige", slug: "warm-beige", hexCode: "#D8A47F" },
       price: "3200.00",
       inStock: true,
+      sale: null,
     },
     {
       id: "v-50-warm-beige",
@@ -100,6 +106,7 @@ export const silkFoundation: Product = {
       shade: { name: "Warm Beige", slug: "warm-beige", hexCode: "#D8A47F" },
       price: "4400.00",
       inStock: true,
+      sale: null,
     },
     {
       id: "v-30-deep-mocha",
@@ -107,6 +114,7 @@ export const silkFoundation: Product = {
       shade: { name: "Deep Mocha", slug: "deep-mocha", hexCode: "#6B432C" },
       price: "3200.00",
       inStock: false,
+      sale: null,
     },
   ],
   skinTypes: [],
@@ -123,6 +131,7 @@ export const hydratingSerum: Product = {
   category: { name: "Serums", slug: "serums" },
   primaryImage: null,
   inStock: true,
+  sale: null,
   description: "Hyaluronic acid and niacinamide for plump, even skin.",
   images: [],
   variants: [
@@ -132,6 +141,7 @@ export const hydratingSerum: Product = {
       shade: null,
       price: "2900.00",
       inStock: true,
+      sale: null,
     },
     {
       id: "v-30-serum",
@@ -139,6 +149,7 @@ export const hydratingSerum: Product = {
       shade: null,
       price: "4800.00",
       inStock: false,
+      sale: null,
     },
   ],
   skinTypes: [
@@ -147,6 +158,42 @@ export const hydratingSerum: Product = {
   ],
   skinFeel: "Plump, dewy, comfortable",
   keyIngredients: "Water (Aqua), Sodium Hyaluronate, Niacinamide, Panthenol",
+};
+
+export const discountedCream: ProductSummary = {
+  id: "2e6f0a93-5b1c-4d7e-8f20-3a4b5c6d7e8f",
+  name: "Barrier Cream",
+  slug: "barrier-cream",
+  basePrice: "3200.00",
+  brand: verde,
+  category: { name: "Moisturisers", slug: "moisturisers" },
+  primaryImage: null,
+  inStock: true,
+  sale: { price: "2720.00", compareAtPrice: "3200.00", discountPercent: 15 },
+};
+
+// The 30 ml is on sale; the 50 ml has a stale compare-at at its own price, so is not.
+export const discountedSerum: Product = {
+  ...hydratingSerum,
+  sale: { price: "2720.00", compareAtPrice: "3200.00", discountPercent: 15 },
+  variants: [
+    {
+      id: "v-30-sale",
+      size: { name: "30 ml", slug: "30-ml" },
+      shade: null,
+      price: "2720.00",
+      inStock: true,
+      sale: { compareAtPrice: "3200.00", discountPercent: 15 },
+    },
+    {
+      id: "v-50-full",
+      size: { name: "50 ml", slug: "50-ml" },
+      shade: null,
+      price: "4800.00",
+      inStock: true,
+      sale: null,
+    },
+  ],
 };
 
 export const categoryTree: Category[] = [
