@@ -85,6 +85,7 @@ test("filters the catalogue by brand, shade and skin type through links", async 
 
 test("an applied filter keeps its inverted text on hover", async ({ page }) => {
   await page.goto("/products?category=hydrate&skin_type=dry");
+  await page.getByRole("button", { name: "Filter and sort (1 applied)" }).click();
 
   const dry = page.getByRole("region", { name: "Skin type" }).getByRole("link", { name: "Dry" });
   await expect(dry).toHaveAttribute("aria-current", "true");

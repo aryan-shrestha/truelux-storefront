@@ -2,7 +2,7 @@
 
 Status: Implemented
 
-Last updated: 2026-09-26
+Last updated: 2026-09-29
 
 ---
 
@@ -57,7 +57,7 @@ the URL (ADR 0004).
 - `app/products/page.tsx` — redirects to the canonical URL when the request differs,
   then renders `ProductListing` with `ShopHero` and the facets.
 - `components/catalog/ShopHero.tsx` + `ListingHero.tsx` — a full-bleed band on
-  `public/art/listing.svg` with a scrim: the category's name (or "Shop", or "Results
+  `public/images/listing.jpg` with a scrim: the category's name (or "Shop", or "Results
   for …"), a line of copy, and a Shop › root breadcrumb inside a category.
 - `components/catalog/CategoryBand.tsx` — the greige band: "Shop all" then the roots;
   inside a root, "Shop all" (the root, which includes its children) then its
@@ -66,9 +66,11 @@ the URL (ADR 0004).
 - `components/catalog/ProductListing.tsx` — hero, band, then the Filter and sort
   panel with a live product count on its row, and the grid in a `Suspense` boundary
   keyed on the canonical query. Three empty states as before.
-- `components/catalog/FilterPanel.tsx` — one `Accordion` item, "Filter and sort (n
-  applied)", open whenever a filter or sort is applied and closed otherwise. Inside,
-  in up to four columns: Skin type, Brand and Size as toggle-styled links, Shade as
+- `components/catalog/FilterPanel.tsx` — a `Popover` dropdown, "Filter and sort (n
+  applied)", always closed on arrival. Its full-width ghost trigger spans the
+  listing's column and the panel takes the trigger's width, so it lines up with the
+  grid; it opens below the trigger and scrolls within the viewport's remaining height.
+  Inside, in up to four columns: Skin type, Brand and Size as toggle-styled links, Shade as
   swatch links, Price bands, In stock only, and the GET sort form carrying every
   filter (skin types included) as hidden inputs. "Clear filters" keeps the category,
   search and sort.
@@ -123,25 +125,31 @@ They work without JavaScript, with middle-click and with the back button (ADR 00
 No `Checkbox` or `ToggleGroup` in the rail; see
 [shadcn-foundation.md](shadcn-foundation.md).
 
-### Decision: the facets sit in a panel that is closed until something is applied
+### Decision: the facets sit in a dropdown panel the width of the grid
 
 **Decision**
 
 Categories are in the always-visible band; every other facet is in a Filter and sort
-`Accordion` that is open whenever a filter or sort is applied and closed otherwise.
+`Popover` that drops over the grid at the grid's width. It is closed on arrival,
+including when a filter is applied; the trigger carries the applied count.
 
 **Reason**
 
 The design has no filter rail: a full-width four-column grid under a category band.
-Opening the panel whenever something is applied keeps what narrowed the grid in view.
+An overlay replaced the earlier in-flow `Accordion` (2026-09-29) so opening the
+filters no longer pushes the grid down. Being an overlay, it does not open itself when
+something is applied, or it would cover the results on every filtered page.
 
 **Consequence**
 
-The filters are still links, but **opening the closed panel needs JavaScript**:
-Radix does not render closed content. Without it a shopper can still browse by
-category, search, paginate, and follow any filtered link. This relaxes the old
-"the whole rail works without JavaScript" property and is recorded as a deviation
-in `design-alignment.md`.
+The filters are still links, but **opening the panel needs JavaScript**: Radix does
+not render closed content, and a popover never renders on the server. Without it a
+shopper can still browse by category, search, paginate, and follow any filtered link.
+This relaxes the old "the whole rail works without JavaScript" property and is
+recorded as a deviation in `design-alignment.md`. The popover's open state survives a
+filter click (same route, soft navigation), so several filters can be applied in a row.
+It is not `modal` and pins to the bottom side (`avoidCollisions={false}`), so it never
+flips up over the hero.
 
 ### Decision: pagination is numbered links, price is fixed bands
 
@@ -236,7 +244,7 @@ only the panel's open state.
   brands, skin types (parsing, dedupe, cap, canonical order, toggling),
   `appliedFilterCount`, idempotent canonicalisation, `hrefWith`.
 - `lib/catalog/listing.test.ts`, `lib/catalog/navigation.test.ts` (`findCategory`).
-- `components/catalog/FilterPanel.test.tsx` — closed and open states, skin-type and
+- `components/catalog/FilterPanel.test.tsx` — closed on arrival with the applied count, skin-type and
   brand toggles, shade and size links, clear filters, hidden inputs, the brand page.
 - `components/catalog/CategoryBand.test.tsx` — roots, a root's children, the applied
   child, nothing on failure. `components/catalog/ProductCard.test.tsx`.
@@ -251,5 +259,5 @@ app/products/page.tsx
 app/products/loading.tsx
 components/catalog/
 lib/catalog/{query,navigation,listing}.ts
-public/art/listing.svg
+public/images/listing.jpg
 ```

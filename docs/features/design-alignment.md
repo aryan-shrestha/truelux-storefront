@@ -149,7 +149,7 @@ controls. The bag line no longer overflows at 375px.
 | Journal | Articles with "Read more", "All blog posts" | Four short notes ending in a search link | No articles or article routes exist |
 | Mega-menu | Four columns | One per root plus Skin type, wrapping | The seeded tree has five roots |
 | Listing | "Revered formulations" heading above the grid | Product count and the Filter and sort panel | No per-category copy in the API; the filters need a place |
-| Listing | No filters shown | A Filter and sort panel, closed until something is applied | The requirement adds filters; the design has no rail |
+| Listing | No filters shown | A Filter and sort dropdown panel, the width of the grid | The requirement adds filters; the design has no rail |
 | Product detail | "Save to cabinet" | Left out | No wishlist |
 | Product detail | Benefits / How to use / Ingredients accordion | Delivery / Payment / Authenticity | No benefits or usage fields; ingredients are already a row |
 | Product detail | Reviews | Left out | No reviews |
@@ -169,12 +169,12 @@ controls. The bag line no longer overflows at 375px.
 
 ## Decisions
 
-### Decision: the facet panel is closed until something is applied
+### Decision: the facets sit in a dropdown panel
 
 **Decision**
 
-Categories live in the always-visible band; the other facets sit in an accordion
-that opens itself whenever a filter or sort is applied.
+Categories live in the always-visible band; the other facets sit in a dropdown
+panel (a `Popover`) the width of the grid, closed on arrival.
 
 **Reason**
 
@@ -182,7 +182,7 @@ The design has no filter rail, and the requirement adds a Skin type filter.
 
 **Consequence**
 
-Opening the closed panel needs JavaScript; see catalog-browsing.md.
+Opening the panel needs JavaScript; see catalog-browsing.md.
 
 ### Decision: the listing revalidates every ten minutes
 
