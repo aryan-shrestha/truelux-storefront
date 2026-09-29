@@ -10,7 +10,7 @@ import {
   sizeOptions,
   statusOf,
 } from "@/lib/catalog/variants";
-import { hydratingSerum, silkFoundation } from "@/tests/fixtures/catalog";
+import { discountedSerum, hydratingSerum, silkFoundation } from "@/tests/fixtures/catalog";
 
 // silkFoundation:
 //   30 ml / porcelain   in stock
@@ -93,8 +93,28 @@ describe("findVariant", () => {
 
 describe("statusOf", () => {
   it("says nothing for an available option and different words for the two unavailable states", () => {
-    expect(statusOf("available")).toBeUndefined();
-    expect(statusOf("sold-out")).not.toBe(statusOf("not-made"));
+    expect(statusOf({ state: "available", onSale: false })).toBeUndefined();
+    expect(statusOf({ state: "sold-out", onSale: false })).not.toBe(
+      statusOf({ state: "not-made", onSale: false }),
+    );
+  });
+
+  it("names a sale only on an option that can be bought", () => {
+    expect(statusOf({ state: "available", onSale: true })).toBe("On sale");
+    expect(statusOf({ state: "sold-out", onSale: true })).toBe("Sold out");
+  });
+});
+
+describe("sale flags on options", () => {
+  it("marks the size whose variant is on sale, and not the one with a stale compare-at", () => {
+    const flags = Object.fromEntries(
+      sizeOptions(discountedSerum.variants, null).map((option) => [option.slug, option.onSale]),
+    );
+    expect(flags).toEqual({ "30-ml": true, "50-ml": false });
+  });
+
+  it("marks nothing on a product with no sale", () => {
+    expect(shadeOptions(variants, null).some((option) => option.onSale)).toBe(false);
   });
 });
 

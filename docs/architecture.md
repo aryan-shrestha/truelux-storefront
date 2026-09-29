@@ -274,15 +274,16 @@ five reference lists (categories, brands, shades, sizes,     5 × 1   =   5
   skin types)
 the shipping settings                                         1 × 1   =   1
 ten brand detail keys                                        10 × 1   =  10
-listing keys reachable in one click: 22 categories from      42 × 6   = 252
+listing keys reachable in one click: 22 categories from      44 × 6   = 264
   the mega-menu and band, 6 skin types, the unfiltered
-  listing, new-in, ten brand listings, the home page's
-  two rails (newest, first root category)
+  listing, new-in, the header's Sale listing, ten brand
+  listings, the home page's three rails (newest, on sale,
+  first root category)
 the sitemap's one key per hundred products                    1 × 6   =   6
 related-product keys, one per category a product sits in     20 × 1   =  20
 a hundred product detail keys                               100 × 2   = 200
                                                                         ----
-                                                                        494 / 600
+                                                                        506 / 600
 ```
 
 Revalidation is lazy, so the real figure is far lower, but the worst case is what
@@ -300,7 +301,12 @@ layout, the header, `/cart` and the product page, all the same cache key. The
 checkout quote is not in this sum: it is a browser call on the customer's IP, in
 the backend's `quote` scope (600/hour), not the storefront's `catalog` one.
 
-**At roughly 150 products, or with many more categories or brands, this budget
+**Sale prices added two listing keys on 2026-09-29**: the header's
+`/products?on_sale=true` and the home page's on-sale rail
+(`?on_sale=true&limit=8`), six calls an hour each, 494 → 506. The sale fields ride
+on the list and detail reads that already exist, so nothing else changed.
+
+**At roughly 145 products, or with many more categories or brands, this budget
 breaks.** Each product adds two calls an hour and each category or brand six. The
 fix is to lengthen `revalidate` on the detail or listing read, or to raise
 `DJANGO_THROTTLE_CATALOG` on the backend, a deliberate choice either way, made

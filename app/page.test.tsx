@@ -5,7 +5,7 @@ import Home from "@/app/page";
 import { CategoryRail } from "@/components/home/CategoryRail";
 import { ApiError } from "@/lib/api/errors";
 import type { ProductSummary } from "@/lib/api/types";
-import { brands, categoryTree, velvetLipTint } from "@/tests/fixtures/catalog";
+import { brands, categoryTree, discountedCream, velvetLipTint } from "@/tests/fixtures/catalog";
 
 const { listProducts, listCategories, listBrands } = vi.hoisted(() => ({
   listProducts: vi.fn(),
@@ -55,6 +55,38 @@ describe("/", () => {
       "/products/product-0",
     );
     expect(within(arrivals).getAllByRole("article")).toHaveLength(8);
+  });
+
+  it("shows what is on sale in its own rail, linking to the sale listing", async () => {
+    listProducts.mockImplementation((query: { onSale?: boolean }) =>
+      Promise.resolve(pageOf(query.onSale ? [discountedCream] : productsNamed(2))),
+    );
+    listCategories.mockResolvedValue([]);
+    listBrands.mockResolvedValue([]);
+
+    await renderHome();
+
+    expect(listProducts).toHaveBeenCalledWith({ onSale: true, limit: 8 });
+    const rail = section(/^On sale$/);
+    expect(within(rail).getAllByRole("article")).toHaveLength(1);
+    expect(within(rail).getByText("15% off")).toBeInTheDocument();
+    expect(within(rail).getByRole("link", { name: /Everything on sale/ })).toHaveAttribute(
+      "href",
+      "/products?on_sale=true",
+    );
+  });
+
+  it("hides the sale rail when nothing is on sale", async () => {
+    listProducts.mockImplementation((query: { onSale?: boolean }) =>
+      Promise.resolve(pageOf(query.onSale ? [] : productsNamed(2))),
+    );
+    listCategories.mockResolvedValue([]);
+    listBrands.mockResolvedValue([]);
+
+    await renderHome();
+
+    expect(section(/^New arrivals$/)).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: /On sale/ })).not.toBeInTheDocument();
   });
 
   it("points the editorial at the first root category", async () => {

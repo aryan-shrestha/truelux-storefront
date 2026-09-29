@@ -46,18 +46,19 @@ the URL (ADR 0004).
 
 - `lib/catalog/query.ts` — `toProductQuery` keeps only known parameters with valid
   values: slugs for `category`, `size`, `shade`, and every valid `brand` and
-  `skin_type` (each sorted, deduplicated, at most ten); prices matching a decimal pattern; `in_stock` only as
+  `skin_type` (each sorted, deduplicated, at most ten); prices matching a decimal pattern; `in_stock` and `on_sale` only as
   `true`; a known `ordering`; a trimmed search capped at 100 characters; whole-page
   offsets. `limit` is fixed at 25. `toCanonicalSearch` writes them in a fixed order;
   `toRequestedSearch` renders what arrived the same way, so the two compare.
   `hrefWith` builds every filter and page link, returning to page one on a filter
   change, under `/products` or a brand path. `withToggled` adds or removes one value
   of a repeatable filter; `appliedFilterCount` counts what the panel shows as
-  applied.
+  applied; `isSaleOnly` is true when `on_sale` is the only filter (see
+  [sale-prices.md](sale-prices.md)).
 - `app/products/page.tsx` — redirects to the canonical URL when the request differs,
   then renders `ProductListing` with `ShopHero` and the facets.
 - `components/catalog/ShopHero.tsx` + `ListingHero.tsx` — a full-bleed band on
-  `public/images/listing.jpg` with a scrim: the category's name (or "Shop", or "Results
+  `public/images/listing.jpg` with a scrim: the category's name (or "Shop", "Sale" when `isSaleOnly`, or "Results
   for …"), a line of copy, and a Shop › root breadcrumb inside a category.
 - `components/catalog/CategoryBand.tsx` — the greige band: "Shop all" then the roots;
   inside a root, "Shop all" (the root, which includes its children) then its
@@ -65,18 +66,21 @@ the URL (ADR 0004).
   filters.
 - `components/catalog/ProductListing.tsx` — hero, band, then the Filter and sort
   panel with a live product count on its row, and the grid in a `Suspense` boundary
-  keyed on the canonical query. Three empty states as before.
+  keyed on the canonical query. Three empty states as before, plus "Nothing here
+  is on sale right now" when `isSaleOnly`.
 - `components/catalog/FilterPanel.tsx` — a `Popover` dropdown, "Filter and sort (n
   applied)", always closed on arrival. Its full-width ghost trigger spans the
   listing's column and the panel takes the trigger's width, so it lines up with the
   grid; it opens below the trigger and scrolls within the viewport's remaining height.
   Inside, in up to four columns: Skin type, Brand and Size as toggle-styled links, Shade as
-  swatch links, Price bands, In stock only, and the GET sort form carrying every
+  swatch links, Price bands, In stock only and On sale, and the GET sort form carrying every
   filter (skin types included) as hidden inputs. "Clear filters" keeps the category,
   search and sort.
 - `components/catalog/{ProductGrid,ProductCard,ProductGridSkeleton,Pagination}.tsx`
   — four columns from `lg` with hairline gutters; the card is centred: the image on
-  a tinted 4:5 tile, the name, the brand, the price, and "Sold out" as a label.
+  a tinted 4:5 tile, the name, the brand, the price (`ProductPrice`: the sale price,
+  the struck compare-at and the API's percent when on sale), and "Sold out" as a
+  label.
 - `lib/catalog/navigation.ts` — `listingFacets()` reads categories, brands, shades,
   sizes and skin types, each degrading to `[]`; `findCategory()` places a slug in
   the tree.
@@ -225,7 +229,7 @@ GET /api/v1/skin-types/      server, revalidate 3600
 ## State and data
 
 URL only: `category`, `brand` (repeated), `size`, `shade`, `skin_type` (repeated),
-`min_price`, `max_price`, `in_stock`, `search`, `ordering`, `offset`. React state:
+`min_price`, `max_price`, `in_stock`, `on_sale`, `search`, `ordering`, `offset`. React state:
 only the panel's open state.
 
 ---
@@ -242,12 +246,15 @@ only the panel's open state.
 
 - `lib/catalog/query.test.ts` — allowlist, slugs, prices, flags, orderings, offsets,
   brands, skin types (parsing, dedupe, cap, canonical order, toggling),
-  `appliedFilterCount`, idempotent canonicalisation, `hrefWith`.
+  `appliedFilterCount`, idempotent canonicalisation, `hrefWith`, `on_sale` and
+  `isSaleOnly`.
 - `lib/catalog/listing.test.ts`, `lib/catalog/navigation.test.ts` (`findCategory`).
 - `components/catalog/FilterPanel.test.tsx` — closed on arrival with the applied count, skin-type and
-  brand toggles, shade and size links, clear filters, hidden inputs, the brand page.
+  brand toggles, shade and size links, the On sale link, clear filters, hidden inputs,
+  the brand page.
 - `components/catalog/CategoryBand.test.tsx` — roots, a root's children, the applied
-  child, nothing on failure. `components/catalog/ProductCard.test.tsx`.
+  child, nothing on failure. `components/catalog/ProductCard.test.tsx` — including a
+  sale and its accessible "Was".
 - `tests/e2e/buy-flow.spec.ts` — filter by brand, shade and skin type.
 
 ---

@@ -4,7 +4,7 @@ import { ChevronLeftIcon, ChevronRightIcon, MenuIcon } from "lucide-react";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 
-import { BRANDS_LINK, JOURNAL_LINK, ORDER_LINKS } from "@/components/layout/site-links";
+import { BRANDS_LINK, JOURNAL_LINK, ORDER_LINKS, SALE_LINK } from "@/components/layout/site-links";
 import { Button } from "@/components/ui/button";
 import { Item } from "@/components/ui/item";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -75,6 +75,11 @@ export function MobileNav({
                       {brands.title}
                     </ForwardRow>
                   )}
+                </li>
+                <li>
+                  <LinkRow href={SALE_LINK.href} onNavigate={close}>
+                    {SALE_LINK.label}
+                  </LinkRow>
                 </li>
                 <li>
                   <LinkRow href={JOURNAL_LINK.href} onNavigate={close}>

@@ -6,7 +6,7 @@ import { VariantPicker } from "@/components/catalog/VariantPicker";
 import type { Product } from "@/lib/api/types";
 import { CART_STORAGE_KEY } from "@/lib/cart/storage";
 import { CartProvider } from "@/lib/cart/use-cart";
-import { hydratingSerum, silkFoundation } from "@/tests/fixtures/catalog";
+import { discountedSerum, hydratingSerum, silkFoundation } from "@/tests/fixtures/catalog";
 
 function renderPicker(product: Product) {
   return render(
@@ -95,7 +95,9 @@ describe("VariantPicker, for a shadeless product", () => {
     await user.click(screen.getByRole("radio", { name: "15 ml" }));
     await user.click(screen.getByRole("button", { name: "Add to bag" }));
 
-    expect(storedLines()).toEqual([expect.objectContaining({ variantId: "v-15-serum", shade: null })]);
+    expect(storedLines()).toEqual([
+      expect.objectContaining({ variantId: "v-15-serum", shade: null }),
+    ]);
   });
 });
 
@@ -121,5 +123,55 @@ describe("VariantPicker, for simple and unfinished products", () => {
     renderPicker({ ...silkFoundation, variants: [] });
 
     expect(screen.getByText(/not available to buy yet/)).toBeInTheDocument();
+  });
+});
+
+describe("VariantPicker, for a product on sale", () => {
+  function priceBlock() {
+    const block = screen.getByText("Rs 2,720", { exact: false }).closest("p");
+    if (block === null) throw new Error("no price block");
+    return block;
+  }
+
+  it("shows the product's sale before a size is chosen, as the card does", () => {
+    renderPicker(discountedSerum);
+
+    expect(priceBlock()).toHaveTextContent("Rs 2,720Was Rs 3,200");
+    expect(priceBlock()).toHaveTextContent("15% off");
+  });
+
+  it("marks the on-sale size in words, and follows the chosen variant's own sale", async () => {
+    const user = userEvent.setup();
+    renderPicker(discountedSerum);
+
+    const onSale = screen.getByRole("radio", { name: "30 ml, On sale" });
+    expect(onSale).toHaveTextContent("Sale");
+    expect(screen.getByRole("radio", { name: "50 ml" })).not.toHaveTextContent("Sale");
+
+    await user.click(onSale);
+    expect(priceBlock()).toHaveTextContent("Was Rs 3,200");
+  });
+
+  it("drops the struck price and the badge when the chosen variant is not on sale", async () => {
+    const user = userEvent.setup();
+    renderPicker(discountedSerum);
+
+    await user.click(screen.getByRole("radio", { name: "50 ml" }));
+
+    const block = screen.getByText("Rs 4,800").closest("p");
+    expect(block?.querySelector("s")).toBeNull();
+    expect(block).not.toHaveTextContent("% off");
+  });
+
+  it("puts the price the customer pays in the bag, never the struck one", async () => {
+    const user = userEvent.setup();
+    renderPicker(discountedSerum);
+
+    await user.click(screen.getByRole("radio", { name: "30 ml, On sale" }));
+    await user.click(screen.getByRole("button", { name: "Add to bag" }));
+
+    expect(storedLines()).toEqual([
+      expect.objectContaining({ variantId: "v-30-sale", unitPrice: "2720.00" }),
+    ]);
   });
 });

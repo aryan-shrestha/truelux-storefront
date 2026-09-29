@@ -77,8 +77,11 @@ unset.
   width; side by side it is the row's full height and 9:10 wide, the gallery capped
   at 62% of the row, past which the photograph is cropped (`object-cover`) rather
   than squeezing the panel.
-- `components/catalog/VariantPicker.tsx` — unchanged behaviour; the price in the
-  sans at `text-2xl`, and Add to bag full width at 56px.
+- `components/catalog/VariantPicker.tsx` — the price in the sans at `text-2xl`,
+  and Add to bag full width at 56px. The price is `ProductPrice`: the selected
+  variant's price and, when that variant is on sale, its struck compare-at and the
+  API's percent; before a choice, the product's sale as on the card. On-sale size
+  and shade options carry a "Sale" marker ([sale-prices.md](sale-prices.md)).
 - `components/catalog/ProductDetails.tsx` — a `dl` under a charcoal rule at the foot
   of the panel: Suited to (the skin-type names joined), Skin feel, Key ingredients. Blank values are
   dropped, and nothing renders when all three are blank.
@@ -239,7 +242,8 @@ GET /api/v1/categories/                          server, revalidate 3600 (breadc
 
 - Toggle groups are radios to assistive technology, labelled by their visible
   "Shade" and "Size" text.
-- The price is a polite live region, so a price override is heard.
+- The price is a polite live region, so a price override or a sale is heard,
+  with the old price read as "Was …" and the badge as "…% off".
 - The care rows are a description list; the routine is an ordered list whose
   numbers and plus signs are hidden from assistive technology.
 
@@ -251,7 +255,8 @@ GET /api/v1/categories/                          server, revalidate 3600 (breadc
   empty or blank; nothing at all when every row is empty.
 - `lib/catalog/rails.test.ts` — `relatedProducts` asks for nine from the category,
   drops the product, keeps eight, degrades to none.
-- `components/catalog/VariantPicker.test.tsx`, `components/catalog/Gallery.test.tsx`,
+- `components/catalog/VariantPicker.test.tsx` (including the price following the
+  chosen variant's sale), `components/catalog/Gallery.test.tsx`,
   `lib/catalog/variants.test.ts`.
 - `lib/api/catalog.test.ts` — the three new fields are mapped.
 - `tests/e2e/buy-flow.spec.ts` — a shade product and a shadeless one.

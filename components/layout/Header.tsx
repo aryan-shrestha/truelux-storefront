@@ -1,3 +1,4 @@
+import { PackageIcon } from "lucide-react";
 import Link from "next/link";
 
 import { CartButton } from "@/components/layout/CartButton";
@@ -5,6 +6,8 @@ import { HeaderFrame } from "@/components/layout/HeaderFrame";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { SearchSheet } from "@/components/layout/SearchSheet";
 import { ShopMenu } from "@/components/layout/ShopMenu";
+import { FIND_ORDER_LINK } from "@/components/layout/site-links";
+import { Button } from "@/components/ui/button";
 import {
   brandMenu,
   navigationBrands,
@@ -43,6 +46,11 @@ export async function Header() {
 
         <div className="flex items-center justify-end">
           <SearchSheet />
+          <Button asChild variant="ghost" size="icon">
+            <Link href={FIND_ORDER_LINK.href} aria-label={FIND_ORDER_LINK.label}>
+              <PackageIcon aria-hidden />
+            </Link>
+          </Button>
           <CartButton shippingNote={note} />
         </div>
       </div>
