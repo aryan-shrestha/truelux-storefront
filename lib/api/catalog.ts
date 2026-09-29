@@ -9,9 +9,12 @@ import type {
   Product,
   ProductImage,
   ProductQuery,
+  ProductSale,
   ProductSummary,
   ProductVariant,
+  Sale,
   ShadeRef,
+  ShippingSettings,
   SizeRef,
   SkinTypeRef,
 } from "@/lib/api/types";
@@ -22,6 +25,7 @@ const LIST_REVALIDATE = 600;
 const DETAIL_REVALIDATE = 1800;
 const REFERENCE_REVALIDATE = 3600;
 const RELATED_REVALIDATE = 3600;
+const SHIPPING_REVALIDATE = 3600;
 
 type RawRef = { name: string; slug: string };
 type RawShade = { name: string; slug: string; hex_code: string };
@@ -32,6 +36,9 @@ type RawVariant = {
   shade: RawShade | null;
   price: Money;
   in_stock: boolean;
+  compare_at_price: Money | null;
+  on_sale: boolean;
+  discount_percent: number | null;
 };
 type RawProductSummary = {
   id: string;
@@ -42,6 +49,10 @@ type RawProductSummary = {
   category: RawRef;
   primary_image: RawImage | null;
   in_stock: boolean;
+  on_sale: boolean;
+  sale_price: Money | null;
+  compare_at_price: Money | null;
+  discount_percent: number | null;
 };
 type RawProduct = RawProductSummary & {
   description: string;
@@ -50,6 +61,11 @@ type RawProduct = RawProductSummary & {
   skin_types: RawRef[];
   skin_feel: string;
   key_ingredients: string;
+};
+type RawShipping = {
+  inside_valley_fee: Money;
+  outside_valley_fee: Money;
+  free_shipping_threshold: Money | null;
 };
 type RawCategory = RawRef & { children: RawRef[] };
 type RawBrand = RawRef & {
@@ -70,6 +86,21 @@ function toImage(raw: RawImage): ProductImage {
   return { url: toAbsoluteImageUrl(raw.url), altText: raw.alt_text };
 }
 
+// A variant keeps its compare-at when it is not on sale; only `on_sale` decides.
+function toSale(raw: {
+  on_sale: boolean;
+  compare_at_price: Money | null;
+  discount_percent: number | null;
+}): Sale | null {
+  if (!raw.on_sale || raw.compare_at_price === null || raw.discount_percent === null) return null;
+  return { compareAtPrice: raw.compare_at_price, discountPercent: raw.discount_percent };
+}
+
+function toProductSale(raw: RawProductSummary): ProductSale | null {
+  const sale = toSale(raw);
+  return sale === null || raw.sale_price === null ? null : { ...sale, price: raw.sale_price };
+}
+
 function toVariant(raw: RawVariant): ProductVariant {
   return {
     id: raw.id,
@@ -77,6 +108,7 @@ function toVariant(raw: RawVariant): ProductVariant {
     shade: raw.shade === null ? null : toShade(raw.shade),
     price: raw.price,
     inStock: raw.in_stock,
+    sale: toSale(raw),
   };
 }
 
@@ -90,6 +122,7 @@ function toSummary(raw: RawProductSummary): ProductSummary {
     category: toRef(raw.category),
     primaryImage: raw.primary_image === null ? null : toImage(raw.primary_image),
     inStock: raw.in_stock,
+    sale: toProductSale(raw),
   };
 }
 
@@ -140,6 +173,7 @@ export async function listProducts(query: ProductQuery = {}): Promise<Page<Produ
       min_price: query.minPrice,
       max_price: query.maxPrice,
       in_stock: query.inStock,
+      on_sale: query.onSale,
       search: query.search,
       ordering: query.ordering,
       limit: query.limit,
@@ -214,4 +248,15 @@ export async function listSkinTypes(): Promise<SkinTypeRef[]> {
     revalidate: REFERENCE_REVALIDATE,
   });
   return raw.map(toRef);
+}
+
+export async function getShipping(): Promise<ShippingSettings> {
+  const raw = await request<RawShipping>("/api/v1/shipping/", {
+    revalidate: SHIPPING_REVALIDATE,
+  });
+  return {
+    insideValleyFee: raw.inside_valley_fee,
+    outsideValleyFee: raw.outside_valley_fee,
+    freeShippingThreshold: raw.free_shipping_threshold,
+  };
 }

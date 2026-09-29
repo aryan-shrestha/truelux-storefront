@@ -2,7 +2,7 @@
 
 Status: Implemented
 
-Last updated: 2026-09-26
+Last updated: 2026-09-29
 
 ---
 
@@ -21,7 +21,7 @@ suits, and an add-to-bag that cannot produce an invalid line. Laid out as
 What is included in this implementation?
 
 - `/products/[slug]`, server-rendered from the detail endpoint
-- A full-bleed gallery beside a panel: the category breadcrumb (root, then the
+- A gallery beside a panel, inside the header's `max-w-page` column: the category breadcrumb (root, then the
   product's own category), the title, the brand, the description, the price, the
   shade and size pickers, and a full-width dark Add to bag
 - Ruled **Suited to** (`skin_types`), **Skin feel** and **Key ingredients** rows,
@@ -54,28 +54,47 @@ unset.
 ## Implemented
 
 - `app/products/[slug]/page.tsx` — reads the product and the category tree in
-  parallel (the tree is the header's read, deduplicated), lays out a
-  `69fr / 31fr` grid from `md`, then the routine and care bands flush beneath it,
-  then the related rail in its own `Suspense`. `generateStaticParams`, `load` and
+  parallel (the tree is the header's read, deduplicated). On a landscape viewport
+  from `md` (`md:landscape:`) the gallery and panel sit side by side; the gallery is
+  exactly `100svh - 5rem` tall (the viewport under the 80px header) and sets the
+  row's height. The article is the header's column (`max-w-page`, centred, `px-4`,
+  `md:px-8`), so the gallery's left edge and the panel's right edge line up with
+  the navbar at every width. The panel never scrolls: it centres vertically and
+  fills the rest of the row (stacked, the full column width), and its spacing shrinks with the screen's height (`gap-fit-*` and
+  `py-fit-*`, below) so it fits; on a screen too short even then (a landscape phone)
+  it grows the row instead. Everywhere else (phones, portrait tablets) they stack:
+  gallery, then panel. Then the routine and care bands, then the related rail in
+  its own `Suspense`. `generateStaticParams`, `load` and
   `generateMetadata` as before.
 - `components/catalog/ProductBreadcrumb.tsx` — root, then the product's category,
   both linking to their listings; just the category when the tree is unavailable.
-- `components/catalog/Gallery.tsx` — the carousel and thumbnails as before, square
-  and at 9:10, sized for 70% of the viewport.
-- `components/catalog/VariantPicker.tsx` — unchanged behaviour; the price in the
-  sans at `text-2xl`, and Add to bag full width at 56px.
-- `components/catalog/ProductDetails.tsx` — a `dl` under a charcoal rule: Suited to
-  (the skin-type names joined), Skin feel, Key ingredients. Blank values are
+- `components/catalog/Gallery.tsx` — a shadcn `Carousel` with a thumbnail strip
+  (64px thumbnails, 84px from `md`). Stacked, the strip is a row under the
+  photograph that scrolls sideways; side by side, it is a column on the
+  photograph's left that takes the photograph's height and scrolls, and round `floating` Previous/Next buttons (a `Button` variant, 44px,
+  chevrons) over the photograph. The strip and the buttons show even for one
+  photograph (one thumbnail, both buttons disabled), at the client's request. Stacked, the photograph is 9:10 at the column's full
+  width; side by side it is the row's full height and 9:10 wide, the gallery capped
+  at 62% of the row, past which the photograph is cropped (`object-cover`) rather
+  than squeezing the panel.
+- `components/catalog/VariantPicker.tsx` — the price in the sans at `text-2xl`,
+  and Add to bag full width at 56px. The price is `ProductPrice`: the selected
+  variant's price and, when that variant is on sale, its struck compare-at and the
+  API's percent; before a choice, the product's sale as on the card. On-sale size
+  and shade options carry a "Sale" marker ([sale-prices.md](sale-prices.md)).
+- `components/catalog/ProductDetails.tsx` — a `dl` under a charcoal rule at the foot
+  of the panel: Suited to (the skin-type names joined), Skin feel, Key ingredients. Blank values are
   dropped, and nothing renders when all three are blank.
 - `components/catalog/SkinRoutine.tsx` — static: Cleanse, Treat, Protect, as an
   ordered list of numbered cards joined by plus signs on the greige band.
 - `components/catalog/ProductCare.tsx` — on the stone band, an `Accordion` with
-  Delivery (`env.shippingNote`), Payment and Authenticity (from
+  Delivery (`shippingNote()`, from `GET /shipping/`; see checkout-quote.md), Payment and Authenticity (from
   `components/layout/promises.ts`), and `public/art/texture.svg` beside it from `md`.
 - `components/catalog/RelatedProducts.tsx` — "Combine with": `relatedProducts()`
   asks for nine from the product's category, drops the product itself, keeps eight,
   and renders a `ProductRail`, or nothing.
-- `app/products/[slug]/loading.tsx` — the gallery and panel's shape.
+- `app/products/[slug]/loading.tsx` — the same shape: photograph, thumbnails
+  (under it stacked, beside it on landscape) and panel, height-locked on landscape.
 
 ---
 
@@ -144,20 +163,50 @@ The panel's length varies by product.
 - **`variant.price` is already resolved**; never fall back to `base_price` once a
   variant is selected.
 - **An unknown, an unpublished and an inactive-brand product return the same 404.**
-- **`yarn build` needs an API that answers honestly.** Only the list call in
-  `generateStaticParams` degrades.
+- **No product page is prerendered at build.** `generateStaticParams` returns `[]`,
+  so each page renders on first request and is cached for 1800s. Prerendering the
+  first hundred burst about two hundred API calls from the build machine at once,
+  and Render's edge answered with 429s (plain text, no `X-Request-ID`, so not the
+  Django throttle) that failed the deploy. Do not restore the list call without
+  throttling the build.
 - **The detail mapper expects `skin_types`, `skin_feel` and `key_ingredients`.** A
   backend that predates the skin-types migration fails every product page; deploy
   the backend first.
 - A category with one product shows no related rail: the product itself is dropped.
-- The API gives no image dimensions, so every image states its aspect ratio.
+- The API gives no image dimensions, so every image states its aspect ratio. In the
+  side-by-side layout the photograph's box is fixed by the row's height instead.
+- **The gallery's height chain needs `CarouselContent`'s viewport to be `h-full`**
+  (tailored in `components/ui/carousel.tsx`); without it the slides cannot fill the
+  height-locked gallery. It has no effect where the carousel's height is auto (the hero,
+  the rails).
+- **The gallery, not the article, carries the height** so a panel taller than the
+  screen grows the row rather than overflowing or scrolling.
+- **The panel's spacing is `--fit-step`** (`app/globals.css`): Tailwind's 4px step
+  everywhere except landscape from `md`, where it is
+  `clamp(1.5px, 1.25svh - 7.5px, 4px)` — full from 920px tall, the floor at 720px.
+  Only the panel's gaps and paddings use it (the panel, its header, `VariantPicker`'s
+  root, the detail rows); type, controls and 44px targets keep their size. Do not
+  scale `--spacing` itself, which would shrink every control. Tuned on 2026-09-27
+  against the seeded catalogue: the longest skincare panel (three detail rows) fits
+  at 1920×1080, 1440×900, 1366×768, 1280×720, 1180×820 and 1024×768. Longer copy or
+  more rows can still grow the row; nothing scrolls.
+- **The panel has no side padding of its own**; the article's gutters are the
+  header's. Side by side it takes `pl-8` (`pl-12` from `xl`) as the gap to the
+  gallery. Do not cap it with a `max-w-*`: a cap left-aligns it and leaves an empty
+  band before the right gutter.
+- **`5rem` in the gallery's height is the header's `md:h-20`**, not `--header-offset`,
+  which drops to 0 when the header hides and would resize the row on scroll. The
+  announcement bar is not subtracted: the row fills the screen once it has scrolled
+  away.
+- **A landscape phone is `md`** (844×390): it gets the side-by-side layout, with a
+  310px gallery and a panel that makes the row taller (390–620px).
 
 ---
 
 ## Routes
 
 ```text
-/products/[slug]    SSG for the first hundred products, on demand after; ISR at 1800s; indexed
+/products/[slug]    rendered on first request, never at build; ISR at 1800s; indexed
 ```
 
 ---
@@ -167,7 +216,6 @@ The panel's length varies by product.
 ### Calls
 
 ```text
-GET /api/v1/products/?limit=100                  server, revalidate 600 (generateStaticParams)
 GET /api/v1/products/{slug}/                     server, revalidate 1800
 GET /api/v1/products/?category=<slug>&limit=9    server, revalidate 3600 (related)
 GET /api/v1/categories/                          server, revalidate 3600 (breadcrumb, shared)
@@ -194,7 +242,8 @@ GET /api/v1/categories/                          server, revalidate 3600 (breadc
 
 - Toggle groups are radios to assistive technology, labelled by their visible
   "Shade" and "Size" text.
-- The price is a polite live region, so a price override is heard.
+- The price is a polite live region, so a price override or a sale is heard,
+  with the old price read as "Was …" and the badge as "…% off".
 - The care rows are a description list; the routine is an ordered list whose
   numbers and plus signs are hidden from assistive technology.
 
@@ -206,7 +255,8 @@ GET /api/v1/categories/                          server, revalidate 3600 (breadc
   empty or blank; nothing at all when every row is empty.
 - `lib/catalog/rails.test.ts` — `relatedProducts` asks for nine from the category,
   drops the product, keeps eight, degrades to none.
-- `components/catalog/VariantPicker.test.tsx`, `components/catalog/Gallery.test.tsx`,
+- `components/catalog/VariantPicker.test.tsx` (including the price following the
+  chosen variant's sale), `components/catalog/Gallery.test.tsx`,
   `lib/catalog/variants.test.ts`.
 - `lib/api/catalog.test.ts` — the three new fields are mapped.
 - `tests/e2e/buy-flow.spec.ts` — a shade product and a shadeless one.

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   getBrand,
   getProduct,
+  getShipping,
   listBrands,
   listCategories,
   listProducts,
@@ -37,7 +38,13 @@ const rawSummary = {
   category: { name: "Lips", slug: "lips" },
   primary_image: { url: "/media/products/tint.jpg", alt_text: "Uncapped" },
   in_stock: true,
+  on_sale: false,
+  sale_price: null,
+  compare_at_price: null,
+  discount_percent: null,
 };
+
+const notOnSale = { compare_at_price: null, on_sale: false, discount_percent: null };
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -61,7 +68,43 @@ describe("listProducts", () => {
         altText: "Uncapped",
       },
       inStock: true,
+      sale: null,
     });
+  });
+
+  it("carries the API's sale figures as they are, and sends ?on_sale=true", async () => {
+    const fetchMock = stubJson({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [
+        {
+          ...rawSummary,
+          on_sale: true,
+          sale_price: "2720.00",
+          compare_at_price: "3200.00",
+          discount_percent: 15,
+        },
+      ],
+    });
+
+    const page = await listProducts({ onSale: true });
+
+    expect(requestedUrl(fetchMock).searchParams.get("on_sale")).toBe("true");
+    expect(page.results[0]?.sale).toEqual({
+      price: "2720.00",
+      compareAtPrice: "3200.00",
+      discountPercent: 15,
+    });
+    expect(page.results[0]?.basePrice).toBe("1800.00");
+  });
+
+  it("leaves ?on_sale= off the request unless it is asked for", async () => {
+    const fetchMock = stubJson({ count: 0, next: null, previous: null, results: [] });
+
+    await listProducts({ category: "lips" });
+
+    expect(requestedUrl(fetchMock).searchParams.has("on_sale")).toBe(false);
   });
 
   it("repeats ?brand= once per brand and sends shade and size", async () => {
@@ -113,6 +156,7 @@ describe("getProduct", () => {
           shade: { name: "Warm Beige", slug: "warm-beige", hex_code: "#D8A47F" },
           price: "4400.00",
           in_stock: true,
+          ...notOnSale,
         },
       ],
     });
@@ -141,6 +185,7 @@ describe("getProduct", () => {
           shade: null,
           price: "2900.00",
           in_stock: true,
+          ...notOnSale,
         },
       ],
     });
@@ -166,6 +211,44 @@ describe("getProduct", () => {
     expect(product.skinTypes).toEqual([{ name: "Combination", slug: "combination" }]);
     expect(product.skinFeel).toBe("Soothed, balanced, refreshed");
     expect(product.keyIngredients).toBe("Water (Aqua), Niacinamide");
+  });
+});
+
+describe("getProduct, for variants on sale", () => {
+  it("gives an on-sale variant its sale, and a variant with a compare-at at its price none", async () => {
+    stubJson({
+      ...rawSummary,
+      description: "",
+      images: [],
+      ...noSkinCare,
+      variants: [
+        {
+          id: "v-sale",
+          size: { name: "30 ml", slug: "30-ml" },
+          shade: null,
+          price: "2720.00",
+          in_stock: true,
+          compare_at_price: "3200.00",
+          on_sale: true,
+          discount_percent: 15,
+        },
+        {
+          id: "v-stale",
+          size: { name: "50 ml", slug: "50-ml" },
+          shade: null,
+          price: "4400.00",
+          in_stock: true,
+          compare_at_price: "4400.00",
+          on_sale: false,
+          discount_percent: null,
+        },
+      ],
+    });
+
+    const product = await getProduct({ slug: "hydrating-serum" });
+
+    expect(product.variants[0]?.sale).toEqual({ compareAtPrice: "3200.00", discountPercent: 15 });
+    expect(product.variants[1]?.sale).toBeNull();
   });
 });
 
@@ -252,5 +335,33 @@ describe("shade and size lists", () => {
 
     await expect(listSizes()).resolves.toEqual([{ name: "50 ml", slug: "50-ml" }]);
     expect(requestedUrl(fetchMock).pathname).toBe("/api/v1/sizes/");
+  });
+});
+
+describe("getShipping", () => {
+  it("maps the fees and a threshold, revalidating hourly", async () => {
+    const fetchMock = stubJson({
+      inside_valley_fee: "150.00",
+      outside_valley_fee: "250.00",
+      free_shipping_threshold: "8000.00",
+    });
+
+    const shipping = await getShipping();
+
+    expect(requestedUrl(fetchMock).pathname).toBe("/api/v1/shipping/");
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ next: { revalidate: 3600 } });
+    expect(shipping.insideValleyFee).toBe("150.00");
+    expect(shipping.outsideValleyFee).toBe("250.00");
+    expect(shipping.freeShippingThreshold).toBe("8000.00");
+  });
+
+  it("keeps a missing threshold as null", async () => {
+    stubJson({
+      inside_valley_fee: "150.00",
+      outside_valley_fee: "250.00",
+      free_shipping_threshold: null,
+    });
+
+    await expect(getShipping()).resolves.toMatchObject({ freeShippingThreshold: null });
   });
 });

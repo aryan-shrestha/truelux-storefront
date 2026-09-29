@@ -13,24 +13,18 @@ async function renderOpen(
   props: { pathname?: string; showBrands?: boolean } = {},
 ) {
   render(<FilterPanel facets={facets} query={query} {...props} />);
-  const trigger = screen.getByRole("button", { name: /Filter and sort/ });
-  if (trigger.getAttribute("aria-expanded") === "false") await userEvent.click(trigger);
+  await userEvent.click(screen.getByRole("button", { name: /Filter and sort/ }));
 }
 
 describe("FilterPanel", () => {
-  it("starts closed with nothing applied, and open with the applied count once filtered", () => {
-    const { unmount } = render(<FilterPanel facets={facets} query={{}} />);
-    expect(screen.getByRole("button", { name: "Filter and sort" })).toHaveAttribute(
+  it("starts closed, with the applied count on the trigger once filtered", () => {
+    render(<FilterPanel facets={facets} query={{ skinType: ["dry", "oily"], size: "30-ml" }} />);
+
+    expect(screen.getByRole("button", { name: "Filter and sort (3 applied)" })).toHaveAttribute(
       "aria-expanded",
       "false",
     );
-    unmount();
-
-    render(<FilterPanel facets={facets} query={{ skinType: ["dry", "oily"], size: "30-ml" }} />);
-    expect(screen.getByRole("button", { name: "Filter and sort (3 applied)" })).toHaveAttribute(
-      "aria-expanded",
-      "true",
-    );
+    expect(screen.queryByRole("link", { name: "Dry" })).not.toBeInTheDocument();
   });
 
   it("toggles skin types as a repeatable filter, keeping the category", async () => {
@@ -74,6 +68,23 @@ describe("FilterPanel", () => {
       "/products?size=50-ml",
     );
     expect(screen.getByRole("link", { name: "30 ml" })).toHaveAttribute("href", "/products");
+  });
+
+  it("offers On sale as a link carrying ?on_sale=true, keeping the other filters", async () => {
+    await renderOpen({ category: "serums", skinType: ["dry"] });
+
+    const onSale = screen.getByRole("link", { name: "On sale" });
+    expect(onSale).toHaveAttribute("href", "/products?category=serums&skin_type=dry&on_sale=true");
+    expect(onSale).not.toHaveAttribute("aria-current");
+  });
+
+  it("marks an applied On sale and toggles it off, and carries it through the sort form", async () => {
+    await renderOpen({ onSale: true, inStock: true });
+
+    const onSale = screen.getByRole("link", { name: "On sale" });
+    expect(onSale).toHaveAttribute("aria-current", "true");
+    expect(onSale).toHaveAttribute("href", "/products?in_stock=true");
+    expect(document.querySelector('input[name="on_sale"]')).toHaveValue("true");
   });
 
   it("clears every filter but keeps the category, search and sort", async () => {

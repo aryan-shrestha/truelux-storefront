@@ -18,7 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { ProductQuery } from "@/lib/api/types";
 import { listingPage } from "@/lib/catalog/listing";
 import type { ListingFacets } from "@/lib/catalog/navigation";
-import { hasFilters, toCanonicalSearch } from "@/lib/catalog/query";
+import { hasFilters, isSaleOnly, toCanonicalSearch } from "@/lib/catalog/query";
 
 type ProductListingProps = {
   hero: ReactNode;
@@ -49,7 +49,10 @@ export function ProductListing({
       <div className="max-w-page mx-auto px-4 pt-10 md:px-8 md:pt-14">
         <div className="relative">
           {/* Stays mounted across filters, so the new count is announced. */}
-          <div aria-live="polite" className="text-muted-foreground absolute top-3.5 right-12 text-sm">
+          <div
+            aria-live="polite"
+            className="text-muted-foreground pointer-events-none absolute top-3 right-12 text-sm"
+          >
             <Suspense key={boundaryKey} fallback={<Skeleton className="inline-block h-4 w-16" />}>
               <ProductCount query={apiQuery} />
             </Suspense>
@@ -105,6 +108,24 @@ async function ProductCount({ query }: { query: ProductQuery }) {
 }
 
 function NoResults({ query, pathname }: { query: ProductQuery; pathname: string }) {
+  if (isSaleOnly(query)) {
+    return (
+      <Empty className="border">
+        <EmptyHeader>
+          <EmptyTitle>Nothing here is on sale right now</EmptyTitle>
+          <EmptyDescription>
+            Reduced prices appear here as soon as the shop sets them.
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button asChild variant="outline">
+            <Link href={pathname}>See everything</Link>
+          </Button>
+        </EmptyContent>
+      </Empty>
+    );
+  }
+
   const filtered = Boolean(query.search) || hasFilters(query);
 
   return (

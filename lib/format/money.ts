@@ -26,3 +26,8 @@ export function formatPrice(amount: Money): string {
   // in .00 today, and "Rs 2,400.00" reads as a receipt rather than a price tag.
   return paisa !== undefined && paisa !== "00" ? `Rs ${grouped}.${paisa}` : `Rs ${grouped}`;
 }
+
+/** For choosing copy ("Free", hiding a nil discount), never for computing. */
+export function isZeroAmount(amount: Money): boolean {
+  return /^0+(\.0+)?$/.test(amount);
+}

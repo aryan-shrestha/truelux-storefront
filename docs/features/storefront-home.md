@@ -2,7 +2,7 @@
 
 Status: Implemented
 
-Last updated: 2026-09-26
+Last updated: 2026-09-29
 
 ---
 
@@ -48,8 +48,10 @@ and the filter panel make.
 
 ## Implemented
 
-- `app/page.tsx` — reads `latestProducts()`, `navigationCategories()` and
-  `navigationBrands()` in parallel, then streams the category rail in its own
+- `app/page.tsx` — reads `latestProducts()`, `saleProducts()`,
+  `navigationCategories()` and `navigationBrands()` in parallel, renders the "On
+  sale" rail after the category rail (hidden when nothing is on sale; see
+  [sale-prices.md](sale-prices.md)), then streams the category rail in its own
   `Suspense` once the first root is known.
 - `components/home/Hero.tsx` — shadcn `Carousel` (looping, no autoplay) with
   `CarouselDots`; the first slide's title is the page's `h1`. Slides link to
@@ -70,8 +72,8 @@ and the filter panel make.
   name in Belleza, and the product count) on the greige band, then "All brands".
 - `components/home/Journal.tsx` — `id="journal"`, four static notes in a carousel,
   each ending in a search link rather than a "Read more" to nowhere.
-- `lib/catalog/rails.ts` — `latestProducts()`, `categoryProducts()` and
-  `relatedProducts()`, each degrading to `[]` on an API failure.
+- `lib/catalog/rails.ts` — `latestProducts()`, `saleProducts()`,
+  `categoryProducts()` and `relatedProducts()`, each degrading to `[]` on an API failure.
 - `public/art/*.svg` — generated placeholder art in the new palette, replacing
   `public/home/`.
 
@@ -162,6 +164,7 @@ Nothing on the page claims something the shop does not have.
 ```text
 GET /api/v1/products/?ordering=-created_at&limit=8    server, revalidate 600
 GET /api/v1/products/?category=<first root>&limit=8   server, revalidate 600
+GET /api/v1/products/?on_sale=true&limit=8            server, revalidate 600
 GET /api/v1/categories/                               server, revalidate 3600
 GET /api/v1/brands/                                   server, revalidate 3600
 ```
@@ -180,7 +183,9 @@ GET /api/v1/brands/                                   server, revalidate 3600
   arrivals region; the editorial points at the first root; brands link to their
   pages; `#journal` and `#about` exist with the three promises; the hero survives
   every read failing, without rails or brands. `CategoryRail`: asks for the root
-  with a limit of eight and links to all of it; renders nothing when empty.
+  with a limit of eight and links to all of it; renders nothing when empty. The
+  On sale rail: asks for eight on sale, links to the sale listing, and is absent
+  when nothing is on sale.
 - `lib/catalog/rails.test.ts`.
 
 ---

@@ -7,6 +7,7 @@ import { useId, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 
 import { EmptyBag } from "@/components/cart/EmptyBag";
+import { useQuote } from "@/components/cart/use-quote";
 import { DistrictPicker } from "@/components/checkout/DistrictPicker";
 import { OrderSummary } from "@/components/checkout/OrderSummary";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -82,6 +83,8 @@ export function CheckoutForm() {
   const [placed, setPlaced] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [problem, setProblem] = useState<Problem | null>(null);
+  const [district, setDistrict] = useState<string | null>(null);
+  const quote = useQuote(lines, district);
   const formRef = useRef<HTMLFormElement>(null);
 
   function showFieldErrors(errors: FieldErrors) {
@@ -245,6 +248,8 @@ export function CheckoutForm() {
                   name="district"
                   invalid={control["aria-invalid"] === true}
                   describedBy={control["aria-describedby"]}
+                  value={district}
+                  onChange={setDistrict}
                 />
               )}
             </TextField>
@@ -273,7 +278,7 @@ export function CheckoutForm() {
       </div>
 
       <aside className="flex flex-col gap-6 lg:sticky lg:top-[calc(var(--header-offset)+1.5rem)] lg:w-96 lg:shrink-0 lg:self-start">
-        <OrderSummary lines={lines} />
+        <OrderSummary lines={lines} quote={quote} />
 
         {invalidCount > 0 && (
           <p role="status" className="font-medium">

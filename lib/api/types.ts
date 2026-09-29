@@ -50,6 +50,12 @@ export type ProductImage = {
   altText: string;
 };
 
+/** Null on a product or variant that is not on sale; every figure is the API's. */
+export type Sale = {
+  compareAtPrice: Money;
+  discountPercent: number;
+};
+
 export type ProductVariant = {
   id: string;
   size: SizeRef;
@@ -57,7 +63,11 @@ export type ProductVariant = {
   /** Already resolved: the variant's override, or its product's base price. */
   price: Money;
   inStock: boolean;
+  sale: Sale | null;
 };
+
+/** The on-sale variant with the lowest price, as the API chose it. */
+export type ProductSale = Sale & { price: Money };
 
 export type ProductSummary = {
   id: string;
@@ -68,6 +78,7 @@ export type ProductSummary = {
   category: CategoryRef;
   primaryImage: ProductImage | null;
   inStock: boolean;
+  sale: ProductSale | null;
 };
 
 export type Product = ProductSummary & {
@@ -147,6 +158,29 @@ export type CheckoutResult = {
   total: Money;
 };
 
+export type QuoteInput = {
+  items: CheckoutItem[];
+  district?: string;
+};
+
+export type CartQuote = {
+  subtotal: Money;
+  /** Null when no district was sent, unless the free-shipping threshold is reached. */
+  shippingFee: Money | null;
+  discount: Money;
+  /** Null exactly when `shippingFee` is. */
+  total: Money | null;
+  /** Null when no threshold is set or it has been reached. */
+  freeShippingRemaining: Money | null;
+};
+
+export type ShippingSettings = {
+  insideValleyFee: Money;
+  outsideValleyFee: Money;
+  /** Null when the merchant offers no free shipping. */
+  freeShippingThreshold: Money | null;
+};
+
 export type ProductOrdering =
   "name" | "-name" | "base_price" | "-base_price" | "created_at" | "-created_at";
 
@@ -159,6 +193,7 @@ export type ProductQuery = {
   minPrice?: string;
   maxPrice?: string;
   inStock?: boolean;
+  onSale?: boolean;
   search?: string;
   ordering?: ProductOrdering;
   limit?: number;

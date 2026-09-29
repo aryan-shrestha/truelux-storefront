@@ -1,3 +1,4 @@
+import { PackageIcon } from "lucide-react";
 import Link from "next/link";
 
 import { CartButton } from "@/components/layout/CartButton";
@@ -5,22 +6,34 @@ import { HeaderFrame } from "@/components/layout/HeaderFrame";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { SearchSheet } from "@/components/layout/SearchSheet";
 import { ShopMenu } from "@/components/layout/ShopMenu";
-import { navigationCategories, navigationSkinTypes, shopMenu } from "@/lib/catalog/navigation";
+import { FIND_ORDER_LINK } from "@/components/layout/site-links";
+import { Button } from "@/components/ui/button";
+import {
+  brandMenu,
+  navigationBrands,
+  navigationCategories,
+  navigationSkinTypes,
+  shopMenu,
+} from "@/lib/catalog/navigation";
 import { env } from "@/lib/env";
+import { shippingNote } from "@/lib/shipping/note";
 
 export async function Header() {
-  const [categories, skinTypes] = await Promise.all([
+  const [categories, skinTypes, brandList, note] = await Promise.all([
     navigationCategories(),
     navigationSkinTypes(),
+    navigationBrands(),
+    shippingNote(),
   ]);
   const columns = shopMenu(categories, skinTypes);
+  const brands = brandMenu(brandList);
 
   return (
     <HeaderFrame>
-      <div className="max-w-page mx-auto grid h-16 grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 md:h-20 md:px-8">
+      <div className="max-w-page relative mx-auto grid h-16 grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 md:h-20 md:px-8">
         <div className="flex h-full items-center">
-          <MobileNav columns={columns} />
-          <ShopMenu columns={columns} />
+          <MobileNav columns={columns} brands={brands} />
+          <ShopMenu columns={columns} brands={brands} />
         </div>
 
         <Link
@@ -33,7 +46,12 @@ export async function Header() {
 
         <div className="flex items-center justify-end">
           <SearchSheet />
-          <CartButton />
+          <Button asChild variant="ghost" size="icon">
+            <Link href={FIND_ORDER_LINK.href} aria-label={FIND_ORDER_LINK.label}>
+              <PackageIcon aria-hidden />
+            </Link>
+          </Button>
+          <CartButton shippingNote={note} />
         </div>
       </div>
     </HeaderFrame>

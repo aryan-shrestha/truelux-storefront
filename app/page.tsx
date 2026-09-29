@@ -9,8 +9,9 @@ import { Editorial } from "@/components/home/Editorial";
 import { Hero } from "@/components/home/Hero";
 import { ImageBand } from "@/components/home/ImageBand";
 import { Journal } from "@/components/home/Journal";
+import { SALE_LINK } from "@/components/layout/site-links";
 import { categoryHref, navigationBrands, navigationCategories } from "@/lib/catalog/navigation";
-import { latestProducts } from "@/lib/catalog/rails";
+import { latestProducts, saleProducts } from "@/lib/catalog/rails";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
@@ -18,8 +19,9 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   // The category read is the header's, deduplicated within the render.
-  const [latest, categories, brands] = await Promise.all([
+  const [latest, onSale, categories, brands] = await Promise.all([
     latestProducts(),
+    saleProducts(),
     navigationCategories(),
     navigationBrands(),
   ]);
@@ -43,6 +45,14 @@ export default async function Home() {
           <CategoryRail category={featured} />
         </Suspense>
       )}
+      <ProductRail
+        id="on-sale"
+        eyebrow="Reduced"
+        title="On sale"
+        description="Lower prices, for now, from every brand we stock."
+        products={onSale}
+        more={{ href: SALE_LINK.href, label: "Everything on sale" }}
+      />
       <div className="flex flex-col">
         <About />
         <BrandGrid brands={brands} />

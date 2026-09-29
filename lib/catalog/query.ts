@@ -85,6 +85,7 @@ export function toProductQuery(raw: RawSearchParams): ProductQuery {
     minPrice: price(first(raw.min_price)),
     maxPrice: price(first(raw.max_price)),
     inStock: flag(first(raw.in_stock)),
+    onSale: flag(first(raw.on_sale)),
     search: search(first(raw.search)),
     ordering: ordering(first(raw.ordering)),
     offset: offset(first(raw.offset)),
@@ -102,6 +103,7 @@ export function toCanonicalSearch(query: ProductQuery): string {
   if (query.minPrice) params.set("min_price", query.minPrice);
   if (query.maxPrice) params.set("max_price", query.maxPrice);
   if (query.inStock) params.set("in_stock", "true");
+  if (query.onSale) params.set("on_sale", "true");
   if (query.search) params.set("search", query.search);
   if (query.ordering) params.set("ordering", query.ordering);
   if (query.offset) params.set("offset", String(query.offset));
@@ -125,7 +127,8 @@ export function hasFilters(query: ProductQuery): boolean {
     query.skinType ??
     query.minPrice ??
     query.maxPrice ??
-    query.inStock,
+    query.inStock ??
+    query.onSale,
   );
 }
 
@@ -137,7 +140,18 @@ export function appliedFilterCount(query: ProductQuery): number {
     Number(Boolean(query.shade)) +
     Number(Boolean(query.size)) +
     Number(Boolean(query.minPrice ?? query.maxPrice)) +
-    Number(Boolean(query.inStock))
+    Number(Boolean(query.inStock)) +
+    Number(Boolean(query.onSale))
+  );
+}
+
+/** The header's Sale link: on sale, and nothing else narrowing the view. */
+export function isSaleOnly(query: ProductQuery): boolean {
+  return (
+    Boolean(query.onSale) &&
+    appliedFilterCount(query) === 1 &&
+    query.category === undefined &&
+    query.search === undefined
   );
 }
 

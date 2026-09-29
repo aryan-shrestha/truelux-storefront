@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -6,6 +6,12 @@ import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { CART_STORAGE_KEY, readCart, type CartLine } from "@/lib/cart/storage";
 import { CartProvider } from "@/lib/cart/use-cart";
 import { readOrderRecords } from "@/lib/orders/record";
+import {
+  districtlessQuote,
+  freeShippingQuote,
+  lalitpurQuote,
+  quoteResponse,
+} from "@/tests/fixtures/quote";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
@@ -46,12 +52,27 @@ function apiError(status: number, code: string, details: Record<string, unknown>
   return jsonResponse({ error: { code, message: "Reworded at will.", details } }, status);
 }
 
+const QUOTE_URL = /\/checkout\/quote\/$/;
+
+function sentDistrict(init: RequestInit | undefined): string | undefined {
+  return JSON.parse(String(init?.body)).district;
+}
+
 function stubFetch(response: Response | Error) {
-  const fetchMock = vi.fn((_url: string | URL | Request, _init?: RequestInit) =>
-    response instanceof Error ? Promise.reject(response) : Promise.resolve(response),
-  );
+  const fetchMock = vi.fn((url: string | URL | Request, init?: RequestInit) => {
+    if (QUOTE_URL.test(String(url))) {
+      return Promise.resolve(
+        quoteResponse(sentDistrict(init) === undefined ? districtlessQuote : lalitpurQuote),
+      );
+    }
+    return response instanceof Error ? Promise.reject(response) : Promise.resolve(response);
+  });
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
+}
+
+function checkoutCalls(fetchMock: ReturnType<typeof stubFetch>) {
+  return fetchMock.mock.calls.filter(([url]) => !QUOTE_URL.test(String(url)));
 }
 
 const placedCod = {
@@ -105,7 +126,7 @@ describe("CheckoutForm, when an order is placed", () => {
     renderForm();
     await fillAndSubmit();
 
-    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    const body = JSON.parse(String(checkoutCalls(fetchMock)[0]?.[1]?.body));
     expect(body.items).toEqual([
       { variant_id: warmBeige.variantId, quantity: 3 },
       { variant_id: serum.variantId, quantity: 1 },
@@ -156,7 +177,9 @@ describe("CheckoutForm, when the order is refused", () => {
   });
 
   it("names the one line in insufficient_stock and states no quantity", async () => {
-    stubFetch(apiError(422, "insufficient_stock", { variant_id: warmBeige.variantId, requested: 3 }));
+    stubFetch(
+      apiError(422, "insufficient_stock", { variant_id: warmBeige.variantId, requested: 3 }),
+    );
 
     renderForm();
     await fillAndSubmit();
@@ -173,7 +196,7 @@ describe("CheckoutForm, when the order is refused", () => {
     await fillAndSubmit();
 
     expect(screen.getByRole("alert")).toHaveTextContent(/busy/);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(checkoutCalls(fetchMock)).toHaveLength(1);
   });
 
   it("does not claim failure when the store could not be reached", async () => {
@@ -209,10 +232,12 @@ describe("CheckoutForm, before anything is sent", () => {
     const district = screen.getByRole("combobox", { name: "District" });
     expect(district).toHaveAccessibleDescription(/Choose a district from the list/);
     expect(district).toHaveFocus();
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(checkoutCalls(fetchMock)).toHaveLength(0);
   });
 
   it("offers cash on delivery as the only way to pay", () => {
+    stubFetch(jsonResponse(placedCod, 201));
+
     renderForm();
 
     expect(screen.getByText("Cash on delivery")).toBeInTheDocument();
@@ -226,5 +251,66 @@ describe("CheckoutForm, before anything is sent", () => {
 
     expect(screen.getByText("Your bag is empty")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Place order/ })).not.toBeInTheDocument();
+  });
+});
+
+describe("CheckoutForm's quoted summary", () => {
+  it("quotes without a district first, then re-quotes with it and shows the API's total", async () => {
+    const fetchMock = stubFetch(jsonResponse(placedCod, 201));
+    const user = userEvent.setup();
+
+    renderForm();
+
+    expect(await screen.findByText("Rs 6,400")).toBeInTheDocument();
+    expect(screen.getByText("After shipping")).toBeInTheDocument();
+
+    await chooseDistrict(user, "Lalitpur");
+
+    expect(await screen.findByText("Rs 6,550")).toBeInTheDocument();
+    expect(screen.getByText("Rs 150")).toBeInTheDocument();
+    expect(screen.getByText(/more for free shipping/)).toHaveTextContent("Add Rs 1,600");
+    const quotes = fetchMock.mock.calls.filter(([url]) => QUOTE_URL.test(String(url)));
+    expect(sentDistrict(quotes.at(-1)?.[1])).toBe("Lalitpur");
+  });
+
+  it("says Free once when the order ships free", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(quoteResponse(freeShippingQuote))),
+    );
+
+    renderForm();
+
+    expect(await screen.findByText("Free")).toBeInTheDocument();
+    expect(screen.queryByText("Free shipping")).not.toBeInTheDocument();
+  });
+
+  it("keeps Place order available while a quote is in flight", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => new Promise<Response>(() => {})),
+    );
+
+    renderForm();
+    await waitFor(() => expect(fetch).toHaveBeenCalled());
+
+    const button = screen.getByRole("button", { name: "Place order" });
+    expect(button).toBeEnabled();
+    expect(button).not.toHaveAttribute("aria-disabled");
+  });
+
+  it("marks the line a quote says is unavailable", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve(apiError(422, "variant_unavailable", { variant_ids: [serum.variantId] })),
+      ),
+    );
+
+    renderForm();
+
+    const marked = await screen.findByText("This is no longer available.");
+    expect(marked.closest("li")).toHaveTextContent("Hydrating Serum");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });

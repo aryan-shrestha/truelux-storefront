@@ -7,6 +7,7 @@ type BaseOptions = {
   query?: Record<string, QueryValue>;
   method?: "GET" | "POST";
   body?: unknown;
+  signal?: AbortSignal;
 };
 
 // A caching directive is required by the type, so no call can skip deciding its
@@ -54,6 +55,7 @@ export async function request<T>(path: string, options: RequestOptions): Promise
       ...(options.body === undefined ? {} : { "Content-Type": "application/json" }),
     },
     ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
+    ...(options.signal === undefined ? {} : { signal: options.signal }),
     ...(options.cache === "no-store"
       ? { cache: "no-store" as const }
       : { next: { revalidate: options.revalidate } }),

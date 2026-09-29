@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "@/lib/api/errors";
 import {
+  brandMenu,
   findCategory,
   listingFacets,
   navigationBrands,
@@ -79,6 +80,21 @@ describe("listingFacets", () => {
     listSkinTypes.mockRejectedValue(new ApiError("not_found", 404, {}, null, "No route."));
 
     await expect(listingFacets()).resolves.toMatchObject({ shades, skinTypes: [] });
+  });
+});
+
+describe("brandMenu", () => {
+  it("opens with all brands, then links each brand's page in the API's order", () => {
+    const menu = brandMenu(brands);
+
+    expect(menu?.links[0]).toEqual({ label: "All brands", href: "/brands" });
+    expect(menu?.links.slice(1).map((link) => link.href)).toEqual(
+      brands.map((brand) => `/brands/${brand.slug}`),
+    );
+  });
+
+  it("offers no menu when the API lists no brands", () => {
+    expect(brandMenu([])).toBeNull();
   });
 });
 

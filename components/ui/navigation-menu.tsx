@@ -11,7 +11,7 @@ function NavigationMenu({
 }: React.ComponentProps<typeof NavigationMenuPrimitive.Root> & {
   viewport?: boolean
 }) {
-  // Static, so the full-width viewport spans the sticky header rather than the menu's own cell.
+  // Static, so the viewport spans the header's page column rather than the menu's own cell.
   return (
     <NavigationMenuPrimitive.Root
       data-slot="navigation-menu"
@@ -100,7 +100,7 @@ function NavigationMenuViewport({
   return (
     <div
       className={cn(
-        "absolute inset-x-0 top-[calc(100%+1px)] isolate z-50 flex justify-center"
+        "absolute inset-x-0 top-full isolate z-50 flex justify-center"
       )}
     >
       <NavigationMenuPrimitive.Viewport

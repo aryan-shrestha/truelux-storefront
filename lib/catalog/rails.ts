@@ -20,6 +20,10 @@ export function latestProducts(): Promise<ProductSummary[]> {
   return orNone(() => listProducts({ ordering: "-created_at", limit: RAIL_LENGTH }));
 }
 
+export function saleProducts(): Promise<ProductSummary[]> {
+  return orNone(() => listProducts({ onSale: true, limit: RAIL_LENGTH }));
+}
+
 /** A root's slug includes its children, so this is the whole branch. */
 export function categoryProducts(category: string): Promise<ProductSummary[]> {
   return orNone(() => listProducts({ category, limit: RAIL_LENGTH }));

@@ -19,7 +19,6 @@ export default defineConfig({
       NEXT_PUBLIC_API_BASE_URL: "http://127.0.0.1:8000",
       NEXT_PUBLIC_SITE_URL: "http://localhost:3000",
       NEXT_PUBLIC_BRAND_NAME: "TrueLux",
-      NEXT_PUBLIC_SHIPPING_NOTE: "Rs 150 inside the Kathmandu valley, Rs 250 elsewhere.",
     },
     // Playwright owns tests/e2e and runs them with its own runner.
     exclude: ["tests/e2e/**", "node_modules/**", ".next/**"],

@@ -1,4 +1,4 @@
-# TrueLux — Storefront
+# TrueLux — Storefront (test dev deployment)
 
 Next.js 16 storefront for TrueLux, a multi-brand cosmetics shop in Nepal:
 skincare, makeup and fragrance, paid in cash on delivery. It consumes the Django
@@ -53,12 +53,13 @@ categories and products; the Playwright spec is written against that seed.
 ### Stale data after a reseed
 
 Catalogue reads are cached for minutes to hours (`docs/architecture.md`), and
-Next keeps that cache in `.next/cache/fetch-cache` **across dev-server
-restarts**. After `make reseed` in the backend, or after pointing
+Next keeps that cache on disk **across restarts**: `.next/dev/cache/fetch-cache`
+for `yarn dev`, `.next/cache/fetch-cache` for `yarn start`. After `make reseed` in the backend, or after pointing
 `API_BASE_URL` at a stub, the storefront keeps serving the old categories,
 products and variant ids until the entries expire. A bag filled from stale data
 then fails at checkout with `variant_unavailable`. Stop `yarn dev`, run
-`rm -rf .next/cache/fetch-cache`, start it again, and clear the bag.
+`rm -rf .next/dev/cache/fetch-cache .next/cache/fetch-cache`, start it again,
+and clear the bag.
 
 ## Commands
 
@@ -86,7 +87,6 @@ connection.
 | `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:8000` | Used by the browser for checkout and the order routes. **Public** |
 | `NEXT_PUBLIC_SITE_URL` | `http://localhost:3000` | The storefront's own origin, for canonical URLs and Open Graph |
 | `NEXT_PUBLIC_BRAND_NAME` | `TrueLux` | The wordmark and every page title. See ADR 0007 |
-| `NEXT_PUBLIC_SHIPPING_NOTE` | `Rs 150 inside the Kathmandu valley, Rs 250 elsewhere. Cash on delivery.` | Display copy only. Must be kept in agreement with the backend's shipping settings by hand |
 
 Every variable is read in `lib/env.ts` and nowhere else, so that one file lists
 the whole configuration surface.
@@ -117,7 +117,6 @@ it):
 | `NEXT_PUBLIC_API_BASE_URL` | The same origin. Must be HTTPS, or the browser blocks checkout as mixed content |
 | `NEXT_PUBLIC_SITE_URL` | The storefront's own origin, e.g. `https://shop.example.com`, with no trailing slash |
 | `NEXT_PUBLIC_BRAND_NAME` | The brand name |
-| `NEXT_PUBLIC_SHIPPING_NOTE` | The shipping copy, matching the backend's fees |
 | `ENABLE_EXPERIMENTAL_COREPACK` | `1` — makes Vercel use the Yarn 4 pinned in `packageManager` rather than Yarn 1, which cannot read this lockfile |
 
 - **`API_BASE_URL` cannot be a private address on Vercel.** Functions run
@@ -184,10 +183,11 @@ sits outside `/api/v1/`, so it uses none of the per-IP throttle budget.
 
 ### What the build does
 
-- Prerenders the home page, the product pages, `robots.txt` and `sitemap.xml`,
-  calling the API. If the API is unreachable during the build, the build still
-  succeeds: the home page shows "not open yet" and product pages render on
-  first request, both refreshed within five minutes once the API answers.
+- Prerenders the home page, `robots.txt` and `sitemap.xml`, calling the API. If
+  the API is unreachable during the build, the build still succeeds: the home
+  page shows "not open yet", refreshed within five minutes once the API answers.
+  Product pages are never prerendered; each renders on first request and is
+  cached.
 - Sends security headers on every response (`next.config.ts`): `nosniff`,
   `DENY` framing, a `same-origin` referrer, a restrictive permissions policy and
   HSTS, plus `X-Robots-Tag: noindex` on `/orders/*`.

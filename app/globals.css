@@ -53,6 +53,26 @@
   --header-offset: 0px;
 }
 
+/* The product panel beside the gallery must fit the screen without scrolling, so on a
+   landscape screen its spacing shrinks with the height: 4px a step from 920px tall, 1.5px at 720px. */
+:root {
+  --fit-step: var(--spacing);
+}
+
+@media (min-width: 48rem) and (orientation: landscape) {
+  :root {
+    --fit-step: clamp(1.5px, 1.25svh - 7.5px, var(--spacing));
+  }
+}
+
+@utility gap-fit-* {
+  gap: calc(var(--fit-step) * --value(integer));
+}
+
+@utility py-fit-* {
+  padding-block: calc(var(--fit-step) * --value(integer));
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -112,6 +132,11 @@
   }
   html {
     @apply font-sans;
+  }
+  /* The open mega-menu locks the page; the gutter stays so the header does not shift. */
+  html:has([data-slot="navigation-menu-viewport"][data-state="open"]) {
+    overflow: hidden;
+    scrollbar-gutter: stable;
   }
   body {
     @apply bg-background text-foreground antialiased;

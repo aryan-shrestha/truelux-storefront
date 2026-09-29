@@ -13,7 +13,7 @@ export function Editorial({ href }: { href: string }) {
     >
       <div className="relative aspect-[562/530]">
         <Image
-          src="/art/editorial.svg"
+          src="/images/hero-3.jpg"
           alt=""
           fill
           sizes="(min-width: 768px) 45vw, 100vw"

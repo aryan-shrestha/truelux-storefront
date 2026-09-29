@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { act } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Gallery } from "@/components/catalog/Gallery";
 import type { ProductImage } from "@/lib/api/types";
@@ -17,13 +17,21 @@ const embla = vi.hoisted(() => {
     },
     selectedScrollSnap: () => selected,
     canScrollPrev: () => selected > 0,
-    canScrollNext: () => selected < 2,
+    canScrollNext: () =>
+      selected < document.querySelectorAll('[data-slot="carousel-item"]').length - 1,
     scrollPrev: () => {},
     scrollNext: () => {},
     on: (_event: string, handler: () => void) => handlers.add(handler),
     off: (_event: string, handler: () => void) => handlers.delete(handler),
   };
-  return { api, settle: () => handlers.forEach((handler) => handler()) };
+  return {
+    api,
+    settle: () => handlers.forEach((handler) => handler()),
+    reset: () => {
+      selected = 0;
+      handlers.clear();
+    },
+  };
 });
 
 vi.mock("embla-carousel-react", () => ({ default: () => [() => {}, embla.api] }));
@@ -34,6 +42,8 @@ const images: ProductImage[] = [0, 1, 2].map((index) => ({
 }));
 
 describe("Gallery", () => {
+  beforeEach(() => embla.reset());
+
   it("marks the first thumbnail current and disables previous at the start", () => {
     render(<Gallery images={images} name="Serum" />);
 
@@ -57,11 +67,15 @@ describe("Gallery", () => {
     );
   });
 
-  it("offers no thumbnails or buttons for a single photograph", () => {
+  it("keeps the strip and the buttons for a single photograph, with both buttons disabled", () => {
     render(<Gallery images={images.slice(0, 1)} name="Serum" />);
 
-    expect(screen.queryByRole("button")).not.toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "Serum, view 1" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Show photograph 1 of 1" })).toHaveAttribute(
+      "aria-current",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: "Previous photograph" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Next photograph" })).toBeDisabled();
   });
 
   it("keeps its shape when there are no photographs", () => {

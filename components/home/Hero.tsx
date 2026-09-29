@@ -7,21 +7,21 @@ import { Carousel, CarouselContent, CarouselDots, CarouselItem } from "@/compone
 
 const SLIDES = [
   {
-    art: "/art/hero-face.svg",
+    art: "/images/hero-1.jpg",
     eyebrow: "Skincare, makeup and fragrance",
     title: "Beauty you can trust, delivered to your door",
     body: "Authentic products from the brands you love, sent anywhere in Nepal. Pay in cash when your order arrives.",
     href: "/products",
   },
   {
-    art: "/art/hero-body.svg",
+    art: "/images/hero-2.jpg",
     eyebrow: "Just in",
     title: "New on our shelves",
     body: "The latest arrivals from every brand we stock, as soon as they are published.",
     href: "/products?ordering=-created_at",
   },
   {
-    art: "/art/hero-scent.svg",
+    art: "/images/hero-3.jpg",
     eyebrow: "Our brands",
     title: "Every product from the brand itself",
     body: "No grey imports and no guesswork: browse the full range of each brand we carry.",

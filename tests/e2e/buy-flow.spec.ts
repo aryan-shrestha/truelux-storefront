@@ -1,5 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import type { RawQuote } from "@/lib/api/orders";
+import { districtlessQuote, freeShippingQuote, lalitpurQuote } from "../fixtures/quote";
+
 // page.route intercepts only what the browser requests (checkout, the order
 // routes). The catalogue is read by Server Components from the Next process,
 // so these specs need a backend seeded with `seed_demo` on API_BASE_URL; the
@@ -8,6 +11,20 @@ import { expect, test, type Page } from "@playwright/test";
 const FOUNDATION = "/products/silk-foundation";
 const SERUM = "/products/24k-radiance-serum";
 const CORS = { "Access-Control-Allow-Origin": "*", "X-Request-ID": "e2e" };
+
+async function routeQuote(page: Page, answer: (body: QuoteBody) => RawQuote) {
+  await page.route("**/api/v1/checkout/quote/", (route) =>
+    route.fulfill({ headers: CORS, json: answer(route.request().postDataJSON()) }),
+  );
+}
+
+type QuoteBody = { items: Array<{ quantity: number }>; district?: string };
+
+test.beforeEach(async ({ page }) => {
+  await routeQuote(page, (body) =>
+    body.district === undefined ? districtlessQuote : lalitpurQuote,
+  );
+});
 
 async function addFoundation(page: Page) {
   await page.goto(FOUNDATION);
@@ -68,6 +85,7 @@ test("filters the catalogue by brand, shade and skin type through links", async 
 
 test("an applied filter keeps its inverted text on hover", async ({ page }) => {
   await page.goto("/products?category=hydrate&skin_type=dry");
+  await page.getByRole("button", { name: "Filter and sort (1 applied)" }).click();
 
   const dry = page.getByRole("region", { name: "Skin type" }).getByRole("link", { name: "Dry" });
   await expect(dry).toHaveAttribute("aria-current", "true");
@@ -125,7 +143,7 @@ test("check out with cash on delivery", async ({ page }) => {
   await addFoundation(page);
   await page.goto("/checkout");
 
-  await expect(page.getByText("Cash on delivery", { exact: true })).toBeVisible();
+  await expect(page.getByRole("main").getByText("Cash on delivery", { exact: true })).toBeVisible();
   await page.getByLabel("Full name").fill("Sita Rai");
   await page.getByLabel("Email").fill("sita@example.com");
   await page.getByLabel("Phone").fill("9800000000");
@@ -134,6 +152,7 @@ test("check out with cash on delivery", async ({ page }) => {
   await page.getByRole("combobox", { name: "District" }).click();
   await page.getByPlaceholder("Search districts").fill("lalit");
   await page.getByRole("option", { name: "Lalitpur" }).click();
+  await expect(page.getByText("Rs 6,550")).toBeVisible();
   await page.getByRole("button", { name: "Place order" }).click();
 
   await expect(page).toHaveURL(/\/checkout\/confirmation\?order=TL-2026-000142$/);
@@ -142,6 +161,22 @@ test("check out with cash on delivery", async ({ page }) => {
   expect(checkoutBody.payment_method).toBe("cod");
   expect(JSON.stringify(checkoutBody)).not.toMatch(/price|total/);
   await expect(page.getByRole("link", { name: /Bag, 0 items/ })).toBeVisible();
+});
+
+test("a quote that crosses the threshold changes the free-shipping message", async ({ page }) => {
+  await routeQuote(page, (body) =>
+    body.items[0]!.quantity >= 2
+      ? freeShippingQuote
+      : { ...districtlessQuote, subtotal: "3200.00", free_shipping_remaining: "4800.00" },
+  );
+
+  await addFoundation(page);
+  await page.goto("/cart");
+
+  await expect(page.getByText("Add Rs 4,800 more for free shipping")).toBeVisible();
+  await page.getByRole("button", { name: /Increase quantity of Silk Foundation/ }).click();
+  await expect(page.getByText("Free shipping", { exact: true })).toBeVisible();
+  await expect(page.getByText(/more for free shipping/)).toHaveCount(0);
 });
 
 test("an order link shows the order and never the token", async ({ page }) => {

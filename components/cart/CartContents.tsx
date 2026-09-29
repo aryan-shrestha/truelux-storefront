@@ -2,17 +2,19 @@
 
 import Link, { useLinkStatus } from "next/link";
 
+import { BagSummary } from "@/components/cart/BagSummary";
 import { CartLine } from "@/components/cart/CartLine";
 import { CartLinesSkeleton } from "@/components/cart/CartLinesSkeleton";
 import { EmptyBag } from "@/components/cart/EmptyBag";
+import { useQuote } from "@/components/cart/use-quote";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { useCart } from "@/lib/cart/use-cart";
-import { env } from "@/lib/env";
 
-export function CartContents() {
+export function CartContents({ shippingNote }: { shippingNote: string }) {
   const { lines, ready } = useCart();
+  const quote = useQuote(lines, null);
 
   // A skeleton rather than the empty state until storage is read: telling
   // someone with a full bag that it is empty is worse than a moment of nothing.
@@ -24,16 +26,17 @@ export function CartContents() {
     <div className="flex flex-col gap-10 lg:flex-row lg:gap-16">
       <ul className="flex-1 border-t">
         {lines.map((line) => (
-          <CartLine key={line.variantId} line={line} />
+          <CartLine
+            key={line.variantId}
+            line={line}
+            problem={quote.status === "problems" ? quote.problems[line.variantId] : undefined}
+          />
         ))}
       </ul>
 
       <Card className="lg:w-80 lg:shrink-0 lg:self-start">
-        {/* No total: the storefront does no money arithmetic (ADR 0003) and the
-            shipping fee depends on the district chosen at checkout. */}
-        <CardContent className="flex flex-col gap-2">
-          <p>Shipping and the total are confirmed at checkout.</p>
-          <p className="text-sm text-muted-foreground">{env.shippingNote}</p>
+        <CardContent>
+          <BagSummary quote={quote} shippingNote={shippingNote} />
         </CardContent>
         <CardFooter>
           <Button asChild className="w-full">

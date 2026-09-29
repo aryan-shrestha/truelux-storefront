@@ -2,14 +2,14 @@
 
 Status: Implemented
 
-Last updated: 2026-09-26
+Last updated: 2026-09-29
 
 ---
 
 ## Goal
 
 The frame around every page: the announcement bar, the header with the wordmark,
-the Shop mega-menu, search and the bag; the mobile drill-down menu; the footer; the
+the Shop and Brands menus, search and the bag; the mobile drill-down menu; the footer; the
 skip link; and the root error, not-found and loading boundaries.
 
 ---
@@ -20,7 +20,7 @@ What is included in this implementation?
 
 - `app/layout.tsx`: fonts, root metadata, `CartProvider`, skip link, announcement
   bar, header, footer
-- `components/layout/`: `Header`, `HeaderFrame`, `ShopMenu`, `MobileNav`,
+- `components/layout/`: `AnnouncementBar`, `Header`, `HeaderFrame`, `ShopMenu`, `MobileNav`,
   `SearchSheet`, `SearchForm`, `CartButton`, `Footer`, `PageShell`,
   `SectionHeading`, `site-links.ts`, `promises.ts`
 - `app/error.tsx`, `app/not-found.tsx`, `app/loading.tsx`
@@ -45,29 +45,38 @@ render on the server (ADR 0002). The Shop menu is built from `/categories/` and
 
 ## Implemented
 
-- `app/layout.tsx` — Noto Sans and Belleza via `next/font`; the announcement bar, a
-  dark `bg-ink` strip carrying `env.shippingNote` (no invented offers); root
+- `app/layout.tsx` — Noto Sans and Belleza via `next/font`; `AnnouncementBar`, a
+  dark `bg-ink` strip carrying `shippingNote()` — "Free shipping over Rs 8,000 ·
+  Cash on delivery", the two fees without a threshold, or "Cash on delivery" when
+  `/shipping/` cannot be read (see [checkout-quote.md](checkout-quote.md)); root
   metadata as before.
 - `components/layout/Header.tsx` — a Server Component inside `HeaderFrame`: reads
-  categories and skin types in parallel, builds the columns with `shopMenu()`, and
-  lays out a three-column grid: the menus on the left, the wordmark centred (bold,
-  tracked, uppercase, `translate="no"`), search and the bag on the right. 64px tall,
-  80px from `md`, with a charcoal rule underneath.
+  categories, skin types and brands in parallel, builds the columns with
+  `shopMenu()` and the brand column with `brandMenu()`, and reads the shipping copy
+  for the bag, and lays out a three-column grid: the menus on the left, the wordmark centred (bold,
+  tracked, uppercase, `translate="no"`), search, an orders icon linking to
+  `/orders/lookup` (there is no `/orders` index), and the bag on the right. 64px tall,
+  80px from `md`, with no rule underneath (removed 2026-09-27).
 - `components/layout/ShopMenu.tsx` — shadcn `NavigationMenu`, from `md`: a Shop
-  trigger whose content spans the header's full width: one column per root
+  trigger whose content spans the header's `max-w-page` column: one column per root
   category ("Shop all", then its children), a Skin type column after the first
   root, and an editorial image (`public/art/menu.svg`) in the right 27%. Then
-  Brands, Journal (`/#journal`) and About (`/#about`) as plain links. With no
-  categories, Shop is a link to `/products`.
+  a Brands trigger whose content is the same frame: "All brands" (`/brands`) then
+  every brand's page, in a wrapping grid. Then Sale (`/products?on_sale=true`,
+  `SALE_LINK`; see [sale-prices.md](sale-prices.md)) and Journal (`/#journal`) as
+  plain links. With no categories, Shop is a link to `/products`; with no brands, Brands is
+  a link to `/brands`. The header has no About link (removed 2026-09-27).
 - `components/layout/MobileNav.tsx` — a full-width shadcn `Sheet` below `md` with
   drill-down panels built from `item` rows: Shop › (Shop everything, one row per
   column) › the column's links, with a back row at the top of each level; then
-  Brands, Journal, About, and "Find an order" and "Your bag" as small links.
+  Brands › (All brands, one row per brand), Sale, Journal, and "Find an order" and "Your
+  bag" as small links.
 - `components/layout/SearchSheet.tsx` + `SearchForm.tsx` — the header's search icon
   opens a top `Sheet` holding a `next/form` GET form to `/products?search=`, which
   navigates client-side and closes the sheet.
-- `components/layout/CartButton.tsx` — unchanged behaviour; the count now sits as
-  text beside the bag icon, as in the design, instead of a badge.
+- `components/layout/CartButton.tsx` — the count sits as text beside the bag icon,
+  as in the design; passes the server's shipping copy to the bag sheet, which
+  quotes the bag while open (checkout-quote.md).
 - `components/layout/Footer.tsx` — `bg-ink`: the wordmark and one line about the
   shop, then Shop, Categories (the root categories) and Orders columns from `md`,
   and the same columns as a plus/minus `Accordion` below `md`; the year.
@@ -83,6 +92,10 @@ render on the server (ADR 0002). The Shop menu is built from `/categories/` and
 ## Remaining
 
 None.
+
+The header's brand read shares the brands page's and the listing's cache key
+(`/brands/`, 3600s), already counted among the five reference lists in
+`architecture.md`'s request budget, so the budget is unchanged.
 
 ---
 
@@ -118,14 +131,16 @@ The header is on every route; the menu data should not ship twice.
 
 **Consequence**
 
-The category and skin-type reads happen once per render on the server and are
+The category, skin-type and brand reads happen once per render on the server and are
 deduplicated with the page's own.
 
 ### Decision: About and Journal are anchors on the home page
 
 **Decision**
 
-The header's About and Journal links go to `/#about` and `/#journal`.
+The header's Journal link and the footer's About and Journal links go to
+`/#journal` and `/#about`. The header dropped About on 2026-09-27, at the client's
+request; the footer keeps it.
 
 **Reason**
 
@@ -141,9 +156,15 @@ Removing either section's `id` breaks a header link.
 ## Gotchas
 
 - **The navigation menu's root is `static`** (in `components/ui/navigation-menu.tsx`),
-  so its viewport is positioned against the sticky header and spans its width. The
-  viewport sits at `top-[calc(100%+1px)]` because `top-full` resolves against the
-  header's padding box and would cover its bottom rule.
+  so its viewport is positioned against the header's `max-w-page` column (made
+  `relative` in `Header.tsx`) and spans that, not the screen. The
+  viewport sits at `top-full`; the header has no bottom rule any more. Restoring the
+  rule means moving the viewport to `top-[calc(100%+1px)]`, or the menu covers it.
+- **An open mega-menu locks the page's scroll** with a CSS rule in
+  `app/globals.css` (`html:has([data-slot="navigation-menu-viewport"][data-state="open"])`),
+  not with state: `ShopMenu` stays a Server Component. `scrollbar-gutter: stable`
+  keeps the header from shifting when the scrollbar goes. Renaming the viewport's
+  `data-slot` silently removes the lock.
 - **Radix wraps the menu list in an unstyled `div`**; the root gives its first child
   `h-full`, or the open trigger's underline sits under the text instead of on the
   header's bottom edge.
@@ -170,6 +191,8 @@ None of its own beyond the boundaries.
 ```text
 GET /api/v1/categories/    server, revalidate 3600 (navigationCategories, degrades to [])
 GET /api/v1/skin-types/    server, revalidate 3600 (navigationSkinTypes, degrades to [])
+GET /api/v1/brands/        server, revalidate 3600 (navigationBrands, degrades to [])
+GET /api/v1/shipping/      server, revalidate 3600 (shippingNote, degrades to "Cash on delivery")
 ```
 
 ---
@@ -197,13 +220,18 @@ GET /api/v1/skin-types/    server, revalidate 3600 (navigationSkinTypes, degrade
 
 ## Tests
 
-- `lib/catalog/navigation.test.ts` — `shopMenu`: a column per root opening with
+- `lib/catalog/navigation.test.ts` — `brandMenu`: All brands first, then each
+  brand's page in the API's order, and no menu for an empty list; `shopMenu`: a column per root opening with
   Shop all, the skin-type column after the first root with `?skin_type=` links, a
   childless root, no skin-type column when the API lists none; `findCategory`.
+- `lib/shipping/note.test.ts` — the announcement copy with and without a
+  threshold, and a failed read.
 - `components/layout/CartButton.test.tsx` — the count after hydration, the announced
   name, no zero, the sheet on a plain click, a modified click left to the browser,
   focus returned on close.
 - `components/layout/header-scroll.test.ts`.
+- `components/layout/ShopMenu.test.tsx`, `components/layout/MobileNav.test.tsx` —
+  Sale links to `/products?on_sale=true` in both menus.
 - `tests/e2e/buy-flow.spec.ts` — the mega-menu opens a skin type and a whole root.
 
 ---

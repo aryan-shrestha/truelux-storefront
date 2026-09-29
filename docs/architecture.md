@@ -1,6 +1,6 @@
 # Architecture
 
-Last updated: 2026-09-26
+Last updated: 2026-09-27
 
 This document describes the current architecture of the storefront.
 
@@ -168,9 +168,10 @@ Deviations from this flow, all deliberate:
   makes the API call from the browser. This is the whole point of ADR 0001: the
   per-IP throttle must land on the customer, and an access token should never
   reach a server log.
-- **The cart page reads nothing from the API.** It renders `localStorage`. Prices
-  shown there are the ones captured when the item was added, and the backend
-  corrects them at checkout.
+- **The bag's figures are a browser-side quote.** The cart page renders
+  `localStorage` lines at the prices captured when each was added; the subtotal,
+  shipping and total beside them come from `POST /checkout/quote/`, called from the
+  browser, debounced, and never computed locally.
 - **`/orders/{accessToken}` is reached from the confirmation email.** It renders a
   loading shell on the server and fetches the order after hydration.
 - **`sitemap.ts` and `robots.ts`** call `lib/api` at build and revalidation time
@@ -251,6 +252,7 @@ policy is incomplete.
 | `GET /brands/{slug}/` | 3600 | The brand page header |
 | `GET /products/` | 600 | The listing and the home rails. Ten minutes is still prompt for a new product, and every menu destination is now a hot key |
 | `GET /products/?category=…&limit=9` (related) | 3600 | The product page's "Combine with" rail; a suggestion an hour stale is harmless |
+| `GET /shipping/` | 3600 | The announcement bar, the product page's Delivery row and the bag's shipping copy. One key; the fees change when the merchant edits them |
 | `GET /products/{slug}/` | 1800 | Detail. `in_stock` can be up to thirty minutes stale, which is acceptable because it is not authoritative anyway |
 
 **The revalidation numbers are a throttle budget, not a taste.** The catalogue scope
@@ -270,16 +272,18 @@ tree (five roots, seventeen children) and six skin types:
 ```text
 five reference lists (categories, brands, shades, sizes,     5 × 1   =   5
   skin types)
+the shipping settings                                         1 × 1   =   1
 ten brand detail keys                                        10 × 1   =  10
-listing keys reachable in one click: 22 categories from      42 × 6   = 252
+listing keys reachable in one click: 22 categories from      44 × 6   = 264
   the mega-menu and band, 6 skin types, the unfiltered
-  listing, new-in, ten brand listings, the home page's
-  two rails (newest, first root category)
+  listing, new-in, the header's Sale listing, ten brand
+  listings, the home page's three rails (newest, on sale,
+  first root category)
 the sitemap's one key per hundred products                    1 × 6   =   6
 related-product keys, one per category a product sits in     20 × 1   =  20
 a hundred product detail keys                               100 × 2   = 200
                                                                         ----
-                                                                        493 / 600
+                                                                        506 / 600
 ```
 
 Revalidation is lazy, so the real figure is far lower, but the worst case is what
@@ -292,7 +296,17 @@ category and skin type a one-click listing, which is 42 keys, and at 300 seconds
 the total was 751. The related read is its own function at 3600 for the same
 reason: at the listing's interval its twenty keys alone would cost 120.
 
-**At roughly 150 products, or with many more categories or brands, this budget
+**`/shipping/` added one call an hour on 2026-09-27.** It is read by the root
+layout, the header, `/cart` and the product page, all the same cache key. The
+checkout quote is not in this sum: it is a browser call on the customer's IP, in
+the backend's `quote` scope (600/hour), not the storefront's `catalog` one.
+
+**Sale prices added two listing keys on 2026-09-29**: the header's
+`/products?on_sale=true` and the home page's on-sale rail
+(`?on_sale=true&limit=8`), six calls an hour each, 494 → 506. The sale fields ride
+on the list and detail reads that already exist, so nothing else changed.
+
+**At roughly 145 products, or with many more categories or brands, this budget
 breaks.** Each product adds two calls an hour and each category or brand six. The
 fix is to lengthen `revalidate` on the detail or listing read, or to raise
 `DJANGO_THROTTLE_CATALOG` on the backend, a deliberate choice either way, made
@@ -310,8 +324,9 @@ Two rules follow from that arithmetic:
   crawlable URL that costs upstream requests and adds no distinct content.
 
 **There is no client data-fetching library.** No React Query, no SWR. The catalogue
-is cached by the server and never refetched in the browser; the three
-customer-scoped calls each happen once, in response to a deliberate action, and a
+is cached by the server and never refetched in the browser; the customer-scoped
+calls each answer one page or one action — the quote re-runs only when the bag or
+district changes, and a stale answer is aborted and dropped — and a
 cache with invalidation rules would be infrastructure for a problem this storefront
 does not have.
 
@@ -408,6 +423,8 @@ edit. See [ADR 0005](decisions/0005-the-storefront-branches-on-api-error-codes.m
 | `validation_error` | checkout, order lookup | Field-level messages from `details`, inline on the form |
 | `validation_error` | product listing | An unknown `?brand=` slug: the listing shows its "nothing matches these filters" state |
 | `not_found` | product detail, order detail, lookup | `notFound()` on the server; an explanatory panel in the browser |
+| `variant_unavailable` | checkout quote | Mark each line in `details.variant_ids`; show no figures |
+| `insufficient_stock` | checkout quote | Mark the line in `details.variant_id`; no quantity; show no figures |
 | `variant_unavailable` | checkout | Name the affected lines from `details.variant_ids`, send the customer back to the cart |
 | `insufficient_stock` | checkout | Name the one line from `details.variant_id`. **Never state a remaining quantity** — the API does not send one |
 | `throttled` | any | "Too many requests, try again shortly." Never retry automatically |
@@ -493,7 +510,7 @@ Future implementation must preserve these:
 
 - **Only `lib/api` calls the backend.** No `fetch` to the API from a component, a
   route, or a test helper.
-- **Customer-scoped calls happen in the browser.** Checkout, order detail and order
+- **Customer-scoped calls happen in the browser.** Checkout, the quote, order detail and order
   lookup are never server-rendered.
 - **Money is a decimal string, end to end.** It is never parsed into a number, and
   arithmetic on it is the backend's job.

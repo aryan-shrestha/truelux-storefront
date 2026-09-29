@@ -2,7 +2,7 @@
 
 Status: Reference
 
-Last updated: 2026-09-26
+Last updated: 2026-09-29
 
 ---
 
@@ -26,6 +26,9 @@ Transcribed from, and verified against:
 
 ```text
 back-end/docs/features/{brands,shades-and-sizes,skin-types,admin-api}.md
+back-end/docs/features/checkout-quote-and-shipping.md   (implemented 2026-09-27)
+back-end/docs/features/sale-prices.md                   (implemented 2026-09-29)
+back-end/docs/decisions/0018-a-sale-is-a-compare-at-price.md
 back-end/docs/decisions/0011-cash-on-delivery-only.md
 back-end/config/urls.py
 back-end/config/settings/base.py
@@ -210,6 +213,7 @@ Query parameters:
 | `min_price` | number | Against `base_price`, not the resolved variant price |
 | `max_price` | number | Against `base_price` |
 | `in_stock` | boolean | True when *any* variant has stock |
+| `on_sale` | `true` or `false` | `true`: only products with at least one on-sale published variant. **Any other value is `400 validation_error`** |
 | `search` | string | Case-insensitive substring over `name` and `description` |
 | `ordering` | `name`, `base_price`, `created_at` | Prefix `-` to reverse. Nothing else is accepted |
 | `limit`, `offset` | integers | `limit` caps at 100 |
@@ -232,11 +236,28 @@ error.
       "brand": { "name": "Lumière", "slug": "lumiere" },
       "category": { "name": "Face", "slug": "face" },
       "primary_image": { "url": "https://res.cloudinary.com/...", "alt_text": "..." },
-      "in_stock": true
+      "in_stock": true,
+      "on_sale": true,
+      "sale_price": "2720.00",
+      "compare_at_price": "3200.00",
+      "discount_percent": 15
     }
   ]
 }
 ```
+
+**Sale fields** (back-end ADR 0018). A sale is a variant's `compare_at_price`, the
+"was" price, above its resolved `price`. On a product:
+
+- `on_sale` is true when any published variant is on sale.
+- `sale_price`, `compare_at_price` and `discount_percent` describe the **sale
+  variant**: the on-sale variant with the lowest price, ties going to size order.
+  All three are `null` exactly when `on_sale` is false.
+- `discount_percent` is an integer, floored (`3200 → 2720` is 15), so it never
+  overstates the saving. The storefront never computes it.
+- `base_price` is unchanged and is still what `min_price`, `max_price` and
+  `ordering=base_price` read, so a product on sale sorts and filters by its full
+  price.
 
 `brand` is on every item and is never null: `Product.brand` is required, and a
 product of an inactive brand is hidden from every public endpoint.
@@ -261,12 +282,21 @@ Everything from the list item, plus:
       "id": "1b7d...",
       "size": { "name": "30 ml", "slug": "30-ml" },
       "shade": { "name": "Warm Beige", "slug": "warm-beige", "hex_code": "#D8A47F" },
-      "price": "3200.00",
-      "in_stock": true
+      "price": "2720.00",
+      "in_stock": true,
+      "compare_at_price": "3200.00",
+      "on_sale": true,
+      "discount_percent": 15
     }
   ]
 }
 ```
+
+A variant's `on_sale` is `compare_at_price > price`. A variant whose compare-at is
+at or below its price still returns that `compare_at_price`, with `on_sale` false
+and `discount_percent` `null`; only `on_sale` says whether it is a sale. The
+compare-at is display-only: checkout and the quote charge `price`, and it never
+reaches an order.
 
 `images` is ordered by the merchant's sort order. `variants` is ordered by size
 sort order.
@@ -456,6 +486,64 @@ Errors:
 **A failed checkout is all or nothing**: no partial order is ever created, and no
 stock moves.
 
+Since the quote landed, the placed order's figures come from the same backend
+pricing function as the quote, so they equal the quote for the same cart and
+district unless prices or shipping settings changed in between.
+
+### `POST /api/v1/checkout/quote/`
+
+Public. Throttle scope **`quote`**, 600/hour per IP, separate from `checkout`, so
+quoting never spends the budget for placing an order. Writes nothing, sends no
+email.
+
+```json
+{ "items": [{ "variant_id": "…", "quantity": 2 }], "district": "Lalitpur" }
+```
+
+`district` is optional; `""` and `null` are treated exactly as omitting it. `items`
+follows the checkout rules above.
+
+Response `200`:
+
+```json
+{
+  "subtotal": "6400.00",
+  "shipping_fee": "150.00",
+  "discount": "0.00",
+  "total": "6550.00",
+  "free_shipping_remaining": "1600.00",
+  "lines": [
+    { "variant_id": "…", "quantity": 2, "unit_price": "3200.00", "line_total": "6400.00" }
+  ]
+}
+```
+
+| Field | Rule |
+| --- | --- |
+| `shipping_fee` | `0.00` when a threshold is set and the subtotal reaches it; otherwise the district's fee. **`null` without a district**, unless the threshold is reached |
+| `total` | `null` exactly when `shipping_fee` is |
+| `discount` | always `"0.00"` until discount codes exist |
+| `free_shipping_remaining` | threshold minus subtotal while above zero; `null` with no threshold or once reached |
+
+Errors are identical to `POST /checkout/`: `400 validation_error`,
+`422 variant_unavailable`, `422 insufficient_stock`, `429 throttled`. Variants are
+resolved without locks, so a quote can succeed and the order still fail.
+
+### `GET /api/v1/shipping/`
+
+Public, `catalog` throttle scope, cacheable.
+
+```json
+{ "inside_valley_fee": "150.00", "outside_valley_fee": "250.00", "free_shipping_threshold": "8000.00" }
+```
+
+`free_shipping_threshold` is `null` when the merchant has not set one. The response
+carries **no `Cache-Control`**: the storefront's server-side `revalidate` is the only
+caching it gets. The merchant
+edits these through the staff API (`/api/v1/admin/settings/shipping/`); they
+replace the backend's `SHIPPING_FEE_*` env vars (backend ADR 0017). The storefront
+no longer carries its own shipping copy: `NEXT_PUBLIC_SHIPPING_NOTE` was removed.
+
 ---
 
 ## Orders
@@ -550,9 +638,10 @@ rather than fallbacks the code would use:
 
 | Scope | Default | Applies to |
 | --- | --- | --- |
-| `catalog` | 600/hour | products list and detail, categories, brands, shades, sizes |
+| `catalog` | 600/hour | products list and detail, categories, brands, shades, sizes, `/shipping/` |
 | `anon` | 60/hour | order detail by access token, and anything with no scope of its own |
 | `checkout` | 30/hour | `POST /checkout/` |
+| `quote` | 600/hour | `POST /checkout/quote/` |
 | `order_lookup` | 20/hour | `POST /orders/lookup/` |
 
 The catalogue scope is counted **separately** from `anon`, so browsing does not
@@ -639,8 +728,9 @@ first.
   children, and the tree is only one level deep, so there is nothing deeper to
   reach.
 - **No cursor pagination**, only limit/offset.
-- **No discounts, coupons, gift cards, sale prices, or tax.** `base_price` is the
-  only price concept, and `shipping_fee` the only addition to it.
+- **No discounts, coupons, gift cards, or tax** yet, and **no scheduled sales**:
+  a sale has no start or end date, so there is nothing to count down to. The
+  quote's `discount` is always `"0.00"`.
 - **No product reviews, ratings, related products, or recommendations.** The
   storefront's "combine with" rail is simply other products in the same category.
 - **No wishlist, no restock notification, no abandoned-cart anything.**

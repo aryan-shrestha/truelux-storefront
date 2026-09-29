@@ -1,11 +1,12 @@
+export const BRANDS_LINK = { href: "/brands", label: "Brands" } as const;
+export const FIND_ORDER_LINK = { href: "/orders/lookup", label: "Find an order" } as const;
+export const SALE_LINK = { href: "/products?on_sale=true", label: "Sale" } as const;
+export const JOURNAL_LINK = { href: "/#journal", label: "Journal" } as const;
+
 // A plain module because the server header, the client menu and the footer all render it.
-export const SITE_LINKS = [
-  { href: "/brands", label: "Brands" },
-  { href: "/#journal", label: "Journal" },
-  { href: "/#about", label: "About" },
-] as const;
+export const SITE_LINKS = [BRANDS_LINK, JOURNAL_LINK, { href: "/#about", label: "About" }] as const;
 
 export const ORDER_LINKS = [
-  { href: "/orders/lookup", label: "Find an order" },
+  FIND_ORDER_LINK,
   { href: "/cart", label: "Your bag" },
 ] as const;

@@ -2,7 +2,7 @@
 
 Status: Implemented
 
-Last updated: 2026-09-25
+Last updated: 2026-09-27
 
 ---
 
@@ -27,7 +27,8 @@ What is explicitly outside the scope?
 
 - Online payment. Khalti was removed with the backend's; adding a gateway is a
   feature, not a toggle.
-- Accounts, saved addresses, a shipping quote before placement (the API has none)
+- Accounts, saved addresses
+- The quote itself is documented in [checkout-quote.md](checkout-quote.md)
 
 ---
 
@@ -50,11 +51,13 @@ What is explicitly outside the scope?
   `Card` stating cash on delivery; there is no choice to make. On success it records
   the order on this device, replaces the form, clears the bag and navigates to the
   confirmation.
-- `components/checkout/DistrictPicker.tsx` — a `Command` list in a `Popover`,
-  searchable over Nepal's 77 districts (`districts.ts`), writing a hidden
-  `district` input. Submitting without one is a field error, and nothing is sent.
+- `components/checkout/DistrictPicker.tsx` — a controlled `Command` list in a
+  `Popover`, searchable over Nepal's 77 districts (`districts.ts`), writing a
+  hidden `district` input; `CheckoutForm` owns the value and re-quotes on change. Submitting without one is a field error, and nothing is sent.
 - `components/checkout/OrderSummary.tsx` — the bag's lines as quantity × unit price
-  and "Size · Shade", the shipping note, and no total.
+  and "Size · Shade", then the quoted Subtotal, Discount (non-zero only), Shipping
+  and Total, and the free-shipping line; skeletons until the quote arrives
+  ([checkout-quote.md](checkout-quote.md)). Place order stays enabled throughout.
 - `components/checkout/Confirmation.tsx` — the order number from the URL, the
   amounts from the local order record once hydrated, and the next step: the shop
   calls to confirm, and the customer pays in cash on delivery.
@@ -67,9 +70,7 @@ What is explicitly outside the scope?
 
 ## Remaining
 
-- A shipping quote before placement. The fee is decided from the district at
-  placement and returned with the order, so the customer commits without seeing it.
-  This needs a backend endpoint.
+None. The quote before placement shipped in [checkout-quote.md](checkout-quote.md).
 
 ---
 
@@ -91,19 +92,22 @@ no error, so a misspelt "Lalitpur" costs the customer money.
 The three valley districts must stay spelled as the backend's
 `KATHMANDU_VALLEY_DISTRICTS`.
 
-### Decision: no total before the order is placed
+### Decision: the total before placement is the API's quote
 
 **Decision**
 
-The summary shows lines and the shipping note, never a total.
+The summary shows the quoted total for the chosen district, or a skeleton, never a
+computed one.
 
 **Reason**
 
-ADR 0003 forbids money arithmetic, and the fee depends on the district.
+ADR 0003 forbids money arithmetic; the quote and placement share one backend
+pricing function.
 
 **Consequence**
 
-The first total the customer sees is the API's, on the confirmation page.
+The placed order's figures are still authoritative and are what the confirmation
+page shows; the button is never held back waiting for a quote.
 
 ### Decision: no retries, ever
 
@@ -157,7 +161,8 @@ rather than inviting a second attempt.
 ### Calls
 
 ```text
-POST /api/v1/checkout/     browser, no-store
+POST /api/v1/checkout/        browser, no-store
+POST /api/v1/checkout/quote/  browser, no-store (checkout-quote.md)
 ```
 
 ### Errors handled
@@ -178,7 +183,8 @@ POST /api/v1/checkout/     browser, no-store
 - `localStorage` `tl.orders.v1` — `{ orderNumber, email, recordedAt, paymentMethod: "cod", amounts }`
   written after placement, read by the confirmation page and the lookup. Never the
   access token.
-- React state — field errors, the problem notice, submitting, placed.
+- React state — field errors, the problem notice, submitting, placed, the district,
+  the settled quote.
 
 ---
 
@@ -200,11 +206,13 @@ POST /api/v1/checkout/     browser, no-store
   clears the bag and navigates; a 400 lands on its field and keeps what was typed;
   `variant_unavailable` names and removes lines; `insufficient_stock` states no
   quantity; 429 and transport failures do not retry; a missing district is caught
-  before sending; there is no payment choice and no Khalti.
+  before sending; there is no payment choice and no Khalti; the quote cases listed
+  in checkout-quote.md. Checkout calls are counted apart from quote calls.
 - `components/checkout/districts.test.ts` — the valley districts' spelling.
 - `lib/orders/record.test.ts` — records without amounts or with another payment
   method are dropped.
-- `tests/e2e/buy-flow.spec.ts` — bag to confirmation with a stubbed checkout.
+- `tests/e2e/buy-flow.spec.ts` — bag to confirmation with a stubbed checkout and
+  quote.
 
 ---
 

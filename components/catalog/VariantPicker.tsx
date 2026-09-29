@@ -3,8 +3,9 @@
 import { CheckIcon } from "lucide-react";
 import { useId, useState } from "react";
 
+import { ProductPrice } from "@/components/catalog/ProductPrice";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Price } from "@/components/ui/price";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { Product } from "@/lib/api/types";
 import { useCart } from "@/lib/cart/use-cart";
@@ -61,10 +62,14 @@ export function VariantPicker({ product }: { product: Product }) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* The variant's own price once resolved: price overrides are real. */}
+    <div className="gap-fit-6 flex flex-col">
+      {/* The variant's own price and sale once resolved: overrides and per-variant sales are real. */}
       <p aria-live="polite" className="text-2xl">
-        <Price amount={selected?.price ?? product.basePrice} />
+        {selected === undefined ? (
+          <ProductPrice price={product.sale?.price ?? product.basePrice} sale={product.sale} />
+        ) : (
+          <ProductPrice price={selected.price} sale={selected.sale} />
+        )}
       </p>
 
       {shaded && <ShadeChoice options={shades} value={shade} onChange={choose(setShade)} />}
@@ -130,7 +135,7 @@ function ShadeChoice({
             key={option.slug}
             value={option.slug}
             disabled={option.state !== "available"}
-            aria-label={[option.name, statusOf(option.state)].filter(Boolean).join(", ")}
+            aria-label={[option.name, statusOf(option)].filter(Boolean).join(", ")}
             title={option.name}
           >
             <span
@@ -139,6 +144,7 @@ function ShadeChoice({
               // The swatch colour is data from the API, not a design token.
               style={{ backgroundColor: option.hexCode }}
             />
+            {option.onSale && <SaleMarker className="absolute -top-2 -right-3" />}
           </ToggleGroupItem>
         ))}
       </ToggleGroup>
@@ -180,13 +186,22 @@ function SizeChoice({
             key={option.slug}
             value={option.slug}
             disabled={option.state !== "available"}
-            aria-label={[option.name, statusOf(option.state)].filter(Boolean).join(", ")}
+            aria-label={[option.name, statusOf(option)].filter(Boolean).join(", ")}
           >
             {option.name}
+            {option.onSale && <SaleMarker />}
           </ToggleGroupItem>
         ))}
       </ToggleGroup>
     </div>
+  );
+}
+
+function SaleMarker({ className }: { className?: string }) {
+  return (
+    <Badge variant="sale" aria-hidden className={className}>
+      Sale
+    </Badge>
   );
 }
 

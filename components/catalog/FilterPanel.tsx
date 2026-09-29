@@ -1,15 +1,11 @@
+import { ChevronDownIcon } from "lucide-react";
 import Link from "next/link";
 import { useId, type ReactNode } from "react";
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toggleVariants } from "@/components/ui/toggle";
 import type { ProductOrdering, ProductQuery } from "@/lib/api/types";
 import type { ListingFacets } from "@/lib/catalog/navigation";
@@ -39,8 +35,6 @@ type FilterPanelProps = {
   showBrands?: boolean;
 };
 
-// Closed until something is applied, so the grid leads as in the design; open
-// once a filter or sort is set, so what narrowed the grid stays in view.
 export function FilterPanel({
   facets,
   query,
@@ -49,139 +43,155 @@ export function FilterPanel({
 }: FilterPanelProps) {
   const href = (change: Partial<ProductQuery>) => hrefWith(query, change, { pathname });
   const applied = appliedFilterCount(query);
-  const open = applied > 0 || query.ordering !== undefined;
 
   return (
-    <Accordion type="single" collapsible defaultValue={open ? "filters" : undefined}>
-      <AccordionItem value="filters">
-        <AccordionTrigger className="text-[0.9375rem]">
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" className="w-full justify-between">
           {applied > 0 ? `Filter and sort (${applied} applied)` : "Filter and sort"}
-        </AccordionTrigger>
-        <AccordionContent className="pb-10">
-          <div className="grid gap-x-10 gap-y-8 pt-4 sm:grid-cols-2 lg:grid-cols-4">
-            {facets.skinTypes.length > 0 && (
-              <FilterGroup title="Skin type">
-                {facets.skinTypes.map((skinType) => (
-                  <li key={skinType.slug}>
-                    <ToggleFilter
-                      href={href({ skinType: withToggled(query.skinType, skinType.slug) })}
-                      active={query.skinType?.includes(skinType.slug) ?? false}
-                    >
-                      {skinType.name}
-                    </ToggleFilter>
-                  </li>
-                ))}
-              </FilterGroup>
-            )}
+          <ChevronDownIcon
+            data-icon="inline-end"
+            className="transition-transform group-aria-expanded/button:rotate-180"
+          />
+        </Button>
+      </PopoverTrigger>
+      {/* The trigger spans the listing's column, so its width is the grid's width. */}
+      <PopoverContent
+        align="start"
+        avoidCollisions={false}
+        className="max-h-(--radix-popover-content-available-height) w-(--radix-popover-trigger-width) overflow-y-auto p-6 md:p-8"
+      >
+        <div className="grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
+          {facets.skinTypes.length > 0 && (
+            <FilterGroup title="Skin type">
+              {facets.skinTypes.map((skinType) => (
+                <li key={skinType.slug}>
+                  <ToggleFilter
+                    href={href({ skinType: withToggled(query.skinType, skinType.slug) })}
+                    active={query.skinType?.includes(skinType.slug) ?? false}
+                  >
+                    {skinType.name}
+                  </ToggleFilter>
+                </li>
+              ))}
+            </FilterGroup>
+          )}
 
-            {showBrands && facets.brands.length > 0 && (
-              <FilterGroup title="Brand">
-                {facets.brands.map((brand) => (
-                  <li key={brand.slug}>
-                    <ToggleFilter
-                      href={href({ brand: withToggled(query.brand, brand.slug) })}
-                      active={query.brand?.includes(brand.slug) ?? false}
-                    >
-                      {brand.name}
-                    </ToggleFilter>
-                  </li>
-                ))}
-              </FilterGroup>
-            )}
+          {showBrands && facets.brands.length > 0 && (
+            <FilterGroup title="Brand">
+              {facets.brands.map((brand) => (
+                <li key={brand.slug}>
+                  <ToggleFilter
+                    href={href({ brand: withToggled(query.brand, brand.slug) })}
+                    active={query.brand?.includes(brand.slug) ?? false}
+                  >
+                    {brand.name}
+                  </ToggleFilter>
+                </li>
+              ))}
+            </FilterGroup>
+          )}
 
-            {facets.shades.length > 0 && (
-              <FilterGroup title="Shade">
-                {facets.shades.map((shade) => {
-                  const active = query.shade === shade.slug;
-                  return (
-                    <li key={shade.slug}>
-                      <Link
-                        href={href({ shade: active ? undefined : shade.slug })}
-                        aria-current={active ? "true" : undefined}
-                        title={shade.name}
-                        className={toggleVariants({ variant: "swatch", size: "swatch" })}
-                      >
-                        <span
-                          aria-hidden
-                          className="size-8 rounded-full"
-                          // The swatch colour is data from the API, not a design token.
-                          style={{ backgroundColor: shade.hexCode }}
-                        />
-                        <span className="sr-only">{shade.name}</span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </FilterGroup>
-            )}
-
-            {facets.sizes.length > 0 && (
-              <FilterGroup title="Size">
-                {facets.sizes.map((size) => {
-                  const active = query.size === size.slug;
-                  return (
-                    <li key={size.slug}>
-                      <ToggleFilter
-                        href={href({ size: active ? undefined : size.slug })}
-                        active={active}
-                      >
-                        {size.name}
-                      </ToggleFilter>
-                    </li>
-                  );
-                })}
-              </FilterGroup>
-            )}
-
-            <FilterGroup title="Price">
-              {PRICE_BANDS.map((band) => {
-                const active = query.minPrice === band.minPrice && query.maxPrice === band.maxPrice;
+          {facets.shades.length > 0 && (
+            <FilterGroup title="Shade">
+              {facets.shades.map((shade) => {
+                const active = query.shade === shade.slug;
                 return (
-                  <li key={band.label}>
+                  <li key={shade.slug}>
+                    <Link
+                      href={href({ shade: active ? undefined : shade.slug })}
+                      aria-current={active ? "true" : undefined}
+                      title={shade.name}
+                      className={toggleVariants({ variant: "swatch", size: "swatch" })}
+                    >
+                      <span
+                        aria-hidden
+                        className="size-8 rounded-full"
+                        // The swatch colour is data from the API, not a design token.
+                        style={{ backgroundColor: shade.hexCode }}
+                      />
+                      <span className="sr-only">{shade.name}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </FilterGroup>
+          )}
+
+          {facets.sizes.length > 0 && (
+            <FilterGroup title="Size">
+              {facets.sizes.map((size) => {
+                const active = query.size === size.slug;
+                return (
+                  <li key={size.slug}>
                     <ToggleFilter
-                      href={href({
-                        minPrice: active ? undefined : band.minPrice,
-                        maxPrice: active ? undefined : band.maxPrice,
-                      })}
+                      href={href({ size: active ? undefined : size.slug })}
                       active={active}
                     >
-                      {band.label}
+                      {size.name}
                     </ToggleFilter>
                   </li>
                 );
               })}
             </FilterGroup>
-
-            <FilterGroup title="Availability">
-              <li>
-                <ToggleFilter
-                  href={href({ inStock: query.inStock ? undefined : true })}
-                  active={Boolean(query.inStock)}
-                >
-                  In stock only
-                </ToggleFilter>
-              </li>
-            </FilterGroup>
-
-            <SortForm query={query} pathname={pathname} />
-          </div>
-
-          {applied > 0 && (
-            <Button asChild variant="link" size="inline" className="mt-8">
-              <Link
-                href={hrefWith(
-                  { category: query.category, search: query.search, ordering: query.ordering },
-                  {},
-                  { pathname },
-                )}
-              >
-                Clear filters
-              </Link>
-            </Button>
           )}
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
+
+          <FilterGroup title="Price">
+            {PRICE_BANDS.map((band) => {
+              const active = query.minPrice === band.minPrice && query.maxPrice === band.maxPrice;
+              return (
+                <li key={band.label}>
+                  <ToggleFilter
+                    href={href({
+                      minPrice: active ? undefined : band.minPrice,
+                      maxPrice: active ? undefined : band.maxPrice,
+                    })}
+                    active={active}
+                  >
+                    {band.label}
+                  </ToggleFilter>
+                </li>
+              );
+            })}
+          </FilterGroup>
+
+          <FilterGroup title="Availability">
+            <li>
+              <ToggleFilter
+                href={href({ inStock: query.inStock ? undefined : true })}
+                active={Boolean(query.inStock)}
+              >
+                In stock only
+              </ToggleFilter>
+            </li>
+            <li>
+              <ToggleFilter
+                href={href({ onSale: query.onSale ? undefined : true })}
+                active={Boolean(query.onSale)}
+              >
+                On sale
+              </ToggleFilter>
+            </li>
+          </FilterGroup>
+
+          <SortForm query={query} pathname={pathname} />
+        </div>
+
+        {applied > 0 && (
+          <Button asChild variant="link" size="inline" className="mt-8 self-start">
+            <Link
+              href={hrefWith(
+                { category: query.category, search: query.search, ordering: query.ordering },
+                {},
+                { pathname },
+              )}
+            >
+              Clear filters
+            </Link>
+          </Button>
+        )}
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -233,6 +243,7 @@ function SortForm({ query, pathname }: { query: ProductQuery; pathname: string }
       {query.minPrice && <input type="hidden" name="min_price" value={query.minPrice} />}
       {query.maxPrice && <input type="hidden" name="max_price" value={query.maxPrice} />}
       {query.inStock && <input type="hidden" name="in_stock" value="true" />}
+      {query.onSale && <input type="hidden" name="on_sale" value="true" />}
       {query.search && <input type="hidden" name="search" value={query.search} />}
 
       <Label htmlFor="ordering" className="text-sm font-semibold">

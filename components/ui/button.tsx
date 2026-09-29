@@ -13,6 +13,8 @@ const buttonVariants = cva(
           "border-input bg-transparent hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
         overlay:
           "border-on-image bg-transparent text-on-image hover:bg-on-image/15 focus-visible:border-on-image focus-visible:ring-on-image/60",
+        floating:
+          "rounded-full bg-background/90 text-foreground shadow-md backdrop-blur-sm hover:bg-background",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:
