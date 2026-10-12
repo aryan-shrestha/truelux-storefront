@@ -8,7 +8,6 @@ import { CategoryRail } from "@/components/home/CategoryRail";
 import { Editorial } from "@/components/home/Editorial";
 import { Hero } from "@/components/home/Hero";
 import { ImageBand } from "@/components/home/ImageBand";
-import { Journal } from "@/components/home/Journal";
 import { SALE_LINK } from "@/components/layout/site-links";
 import { categoryHref, navigationBrands, navigationCategories } from "@/lib/catalog/navigation";
 import { latestProducts, saleProducts } from "@/lib/catalog/rails";
@@ -57,7 +56,6 @@ export default async function Home() {
         <About />
         <BrandGrid brands={brands} />
       </div>
-      <Journal />
     </div>
   );
 }

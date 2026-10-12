@@ -28,12 +28,14 @@ In the mockup's order:
 5. The first root category's rail
 6. The About band (the mockup's quote band), with the three promises
 7. Our brands (in the place of the mockup's "User Voice" grid)
-8. Our journal: four static notes
+
+The mockup's journal row was removed on 2026-10-12, at the client's request.
 
 What is explicitly outside the scope?
 
 - Merchant-editable content, a featured flag, bestseller labels: the API has none
-- Instagram content and real journal articles: neither exists
+- Instagram content: none exists
+- A journal: removed at the client's request
 - The mockups' photographs
 
 ---
@@ -70,8 +72,6 @@ and the filter panel make.
   "About {brand}", and the three promises from `components/layout/promises.ts`.
 - `components/home/BrandGrid.tsx` — up to six brands as square tiles (logo, or the
   name in Belleza, and the product count) on the greige band, then "All brands".
-- `components/home/Journal.tsx` — `id="journal"`, four static notes in a carousel,
-  each ending in a search link rather than a "Read more" to nowhere.
 - `lib/catalog/rails.ts` — `latestProducts()`, `saleProducts()`,
   `categoryProducts()` and `relatedProducts()`, each degrading to `[]` on an API failure.
 - `public/art/*.svg` — generated placeholder art in the new palette, replacing
@@ -81,8 +81,7 @@ and the filter panel make.
 
 ## Remaining
 
-- Real photography for the hero, the editorial, the band, the menu and the journal.
-- Journal notes are static; real articles need a content source.
+- Real photography for the hero, the editorial, the band and the menu.
 
 ---
 
@@ -101,8 +100,8 @@ Every link to the shop points here, and a throttled API must not take it down.
 
 **Consequence**
 
-A fresh deployment shows the hero, the editorial, the authenticity band, the About
-band and the journal.
+A fresh deployment shows the hero, the editorial, the authenticity band and the
+About band.
 
 ### Decision: product rails are carousels (reverses "new arrivals are a grid")
 
@@ -127,8 +126,7 @@ link leads to the rest.
 **Decision**
 
 "Parsley Seed Skin Care" becomes new arrivals, "Pure Radiance" the first root
-category, "User Voice" our brands, and the journal is four short notes that end in
-a search.
+category, and "User Voice" our brands. The journal row is not built.
 
 **Reason**
 
@@ -142,9 +140,7 @@ Nothing on the page claims something the shop does not have.
 
 ## Gotchas
 
-- The About and Journal sections' `id`s are the targets of the header's links.
-- Journal links are searches ("spf", "serum", "foundation", "cleans"), which never
-  400, unlike a guessed category or skin-type slug.
+- The About section's `id` is the target of the footer's About link.
 - The category read is the header's, deduplicated within the render.
 
 ---
@@ -181,7 +177,7 @@ GET /api/v1/brands/                                   server, revalidate 3600
 
 - `app/page.test.tsx` — asks for the eight newest and renders them in the New
   arrivals region; the editorial points at the first root; brands link to their
-  pages; `#journal` and `#about` exist with the three promises; the hero survives
+  pages; `#about` exists with the three promises; the hero survives
   every read failing, without rails or brands. `CategoryRail`: asks for the root
   with a limit of eight and links to all of it; renders nothing when empty. The
   On sale rail: asks for eight on sale, links to the sale listing, and is absent

@@ -103,8 +103,8 @@ rule. All inside `components/ui/*` and `app/globals.css`.
 In the render's order: hero carousel (eyebrow, title, copy, outlined Discover more,
 line indicators), image/text editorial, New arrivals rail, dark image band,
 the first root category's rail, the stone quote band (as About, with the three
-promises), the brands grid (in the "User Voice" slot), and the journal row with its
-progress rule. Positions and spacing at 1400px were checked slice by slice against
+promises), and the brands grid (in the "User Voice" slot). The journal row was built and
+then removed on 2026-10-12, at the client's request. Positions and spacing at 1400px were checked slice by slice against
 `Landing-desktop-1..5.png`.
 
 ### Product listing
@@ -146,7 +146,7 @@ controls. The bag line no longer overflows at 375px.
 | Rails | Progress rule only | Progress rule plus previous/next buttons | A mouse user needs a way to move the rail |
 | Quote band | Quote only | Statement, "About TrueLux" and the three promises | It is the About link's destination |
 | User Voice | Instagram grid | Our brands grid | No customer content exists |
-| Journal | Articles with "Read more", "All blog posts" | Four short notes ending in a search link | No articles or article routes exist |
+| Journal | Articles with "Read more", "All blog posts", a header link | Not built | Removed at the client's request |
 | Mega-menu | Four columns | One per root plus Skin type, wrapping | The seeded tree has five roots |
 | Listing | "Revered formulations" heading above the grid | Product count and the Filter and sort panel | No per-category copy in the API; the filters need a place |
 | Listing | No filters shown | A Filter and sort dropdown panel, the width of the grid | The requirement adds filters; the design has no rail |
@@ -214,7 +214,7 @@ A newly published product can take up to ten minutes to appear.
 
 ## Routes
 
-No new routes. `/#journal` and `/#about` are anchors on the home page.
+No new routes. `/#about` is an anchor on the home page.
 
 ---
 
