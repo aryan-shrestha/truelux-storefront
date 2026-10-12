@@ -63,13 +63,13 @@ render on the server (ADR 0002). The Shop menu is built from `/categories/` and
   root, and an editorial image (`public/art/menu.svg`) in the right 27%. Then
   a Brands trigger whose content is the same frame: "All brands" (`/brands`) then
   every brand's page, in a wrapping grid. Then Sale (`/products?on_sale=true`,
-  `SALE_LINK`; see [sale-prices.md](sale-prices.md)) and Journal (`/#journal`) as
-  plain links. With no categories, Shop is a link to `/products`; with no brands, Brands is
+  `SALE_LINK`; see [sale-prices.md](sale-prices.md)) as a
+  plain link. With no categories, Shop is a link to `/products`; with no brands, Brands is
   a link to `/brands`. The header has no About link (removed 2026-09-27).
 - `components/layout/MobileNav.tsx` — a full-width shadcn `Sheet` below `md` with
   drill-down panels built from `item` rows: Shop › (Shop everything, one row per
   column) › the column's links, with a back row at the top of each level; then
-  Brands › (All brands, one row per brand), Sale, Journal, and "Find an order" and "Your
+  Brands › (All brands, one row per brand), Sale, and "Find an order" and "Your
   bag" as small links.
 - `components/layout/SearchSheet.tsx` + `SearchForm.tsx` — the header's search icon
   opens a top `Sheet` holding a `next/form` GET form to `/products?search=`, which
@@ -134,22 +134,22 @@ The header is on every route; the menu data should not ship twice.
 The category, skin-type and brand reads happen once per render on the server and are
 deduplicated with the page's own.
 
-### Decision: About and Journal are anchors on the home page
+### Decision: About is an anchor on the home page
 
 **Decision**
 
-The header's Journal link and the footer's About and Journal links go to
-`/#journal` and `/#about`. The header dropped About on 2026-09-27, at the client's
-request; the footer keeps it.
+The footer's About link goes to `/#about`. The header dropped About on 2026-09-27,
+at the client's request; the footer keeps it. Journal, the other anchor, was removed
+from both menus, the footer and the home page on 2026-10-12, at the client's request.
 
 **Reason**
 
-The design has both, and there are no such pages or content behind them; inventing
-routes is out of scope.
+The design has About, and there is no page or content behind it; inventing a route
+is out of scope.
 
 **Consequence**
 
-Removing either section's `id` breaks a header link.
+Removing the About section's `id` breaks the footer link.
 
 ---
 

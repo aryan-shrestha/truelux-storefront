@@ -97,8 +97,7 @@ What is explicitly outside the scope?
 - `components/catalog/ProductListing.tsx` — `isSaleOnly` with no results is
   "Nothing here is on sale right now", with "See everything".
 - `components/layout/site-links.ts` — `SALE_LINK`; `ShopMenu.tsx` renders it
-  between Brands and Journal, and `MobileNav.tsx` on its first panel in the same
-  place.
+  after Brands, and `MobileNav.tsx` on its first panel in the same place.
 - `lib/catalog/rails.ts` — `saleProducts()`, eight on sale, `[]` on failure.
 - `app/page.tsx` — reads it with the other home reads and renders the "On sale"
   rail after the category rail, linking to "Everything on sale".
