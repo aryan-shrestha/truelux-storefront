@@ -73,6 +73,11 @@
   padding-block: calc(var(--fit-step) * --value(integer));
 }
 
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

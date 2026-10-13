@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { ProductListing } from "@/components/catalog/ProductListing";
-import { ShopHero } from "@/components/catalog/ShopHero";
+import { ShopTitle } from "@/components/catalog/ShopTitle";
 import { listingFacets } from "@/lib/catalog/navigation";
 import {
   toCanonicalSearch,
@@ -33,7 +33,7 @@ export default async function ProductsPage({ searchParams }: PageProps<"/product
 
   return (
     <ProductListing
-      hero={<ShopHero query={query} categories={facets.categories} />}
+      hero={<ShopTitle query={query} categories={facets.categories} />}
       query={query}
       facets={facets}
       pathname="/products"

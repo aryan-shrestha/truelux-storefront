@@ -71,7 +71,6 @@ test("a shadeless product needs only a size, and follows its price override", as
 test("filters the catalogue by brand, shade and skin type through links", async ({ page }) => {
   await page.goto("/products");
 
-  await page.getByRole("button", { name: "Filter and sort" }).click();
   const brands = page.getByRole("region", { name: "Brand" });
   await brands.getByRole("link", { name: "Lumière" }).click();
   await expect(page).toHaveURL(/\/products\?brand=lumiere$/);
@@ -85,7 +84,6 @@ test("filters the catalogue by brand, shade and skin type through links", async 
 
 test("an applied filter keeps its inverted text on hover", async ({ page }) => {
   await page.goto("/products?category=hydrate&skin_type=dry");
-  await page.getByRole("button", { name: "Filter and sort (1 applied)" }).click();
 
   const dry = page.getByRole("region", { name: "Skin type" }).getByRole("link", { name: "Dry" });
   await expect(dry).toHaveAttribute("aria-current", "true");
