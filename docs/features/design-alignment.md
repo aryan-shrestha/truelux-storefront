@@ -109,12 +109,14 @@ then removed on 2026-10-12, at the client's request. Positions and spacing at 14
 
 ### Product listing
 
-Hero band with the category's title and a line of copy, the greige category band
-("Shop all |" then the children, the applied one underlined), then the Filter and
-sort panel (Skin type, Brand, Shade, Size, Price, Availability, Sort), the product
-count, and a four-column grid of centred cards (image tile, name, brand, price).
-Matches `Product-Listing---desktop-1.png` for the hero and band heights and the
-grid; filters remain links (ADR 0004).
+No page header (the image banner and then the title were removed at the client's
+request on 2026-10-13; the `h1` is visually hidden): the greige category band
+("Shop all |" then the children, the applied one underlined), then a left filter
+rail (Skin type, Brand, Shade, Size, Price, Availability; a sheet below `lg`) beside
+the product count, the sort form, and a grid of centred cards (image tile, name,
+brand, price), three columns at `lg` and four from `xl`.
+Matches `Product-Listing---desktop-1.png` for the band height and the cards;
+filters remain links (ADR 0004).
 
 ### Product detail
 
@@ -138,7 +140,7 @@ controls. The bag line no longer overflows at 375px.
 | Everywhere | Photographs | Generated SVG placeholders in `public/art/` | The photos are another brand's assets |
 | Header | Language, wishlist, account icons | Left out | No such features (ADR 0011) |
 | Header, mobile | Search beside the menu icon | Search beside the bag | One search control serves both widths |
-| Hero, listing band | White text directly on pale images | A left-to-right scrim under the text | The mockup's pairing is well under 3:1 contrast |
+| Hero, brand page band | White text directly on pale images | A left-to-right scrim under the text | The mockup's pairing is well under 3:1 contrast |
 | Hero | Body-care copy | TrueLux copy linking to the shop, new arrivals and brands | No such campaign data exists |
 | Editorial | "Skin Care / Potent Solutions" | "Shop by skin type", linking to the first root category | Honest copy for TrueLux |
 | Rails | "Parsley Seed", "Pure Radiance" product lines | New arrivals; the first root category | No product lines in the API |
@@ -148,8 +150,9 @@ controls. The bag line no longer overflows at 375px.
 | User Voice | Instagram grid | Our brands grid | No customer content exists |
 | Journal | Articles with "Read more", "All blog posts", a header link | Not built | Removed at the client's request |
 | Mega-menu | Four columns | One per root plus Skin type, wrapping | The seeded tree has five roots |
-| Listing | "Revered formulations" heading above the grid | Product count and the Filter and sort panel | No per-category copy in the API; the filters need a place |
-| Listing | No filters shown | A Filter and sort dropdown panel, the width of the grid | The requirement adds filters; the design has no rail |
+| Listing | "Revered formulations" heading above the grid | Product count and the sort form | No per-category copy in the API; sorting needs a place |
+| Listing | Image banner with the title and a line of copy | No visible header; a visually hidden `h1` | Removed at the client's request on 2026-10-13 |
+| Listing | No filters shown, a full-width four-column grid | A left filter rail from `lg` (a sheet below), the grid three columns at `lg` and four from `xl` | The requirement adds filters; a rail was requested on 2026-10-13 |
 | Product detail | "Save to cabinet" | Left out | No wishlist |
 | Product detail | Benefits / How to use / Ingredients accordion | Delivery / Payment / Authenticity | No benefits or usage fields; ingredients are already a row |
 | Product detail | Reviews | Left out | No reviews |
@@ -169,20 +172,22 @@ controls. The bag line no longer overflows at 375px.
 
 ## Decisions
 
-### Decision: the facets sit in a dropdown panel
+### Decision: the facets sit in a left rail
 
 **Decision**
 
-Categories live in the always-visible band; the other facets sit in a dropdown
-panel (a `Popover`) the width of the grid, closed on arrival.
+Categories live in the always-visible band; the other facets sit in a rail on the
+left of the grid from `lg`, and in a sheet below it.
 
 **Reason**
 
-The design has no filter rail, and the requirement adds a Skin type filter.
+The design has no filter rail, but the requirement adds filters, and a rail was
+requested on 2026-10-13 in place of the earlier dropdown panel.
 
 **Consequence**
 
-Opening the panel needs JavaScript; see catalog-browsing.md.
+The rail works without JavaScript; the sheet below `lg` needs it. See
+catalog-browsing.md.
 
 ### Decision: the listing revalidates every ten minutes
 

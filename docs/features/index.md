@@ -13,7 +13,7 @@ only, and there is no authentication anywhere.
 | 1   | design-system      | Implemented | `features/design-system.md`      | 11         | 2026-09-26   |
 | 2   | api-client         | Implemented | `features/api-client.md`         | —          | 2026-09-26   |
 | 3   | site-shell         | Implemented | `features/site-shell.md`         | 1, 2, 12   | 2026-10-12   |
-| 4   | catalog-browsing   | Implemented | `features/catalog-browsing.md`   | 2, 3       | 2026-09-29   |
+| 4   | catalog-browsing   | Implemented | `features/catalog-browsing.md`   | 2, 3       | 2026-10-13   |
 | 5   | product-detail     | Implemented | `features/product-detail.md`     | 4          | 2026-09-29   |
 | 6   | cart               | Implemented | `features/cart.md`               | 5          | 2026-09-27   |
 | 7   | checkout           | Implemented | `features/checkout.md`           | 6          | 2026-09-27   |
@@ -59,8 +59,8 @@ Things worth knowing, each recorded in its feature document:
   and related products: the listing now revalidates every 10 minutes, related
   products hourly, and the budget holds to roughly 145 products (`architecture.md`,
   506/600 after the sale listing and rail).
-- **Only categories are always visible on the listing**; the other facets are in a
-  dropdown panel, the width of the grid, that needs JavaScript to open (#4, #14).
+- **The listing's facets are in a left rail from `lg`**, and below it in a sheet
+  that needs JavaScript to open; categories stay in the band (#4, #14).
 - **The product page needs the backend's skin-types fields**; deploy the backend
   first (#5).
 - **`toggle.tsx` has no `"use client"`**, so the Server Component filter panel can
