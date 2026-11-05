@@ -7,10 +7,10 @@ export function About() {
     <section
       id="about"
       aria-labelledby="about-heading"
-      className="bg-secondary scroll-mt-(--header-offset) px-4 py-24 md:py-40"
+      className="bg-ink text-ink-foreground scroll-mt-(--header-offset) px-4 py-24 md:py-40"
     >
       <div className="mx-auto flex max-w-3xl flex-col items-center gap-3 text-center">
-        <h2 id="about-heading" className="font-heading text-title">
+        <h2 id="about-heading" className="font-heading text-title text-gold">
           Good skin is a habit, not a secret. We bring the brands; you choose what suits you.
         </h2>
         <p className="text-sm uppercase">About {env.brandName}</p>
@@ -22,7 +22,7 @@ export function About() {
         {Object.values(PROMISES).map((promise) => (
           <li key={promise.title} className="flex flex-col gap-1">
             <p className="font-semibold">{promise.title}</p>
-            <p className="text-muted-foreground text-sm">{promise.body}</p>
+            <p className="text-ink-muted text-sm">{promise.body}</p>
           </li>
         ))}
       </ul>
