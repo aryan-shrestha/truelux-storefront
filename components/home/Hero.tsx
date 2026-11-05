@@ -7,7 +7,7 @@ import { Carousel, CarouselContent, CarouselDots, CarouselItem } from "@/compone
 
 const SLIDES = [
   {
-    art: "/images/hero-1.jpg",
+    art: "/images/hero-1.png",
     eyebrow: "Skincare, makeup and fragrance",
     title: "Beauty you can trust, delivered to your door",
     body: "Authentic products from the brands you love, sent anywhere in Nepal. Pay in cash when your order arrives.",
