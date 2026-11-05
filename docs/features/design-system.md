@@ -2,7 +2,7 @@
 
 Status: Implemented
 
-Last updated: 2026-10-14
+Last updated: 2026-11-05
 
 ---
 
@@ -21,7 +21,7 @@ What is included in this implementation?
 - The direction of [ADR 0011](../decisions/0011-the-storefront-follows-the-supplied-design.md):
   the client's mockups in `docs/design/`, re-expressed as shadcn theme variables,
   with the palette from the client's logo ([ADR 0013](../decisions/0013-the-palette-follows-the-logo.md)).
-  A warm ivory ground tinted from the gold, green-black text, a bottle-green primary and ink, honey gold
+  A white ground, green-black text, a bottle-green primary and ink, honey gold
   only on the green, sage bands, square controls, thin rules
 - The token set as shadcn CSS variables in `app/globals.css`, light theme only
 - Two typefaces through `next/font`
@@ -56,10 +56,10 @@ Defined once in `app/globals.css` and mapped to Tailwind colours under
 
 | Token | Value | Role |
 | --- | --- | --- |
-| `--background` | `#faf5e9` warm ivory, tinted from the gold | Page |
+| `--background` | `#ffffff` white | Page |
 | `--foreground` | `#1d2e2b` green-black | Text, the header's bottom rule, the open-menu bar |
 | `--card` | `#ffffff` | Cards, the routine steps |
-| `--popover` | `#faf5e9` | Sheets, the mega-menu |
+| `--popover` | `#ffffff` | Sheets, the mega-menu |
 | `--primary` | `#143532` bottle green | Primary buttons (Add to bag, Checkout), the header wordmark |
 | `--primary-foreground` | `#faf5e9` | Text on primary |
 | `--secondary` | `#dde6da` deep sage | The product care panel, the brand tile hover |
@@ -80,17 +80,17 @@ Defined once in `app/globals.css` and mapped to Tailwind colours under
 Removed earlier: `--shade-1`…`8` (the hero's shade ribbon). `--gold` returned on
 2026-10-14 as the logo's gold, on ink only.
 
-Measured contrast (WCAG): foreground on background 13.1:1, on leaf sage 12.2:1, on
-deep sage 11.1:1; muted-foreground on background 6.2:1, on leaf sage 5.8:1, on deep
+Measured contrast (WCAG): foreground on background 14.2:1, on leaf sage 12.2:1, on
+deep sage 11.1:1; muted-foreground on background 6.7:1, on leaf sage 5.8:1, on deep
 sage 5.3:1; primary-foreground on primary 12.2:1; ink-foreground on ink 11.6:1;
-ink-muted on ink 6.7:1; gold on ink 7.4:1 (and 1.6:1 on the background, which is why
-it stays on ink); input border on background 3.4:1 and on leaf sage 3.1:1;
-destructive on background 6.1:1. The deep sage holds no bordered control (it is
+ink-muted on ink 6.7:1; gold on ink 7.4:1 (and 1.8:1 on the background, which is why
+it stays on ink); input border on background 3.7:1 and on leaf sage 3.1:1;
+destructive on background 6.6:1. The deep sage holds no bordered control (it is
 only the care panel and the brand tile hover), so the input border's 2.9:1 there does
 not apply.
 
-The ground is warm and the bands are green on purpose: the two logo colours each
-own a surface, and the bands stay distinct from the page by hue, not by darkness.
+The ground is white (the client's choice, 2026-11-05) and the bands are green on
+purpose: the bands stay distinct from the page by hue, not by darkness.
 
 ### Type
 

@@ -6,6 +6,9 @@ Date: 2026-10-14
 
 Supersedes: the palette in [ADR 0011](0011-the-storefront-follows-the-supplied-design.md)
 
+Amended 2026-11-05: the page ground is white (`#ffffff`), not ivory, at the client's
+request. Everything else below stands.
+
 ---
 
 ## Context
@@ -42,7 +45,7 @@ The storefront stays light only (ADR 0012).
 
 The logo is the client's identity; a shop in charcoal and greige under a green and
 gold mark reads as two brands. Gold is restricted to green because it measures
-1.6:1 on the page and 7.4:1 on the green: on the light ground it fails as text and
+1.8:1 on the page and 7.4:1 on the green: on the light ground it fails as text and
 as a control boundary, and as decoration it would blur the one place the brand is
 spent.
 

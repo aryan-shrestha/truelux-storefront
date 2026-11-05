@@ -2,7 +2,7 @@
 
 Status: Implemented
 
-Last updated: 2026-09-26
+Last updated: 2026-11-05
 
 ---
 
@@ -76,7 +76,7 @@ Page by page, with where it matches the render and where it deliberately does no
 
 The mockups' palette (near-white ground, charcoal text and primary, greige and stone
 bands, charcoal ink) was replaced on 2026-10-14 by the logo's (ADR 0013): green-black
-text on a warm ivory ground, bottle-green primary and ink, sage bands, and honey
+text on a white ground (ivory until 2026-11-05), bottle-green primary and ink, sage bands, and honey
 gold only on the green. Noto Sans for
 the interface (the mockup's UI face) and Belleza for section titles (closest Google
 match to the mockup's flared humanist). Square buttons, inputs and toggles; the

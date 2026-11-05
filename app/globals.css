@@ -5,11 +5,11 @@
 :root {
   color-scheme: light;
 
-  --background: #faf5e9;
+  --background: #ffffff;
   --foreground: #1d2e2b;
   --card: #ffffff;
   --card-foreground: #1d2e2b;
-  --popover: #faf5e9;
+  --popover: #ffffff;
   --popover-foreground: #1d2e2b;
   --primary: #143532;
   --primary-foreground: #faf5e9;
@@ -27,7 +27,7 @@
   --ink: #143532;
   --ink-foreground: #f5efe2;
   --ink-muted: #a9bcb5;
-  /* The logo's gold. Only ever on ink: it is 7.4:1 there and 1.6:1 on the page. */
+  /* The logo's gold. Only ever on ink: it is 7.4:1 there and 1.8:1 on the page. */
   --gold: #ebba65;
   --on-image: #ffffff;
   --scrim: rgb(20 53 50 / 0.5);
