@@ -30,7 +30,7 @@ What is included in this implementation?
 - **Listing filter:** "On sale" in the filter panel's Availability group, as
   `?on_sale=true`, a link like every other filter, through the URL normaliser.
 - **Navigation:** "Sale" in the header's menu and the mobile menu, to
-  `/products?on_sale=true`. The listing's hero reads "Sale" when that is the only
+  `/products?on_sale=true`. The listing's hidden `h1` reads "Sale" when that is the only
   filter applied.
 - **Home:** an "On sale" rail on the existing `ProductRail`, reading
   `?on_sale=true&limit=8`, hidden when nothing is on sale.
@@ -74,8 +74,8 @@ What is explicitly outside the scope?
   visually hidden "Was ", and a `Badge variant="sale"` whose visible "−15%" is
   `aria-hidden` beside a visually hidden "15% off". It wraps onto a second line
   on a narrow card.
-- `components/ui/badge.tsx` — `sale`: a hairline charcoal outline on the page
-  colour with charcoal tabular figures. No red, matching the mockups' quiet
+- `components/ui/badge.tsx` — `sale`: a hairline foreground outline on the page
+  colour with foreground tabular figures. No red, matching the mockups' quiet
   "BESTSELLER" label.
 - `components/catalog/ProductCard.tsx` — `ProductPrice` with `sale.price`, or
   `basePrice` when not on sale.
@@ -92,13 +92,11 @@ What is explicitly outside the scope?
   filter and there is no category or search (sort and page allowed).
 - `components/catalog/FilterPanel.tsx` — the "On sale" toggle link, and the hidden
   `on_sale` input in the sort form.
-- `components/catalog/ShopHero.tsx` — title "Sale" and its own line when
-  `isSaleOnly`.
+- `components/catalog/ShopTitle.tsx` — the hidden `h1` "Sale" when `isSaleOnly`.
 - `components/catalog/ProductListing.tsx` — `isSaleOnly` with no results is
   "Nothing here is on sale right now", with "See everything".
 - `components/layout/site-links.ts` — `SALE_LINK`; `ShopMenu.tsx` renders it
-  between Brands and Journal, and `MobileNav.tsx` on its first panel in the same
-  place.
+  after Brands, and `MobileNav.tsx` on its first panel in the same place.
 - `lib/catalog/rails.ts` — `saleProducts()`, eight on sale, `[]` on failure.
 - `app/page.tsx` — reads it with the other home reads and renders the "On sale"
   rail after the category rail, linking to "Everything on sale".
@@ -136,7 +134,7 @@ not on sale is not available to the UI, which has no use for it.
 
 **Decision**
 
-Struck price in the muted colour, a hairline outline badge in charcoal, no red,
+Struck price in the muted colour, a hairline outline badge in the foreground colour, no red,
 and no badge over the photograph.
 
 **Reason**
@@ -249,7 +247,7 @@ sale or not, which is the demo data, not this feature.
 
 ```text
 components/catalog/ProductPrice.tsx
-components/catalog/{ProductCard,VariantPicker,FilterPanel,ShopHero,ProductListing}.tsx
+components/catalog/{ProductCard,VariantPicker,FilterPanel,ShopTitle,ProductListing}.tsx
 components/layout/{site-links.ts,ShopMenu.tsx,MobileNav.tsx}
 components/ui/badge.tsx
 lib/api/{types,catalog}.ts

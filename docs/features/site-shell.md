@@ -2,13 +2,13 @@
 
 Status: Implemented
 
-Last updated: 2026-09-29
+Last updated: 2026-11-05
 
 ---
 
 ## Goal
 
-The frame around every page: the announcement bar, the header with the wordmark,
+The frame around every page: the header with the wordmark,
 the Shop and Brands menus, search and the bag; the mobile drill-down menu; the footer; the
 skip link; and the root error, not-found and loading boundaries.
 
@@ -18,9 +18,9 @@ skip link; and the root error, not-found and loading boundaries.
 
 What is included in this implementation?
 
-- `app/layout.tsx`: fonts, root metadata, `CartProvider`, skip link, announcement
-  bar, header, footer
-- `components/layout/`: `AnnouncementBar`, `Header`, `HeaderFrame`, `ShopMenu`, `MobileNav`,
+- `app/layout.tsx`: fonts, root metadata, `CartProvider`, skip link, header,
+  footer
+- `components/layout/`: `Header`, `HeaderFrame`, `ShopMenu`, `MobileNav`,
   `SearchSheet`, `SearchForm`, `CartButton`, `Footer`, `PageShell`,
   `SectionHeading`, `site-links.ts`, `promises.ts`
 - `app/error.tsx`, `app/not-found.tsx`, `app/loading.tsx`
@@ -45,11 +45,10 @@ render on the server (ADR 0002). The Shop menu is built from `/categories/` and
 
 ## Implemented
 
-- `app/layout.tsx` — Noto Sans and Belleza via `next/font`; `AnnouncementBar`, a
-  dark `bg-ink` strip carrying `shippingNote()` — "Free shipping over Rs 8,000 ·
-  Cash on delivery", the two fees without a threshold, or "Cash on delivery" when
-  `/shipping/` cannot be read (see [checkout-quote.md](checkout-quote.md)); root
-  metadata as before.
+- `app/layout.tsx` — Noto Sans and Belleza via `next/font`; root metadata as
+  before. There is no announcement bar above the header (removed 2026-11-05 at the
+  client's request); the shipping copy from `shippingNote()` appears only in the
+  bag (see [checkout-quote.md](checkout-quote.md)).
 - `components/layout/Header.tsx` — a Server Component inside `HeaderFrame`: reads
   categories, skin types and brands in parallel, builds the columns with
   `shopMenu()` and the brand column with `brandMenu()`, and reads the shipping copy
@@ -63,13 +62,13 @@ render on the server (ADR 0002). The Shop menu is built from `/categories/` and
   root, and an editorial image (`public/art/menu.svg`) in the right 27%. Then
   a Brands trigger whose content is the same frame: "All brands" (`/brands`) then
   every brand's page, in a wrapping grid. Then Sale (`/products?on_sale=true`,
-  `SALE_LINK`; see [sale-prices.md](sale-prices.md)) and Journal (`/#journal`) as
-  plain links. With no categories, Shop is a link to `/products`; with no brands, Brands is
+  `SALE_LINK`; see [sale-prices.md](sale-prices.md)) as a
+  plain link. With no categories, Shop is a link to `/products`; with no brands, Brands is
   a link to `/brands`. The header has no About link (removed 2026-09-27).
 - `components/layout/MobileNav.tsx` — a full-width shadcn `Sheet` below `md` with
   drill-down panels built from `item` rows: Shop › (Shop everything, one row per
   column) › the column's links, with a back row at the top of each level; then
-  Brands › (All brands, one row per brand), Sale, Journal, and "Find an order" and "Your
+  Brands › (All brands, one row per brand), Sale, and "Find an order" and "Your
   bag" as small links.
 - `components/layout/SearchSheet.tsx` + `SearchForm.tsx` — the header's search icon
   opens a top `Sheet` holding a `next/form` GET form to `/products?search=`, which
@@ -134,22 +133,22 @@ The header is on every route; the menu data should not ship twice.
 The category, skin-type and brand reads happen once per render on the server and are
 deduplicated with the page's own.
 
-### Decision: About and Journal are anchors on the home page
+### Decision: About is an anchor on the home page
 
 **Decision**
 
-The header's Journal link and the footer's About and Journal links go to
-`/#journal` and `/#about`. The header dropped About on 2026-09-27, at the client's
-request; the footer keeps it.
+The footer's About link goes to `/#about`. The header dropped About on 2026-09-27,
+at the client's request; the footer keeps it. Journal, the other anchor, was removed
+from both menus, the footer and the home page on 2026-10-12, at the client's request.
 
 **Reason**
 
-The design has both, and there are no such pages or content behind them; inventing
-routes is out of scope.
+The design has About, and there is no page or content behind it; inventing a route
+is out of scope.
 
 **Consequence**
 
-Removing either section's `id` breaks a header link.
+Removing the About section's `id` breaks the footer link.
 
 ---
 
@@ -224,7 +223,7 @@ GET /api/v1/shipping/      server, revalidate 3600 (shippingNote, degrades to "C
   brand's page in the API's order, and no menu for an empty list; `shopMenu`: a column per root opening with
   Shop all, the skin-type column after the first root with `?skin_type=` links, a
   childless root, no skin-type column when the API lists none; `findCategory`.
-- `lib/shipping/note.test.ts` — the announcement copy with and without a
+- `lib/shipping/note.test.ts` — the shipping copy with and without a
   threshold, and a failed read.
 - `components/layout/CartButton.test.tsx` — the count after hydration, the announced
   name, no zero, the sheet on a plain click, a modified click left to the browser,

@@ -12,7 +12,7 @@ const buttonVariants = cva(
         outline:
           "border-input bg-transparent hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
         overlay:
-          "border-on-image bg-transparent text-on-image hover:bg-on-image/15 focus-visible:border-on-image focus-visible:ring-on-image/60",
+          "bg-primary text-primary-foreground hover:bg-primary/85 focus-visible:border-on-image focus-visible:ring-on-image/60",
         floating:
           "rounded-full bg-background/90 text-foreground shadow-md backdrop-blur-sm hover:bg-background",
         secondary:

@@ -2,7 +2,7 @@
 
 Status: Implemented
 
-Last updated: 2026-09-26
+Last updated: 2026-11-05
 
 ---
 
@@ -19,9 +19,10 @@ than a fresh set of choices.
 What is included in this implementation?
 
 - The direction of [ADR 0011](../decisions/0011-the-storefront-follows-the-supplied-design.md):
-  the client's mockups in `docs/design/`, re-expressed as shadcn theme variables.
-  A near-white ground, charcoal text and primary, a greige and a stone band, square
-  controls, thin rules
+  the client's mockups in `docs/design/`, re-expressed as shadcn theme variables,
+  with the palette from the client's logo ([ADR 0013](../decisions/0013-the-palette-follows-the-logo.md)).
+  A white ground, green-black text, a bottle-green primary and ink, honey gold
+  only on the green, sage bands, square controls, thin rules
 - The token set as shadcn CSS variables in `app/globals.css`, light theme only
 - Two typefaces through `next/font`
 - The component vocabulary, which is shadcn/ui
@@ -38,7 +39,9 @@ What is explicitly outside the scope?
 
 ## Context
 
-ADR 0011 supersedes ADR 0010's rose-nude direction. The mockups were measured from
+ADR 0011 supersedes ADR 0010's rose-nude direction, and ADR 0013 replaces ADR
+0011's charcoal and greige palette with the logo's bottle green (`#143532`) and honey
+gold (`#ebba65`), measured from `public/truelux-logo.jpg`. The mockups were measured from
 the PNG renders in `docs/design/renders/`; see [design-alignment.md](design-alignment.md)
 for the page-by-page mapping and deviations.
 
@@ -53,32 +56,41 @@ Defined once in `app/globals.css` and mapped to Tailwind colours under
 
 | Token | Value | Role |
 | --- | --- | --- |
-| `--background` | `#fdfdfb` near-white | Page |
-| `--foreground` | `#333333` charcoal | Text, the header's bottom rule, the open-menu bar |
+| `--background` | `#ffffff` white | Page |
+| `--foreground` | `#1d2e2b` green-black | Text, the header's bottom rule, the open-menu bar |
 | `--card` | `#ffffff` | Cards, the routine steps |
-| `--popover` | `#fdfdfb` | Sheets, the mega-menu |
-| `--primary` | `#333333` | Primary buttons (Add to bag, Checkout), the focus ring |
-| `--primary-foreground` | `#ffffff` | Text on primary |
-| `--secondary` | `#e8e6dd` stone | The stone bands: About, the product care panel |
-| `--muted` | `#f3f2ee` greige | The greige bands (category band, brands, routine), image tiles, skeletons |
-| `--muted-foreground` | `#66655f` | Secondary text |
-| `--accent` | `#f3f2ee` | Hover backgrounds |
+| `--popover` | `#ffffff` | Sheets, the mega-menu |
+| `--primary` | `#143532` bottle green | Primary buttons (Add to bag, Checkout), the header wordmark |
+| `--primary-foreground` | `#faf5e9` | Text on primary |
+| `--secondary` | `#dde6da` deep sage | The product care panel, the brand tile hover |
+| `--muted` | `#ebefe4` leaf sage | The pale bands (category band, brands, routine), image tiles, skeletons |
+| `--muted-foreground` | `#4f5f5a` | Secondary text |
+| `--accent` | `#ebefe4` | Hover backgrounds |
 | `--destructive` | `#a3392f` | Checkout and lookup failures |
-| `--border` | `#d6d5cf` | Hairlines |
-| `--input` | `#8a8983` | Control borders and the outlined CTA, 3:1 against the page |
-| `--ring` | `#333333` | Focus |
-| `--ink`, `--ink-foreground` | `#333333`, `#ffffff` | The announcement bar and the footer |
-| `--ink-muted` | `#c9c8c2` | Secondary text on ink |
+| `--border` | `#d4dbcf` | Hairlines, the rail's scrollbar |
+| `--input` | `#7a8984` | Control borders and the outlined CTA, 3:1 against the page |
+| `--ring` | `#143532` | Focus |
+| `--ink`, `--ink-foreground` | `#143532`, `#f5efe2` | The logo's green: the About band, the footer |
+| `--ink-muted` | `#a9bcb5` | Secondary text on ink |
+| `--gold` | `#ebba65` | The logo's gold, **only on ink**: the About statement, the footer wordmark |
 | `--on-image` | `#ffffff` | Text and outlined buttons over imagery |
-| `--scrim` | `rgb(40 36 30 / 0.45)` | The gradient behind text on the hero and listing images |
-| `--chart-1`…`5` | charcoal to stone | Reserved for the admin's charts |
+| `--scrim` | `rgb(20 53 50 / 0.5)` | The green gradient behind text on the hero and brand images |
+| `--chart-1`…`5` | green to sage | Reserved for the admin's charts |
 
-Removed: `--gold` and `--shade-1`…`8` (the old accent and the hero's shade ribbon).
+Removed earlier: `--shade-1`…`8` (the hero's shade ribbon). `--gold` returned on
+2026-10-14 as the logo's gold, on ink only.
 
-Measured contrast (WCAG): foreground on background 12.4:1; muted-foreground on
-background 5.7:1, on greige 5.2:1, on stone 4.7:1; ink-foreground on ink 12.6:1;
-ink-muted on ink 7.5:1; input border on background 3.4:1 and on greige 3.1:1;
-destructive on background 6.5:1.
+Measured contrast (WCAG): foreground on background 14.2:1, on leaf sage 12.2:1, on
+deep sage 11.1:1; muted-foreground on background 6.7:1, on leaf sage 5.8:1, on deep
+sage 5.3:1; primary-foreground on primary 12.2:1; ink-foreground on ink 11.6:1;
+ink-muted on ink 6.7:1; gold on ink 7.4:1 (and 1.8:1 on the background, which is why
+it stays on ink); input border on background 3.7:1 and on leaf sage 3.1:1;
+destructive on background 6.6:1. The deep sage holds no bordered control (it is
+only the care panel and the brand tile hover), so the input border's 2.9:1 there does
+not apply.
+
+The ground is white (the client's choice, 2026-11-05) and the bands are green on
+purpose: the bands stay distinct from the page by hue, not by darkness.
 
 ### Type
 
@@ -103,8 +115,8 @@ destructive on background 6.5:1.
   edge to edge at 1400px with 32px gutters.
 - Bands (hero, category band, About, brands, routine, care, footer) are full-bleed;
   their content sits in `max-w-page`.
-- Buttons: `default` charcoal; `outline` with the `--input` border; `overlay` for
-  imagery; sizes `lg` (56px), `cta` (64px, the design's "Discover more" with the
+- Buttons: `default` bottle green; `outline` with the `--input` border; `overlay` for
+  imagery, filled bottle green with a white focus ring (the hero and the image band); sizes `lg` (56px), `cta` (64px, the design's "Discover more" with the
   arrow pushed to the end) and `inline` (text links with an arrow).
 - Touch targets: 44px buttons, toggles, inputs and selects, as before.
 
@@ -172,8 +184,12 @@ The hero reads darker and cooler than the mockup; recorded in design-alignment.m
   variant, not the base: filter links call `toggleVariants()` without `cn`, so a base
   `rounded-none` and a swatch's `rounded-full` would both land and CSS order would
   pick.
-- The Open Graph image (`app/opengraph-image.tsx`) repeats the light theme's hex
-  values, because `ImageResponse` cannot read CSS variables. Change both together.
+- The Open Graph image (`app/opengraph-image.tsx`) repeats `--ink`, `--gold` and
+  `--ink-muted` as hex values, because `ImageResponse` cannot read CSS variables:
+  the card is the logo's green with the name in gold. Change both together.
+- **The site icon is the logo** (`app/icon.jpg`, `app/apple-icon.jpg`, copies of
+  `public/truelux-logo.jpg`). The supplied file is a 150px JPEG; replace all three
+  when a larger or vector logo arrives.
 - `Alert` always renders `role="alert"`. Use it for failures only.
 - `prettier-plugin-tailwindcss` has no `tailwindStylesheet` configured, so it sorts
   theme classes such as `text-muted-foreground` as unknown and puts them first.
@@ -192,8 +208,11 @@ design-alignment.md.
 
 ```text
 app/globals.css
+app/icon.jpg
+app/apple-icon.jpg
 app/layout.tsx
 app/opengraph-image.tsx
+public/truelux-logo.jpg
 components/ui/
 public/art/
 ```

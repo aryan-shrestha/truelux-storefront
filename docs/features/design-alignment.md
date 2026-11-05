@@ -2,7 +2,7 @@
 
 Status: Implemented
 
-Last updated: 2026-09-26
+Last updated: 2026-11-05
 
 ---
 
@@ -74,8 +74,10 @@ Page by page, with where it matches the render and where it deliberately does no
 
 ### Theme and primitives
 
-Near-white `#fdfdfb` ground, charcoal `#333` text and primary, greige `#f3f2ee` and
-stone `#e8e6dd` bands, `#333` ink for the announcement bar and footer. Noto Sans for
+The mockups' palette (near-white ground, charcoal text and primary, greige and stone
+bands, charcoal ink) was replaced on 2026-10-14 by the logo's (ADR 0013): green-black
+text on a white ground (ivory until 2026-11-05), bottle-green primary and ink, sage bands, and honey
+gold only on the green. Noto Sans for
 the interface (the mockup's UI face) and Belleza for section titles (closest Google
 match to the mockup's flared humanist). Square buttons, inputs and toggles; the
 outlined 64px "Discover more" with the arrow at the far end; an on-image variant;
@@ -85,7 +87,7 @@ rule. All inside `components/ui/*` and `app/globals.css`.
 ### Shell
 
 - Announcement bar: the dark strip, carrying the shipping copy from `GET /shipping/` (checkout-quote.md).
-- Header (80px, charcoal bottom rule): Shop, Brands, Journal, About on the left;
+- Header (80px, foreground bottom rule): Shop, Brands, Journal, About on the left;
   the wordmark centred; search and the bag with its count on the right. Matches
   `Landing-desktop-1.png` and `Menu dropdown- desktop.png` in height, spacing and
   alignment.
@@ -103,18 +105,20 @@ rule. All inside `components/ui/*` and `app/globals.css`.
 In the render's order: hero carousel (eyebrow, title, copy, outlined Discover more,
 line indicators), image/text editorial, New arrivals rail, dark image band,
 the first root category's rail, the stone quote band (as About, with the three
-promises), the brands grid (in the "User Voice" slot), and the journal row with its
-progress rule. Positions and spacing at 1400px were checked slice by slice against
+promises), and the brands grid (in the "User Voice" slot). The journal row was built and
+then removed on 2026-10-12, at the client's request. Positions and spacing at 1400px were checked slice by slice against
 `Landing-desktop-1..5.png`.
 
 ### Product listing
 
-Hero band with the category's title and a line of copy, the greige category band
-("Shop all |" then the children, the applied one underlined), then the Filter and
-sort panel (Skin type, Brand, Shade, Size, Price, Availability, Sort), the product
-count, and a four-column grid of centred cards (image tile, name, brand, price).
-Matches `Product-Listing---desktop-1.png` for the hero and band heights and the
-grid; filters remain links (ADR 0004).
+No page header (the image banner and then the title were removed at the client's
+request on 2026-10-13; the `h1` is visually hidden): the greige category band
+("Shop all |" then the children, the applied one underlined), then a left filter
+rail (Skin type, Brand, Shade, Size, Price, Availability; a sheet below `lg`) beside
+the product count, the sort form, and a grid of centred cards (image tile, name,
+brand, price), three columns at `lg` and four from `xl`.
+Matches `Product-Listing---desktop-1.png` for the band height and the cards;
+filters remain links (ADR 0004).
 
 ### Product detail
 
@@ -135,10 +139,12 @@ controls. The bag line no longer overflows at 375px.
 
 | Where | Mockup | Implementation | Why |
 | --- | --- | --- | --- |
+| Everywhere | Charcoal, greige and stone | The logo's bottle green and honey gold, with sage neutrals | The client supplied a logo on 2026-10-14 (ADR 0013) |
+| Hero, image band | Outlined white "Discover more" | Filled bottle green, white focus ring | Requested on 2026-10-14 with the logo palette; gold was tried and read as a sale sticker on the beige photos |
 | Everywhere | Photographs | Generated SVG placeholders in `public/art/` | The photos are another brand's assets |
 | Header | Language, wishlist, account icons | Left out | No such features (ADR 0011) |
 | Header, mobile | Search beside the menu icon | Search beside the bag | One search control serves both widths |
-| Hero, listing band | White text directly on pale images | A left-to-right scrim under the text | The mockup's pairing is well under 3:1 contrast |
+| Hero, brand page band | White text directly on pale images | A left-to-right scrim under the text | The mockup's pairing is well under 3:1 contrast |
 | Hero | Body-care copy | TrueLux copy linking to the shop, new arrivals and brands | No such campaign data exists |
 | Editorial | "Skin Care / Potent Solutions" | "Shop by skin type", linking to the first root category | Honest copy for TrueLux |
 | Rails | "Parsley Seed", "Pure Radiance" product lines | New arrivals; the first root category | No product lines in the API |
@@ -146,10 +152,11 @@ controls. The bag line no longer overflows at 375px.
 | Rails | Progress rule only | Progress rule plus previous/next buttons | A mouse user needs a way to move the rail |
 | Quote band | Quote only | Statement, "About TrueLux" and the three promises | It is the About link's destination |
 | User Voice | Instagram grid | Our brands grid | No customer content exists |
-| Journal | Articles with "Read more", "All blog posts" | Four short notes ending in a search link | No articles or article routes exist |
+| Journal | Articles with "Read more", "All blog posts", a header link | Not built | Removed at the client's request |
 | Mega-menu | Four columns | One per root plus Skin type, wrapping | The seeded tree has five roots |
-| Listing | "Revered formulations" heading above the grid | Product count and the Filter and sort panel | No per-category copy in the API; the filters need a place |
-| Listing | No filters shown | A Filter and sort dropdown panel, the width of the grid | The requirement adds filters; the design has no rail |
+| Listing | "Revered formulations" heading above the grid | Product count and the sort form | No per-category copy in the API; sorting needs a place |
+| Listing | Image banner with the title and a line of copy | No visible header; a visually hidden `h1` | Removed at the client's request on 2026-10-13 |
+| Listing | No filters shown, a full-width four-column grid | A left filter rail from `lg` (a sheet below), the grid three columns at `lg` and four from `xl` | The requirement adds filters; a rail was requested on 2026-10-13 |
 | Product detail | "Save to cabinet" | Left out | No wishlist |
 | Product detail | Benefits / How to use / Ingredients accordion | Delivery / Payment / Authenticity | No benefits or usage fields; ingredients are already a row |
 | Product detail | Reviews | Left out | No reviews |
@@ -169,20 +176,22 @@ controls. The bag line no longer overflows at 375px.
 
 ## Decisions
 
-### Decision: the facets sit in a dropdown panel
+### Decision: the facets sit in a left rail
 
 **Decision**
 
-Categories live in the always-visible band; the other facets sit in a dropdown
-panel (a `Popover`) the width of the grid, closed on arrival.
+Categories live in the always-visible band; the other facets sit in a rail on the
+left of the grid from `lg`, and in a sheet below it.
 
 **Reason**
 
-The design has no filter rail, and the requirement adds a Skin type filter.
+The design has no filter rail, but the requirement adds filters, and a rail was
+requested on 2026-10-13 in place of the earlier dropdown panel.
 
 **Consequence**
 
-Opening the panel needs JavaScript; see catalog-browsing.md.
+The rail works without JavaScript; the sheet below `lg` needs it. See
+catalog-browsing.md.
 
 ### Decision: the listing revalidates every ten minutes
 
@@ -214,7 +223,7 @@ A newly published product can take up to ten minutes to appear.
 
 ## Routes
 
-No new routes. `/#journal` and `/#about` are anchors on the home page.
+No new routes. `/#about` is an anchor on the home page.
 
 ---
 

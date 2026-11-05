@@ -10,21 +10,21 @@ only, and there is no authentication anywhere.
 
 | #   | Feature            | Status      | Documentation                    | Depends on | Last updated |
 | --- | ------------------ | ----------- | -------------------------------- | ---------- | ------------ |
-| 1   | design-system      | Implemented | `features/design-system.md`      | 11         | 2026-09-26   |
+| 1   | design-system      | Implemented | `features/design-system.md`      | 11         | 2026-11-05   |
 | 2   | api-client         | Implemented | `features/api-client.md`         | —          | 2026-09-26   |
-| 3   | site-shell         | Implemented | `features/site-shell.md`         | 1, 2, 12   | 2026-09-29   |
-| 4   | catalog-browsing   | Implemented | `features/catalog-browsing.md`   | 2, 3       | 2026-09-29   |
+| 3   | site-shell         | Implemented | `features/site-shell.md`         | 1, 2, 12   | 2026-11-05   |
+| 4   | catalog-browsing   | Implemented | `features/catalog-browsing.md`   | 2, 3       | 2026-10-13   |
 | 5   | product-detail     | Implemented | `features/product-detail.md`     | 4          | 2026-09-29   |
 | 6   | cart               | Implemented | `features/cart.md`               | 5          | 2026-09-27   |
 | 7   | checkout           | Implemented | `features/checkout.md`           | 6          | 2026-09-27   |
 | 8   | order-status       | Implemented | `features/order-status.md`       | 7          | 2026-09-25   |
-| 9   | storefront-home    | Implemented | `features/storefront-home.md`    | 4, 12      | 2026-09-29   |
+| 9   | storefront-home    | Implemented | `features/storefront-home.md`    | 4, 12      | 2026-10-12   |
 | 10  | seo-and-metadata   | In progress | `features/seo-and-metadata.md`   | 4, 5, 9    | 2026-09-26   |
 | 11  | shadcn-foundation  | Implemented | `features/shadcn-foundation.md`  | —          | 2026-09-26   |
 | 12  | brands             | Implemented | `features/brands.md`             | 2, 4, 11   | 2026-09-26   |
 | 13  | shades-and-sizes   | Implemented | `features/shades-and-sizes.md`   | 2, 4, 5, 11 | 2026-09-26  |
-| 14  | design-alignment   | Implemented | `features/design-alignment.md`   | 1, 3, 4, 5, 9, 11 | 2026-09-27 |
-| 15  | checkout-quote     | Implemented | `features/checkout-quote.md`     | 2, 3, 6, 7 | 2026-09-27   |
+| 14  | design-alignment   | Implemented | `features/design-alignment.md`   | 1, 3, 4, 5, 9, 11 | 2026-11-05 |
+| 15  | checkout-quote     | Implemented | `features/checkout-quote.md`     | 2, 3, 6, 7 | 2026-11-05   |
 | 16  | sale-prices        | Implemented | `features/sale-prices.md`        | 2, 3, 4, 5, 9 | 2026-09-29 |
 
 `Depends on` refers to the `#` column of this table.
@@ -59,8 +59,10 @@ Things worth knowing, each recorded in its feature document:
   and related products: the listing now revalidates every 10 minutes, related
   products hourly, and the budget holds to roughly 145 products (`architecture.md`,
   506/600 after the sale listing and rail).
-- **Only categories are always visible on the listing**; the other facets are in a
-  dropdown panel, the width of the grid, that needs JavaScript to open (#4, #14).
+- **The palette is the client's logo** (ADR 0013): bottle green and honey gold, with
+  gold only ever on the green, and the logo as the site icon (#1).
+- **The listing's facets are in a left rail from `lg`**, and below it in a sheet
+  that needs JavaScript to open; categories stay in the band (#4, #14).
 - **The product page needs the backend's skin-types fields**; deploy the backend
   first (#5).
 - **`toggle.tsx` has no `"use client"`**, so the Server Component filter panel can

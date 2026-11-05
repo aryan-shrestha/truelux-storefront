@@ -2,7 +2,7 @@
 
 Status: Implemented
 
-Last updated: 2026-09-29
+Last updated: 2026-10-13
 
 ---
 
@@ -18,8 +18,8 @@ the catalogue's per-IP request budget.
 
 What is included in this implementation?
 
-- `/products`: the listing hero, the category band, the Filter and sort panel,
-  sorting, search results, pagination and empty states, laid out as
+- `/products`: the category band (no visible page header), the filter rail (a sheet
+  below `lg`), sorting, search results, pagination and empty states, laid out as
   `Product-Listing---desktop-1..3.png` ([design-alignment.md](design-alignment.md))
 - The same listing under a brand, at `/brands/[slug]` (see [brands.md](brands.md))
 - Filters: category (a root includes its children), skin type (several), brand
@@ -56,28 +56,39 @@ the URL (ADR 0004).
   applied; `isSaleOnly` is true when `on_sale` is the only filter (see
   [sale-prices.md](sale-prices.md)).
 - `app/products/page.tsx` — redirects to the canonical URL when the request differs,
-  then renders `ProductListing` with `ShopHero` and the facets.
-- `components/catalog/ShopHero.tsx` + `ListingHero.tsx` — a full-bleed band on
-  `public/images/listing.jpg` with a scrim: the category's name (or "Shop", "Sale" when `isSaleOnly`, or "Results
-  for …"), a line of copy, and a Shop › root breadcrumb inside a category.
+  then renders `ProductListing` with `ShopTitle` and the facets.
+- `components/catalog/ShopTitle.tsx` — no visible page header (the image banner and
+  then the title were removed at the client's request on 2026-10-13); only a
+  visually hidden `h1`: the category's name, or "Shop", "Sale" when `isSaleOnly`, or
+  "Results for …". The brand page keeps its image banner (`ListingHero`, see
+  [brands.md](brands.md)).
 - `components/catalog/CategoryBand.tsx` — the greige band: "Shop all" then the roots;
   inside a root, "Shop all" (the root, which includes its children) then its
   children. The applied one is underlined and `aria-current`. Links keep the other
   filters.
-- `components/catalog/ProductListing.tsx` — hero, band, then the Filter and sort
-  panel with a live product count on its row, and the grid in a `Suspense` boundary
-  keyed on the canonical query. Three empty states as before, plus "Nothing here
+- `components/catalog/ProductListing.tsx` — the page header it is given, band, then from `lg` a 15rem
+  filter rail on the left (an `aside` with a "Filters" heading) beside the results
+  column. The rail is sticky under the header (`--header-offset`, eased with the
+  header's slide), as tall as the viewport at most, and scrolls on its own with a thin
+  scrollbar in the border colour (`scrollbar-thin` in `globals.css`) and
+  `overscroll-contain`, so a wheel over the rail never scrolls the page and a wheel
+  over the grid scrolls only the page. The column opens with a row: the Filters sheet trigger (below `lg` only)
+  and the live product count on the left, the sort form on the right. Below it, the
+  grid in a `Suspense` boundary keyed on the canonical query. Three empty states as before, plus "Nothing here
   is on sale right now" when `isSaleOnly`.
-- `components/catalog/FilterPanel.tsx` — a `Popover` dropdown, "Filter and sort (n
-  applied)", always closed on arrival. Its full-width ghost trigger spans the
-  listing's column and the panel takes the trigger's width, so it lines up with the
-  grid; it opens below the trigger and scrolls within the viewport's remaining height.
-  Inside, in up to four columns: Skin type, Brand and Size as toggle-styled links, Shade as
-  swatch links, Price bands, In stock only and On sale, and the GET sort form carrying every
-  filter (skin types included) as hidden inputs. "Clear filters" keeps the category,
-  search and sort.
+- `components/catalog/FilterPanel.tsx` — the filter groups stacked in one column:
+  Skin type, Brand and Size as toggle-styled links, Shade as swatch links, Price
+  bands, In stock only and On sale. "Clear filters" keeps the category, search and
+  sort. Rendered twice by the listing, in the rail and in the sheet; only one is ever
+  displayed.
+- `components/catalog/FilterSheet.tsx` — below `lg`, an outline "Filters (n applied)"
+  button opening the panel in a left `Sheet`, closed on arrival, with "Show results"
+  to close it. No `"use client"` of its own: the Sheet parts carry the boundary.
+- `components/catalog/SortForm.tsx` — the GET sort form: a native select and Apply,
+  carrying every filter (skin types included) and the search as hidden inputs.
 - `components/catalog/{ProductGrid,ProductCard,ProductGridSkeleton,Pagination}.tsx`
-  — four columns from `lg` with hairline gutters; the card is centred: the image on
+  — two columns, three from `md`, four from `xl` (the rail takes the room at `lg`),
+  with hairline gutters; the card is centred: the image on
   a tinted 4:5 tile, the name, the brand, the price (`ProductPrice`: the sale price,
   the struck compare-at and the API's percent when on sale), and "Sold out" as a
   label.
@@ -91,7 +102,7 @@ the URL (ADR 0004).
 
 ## Remaining
 
-None. See the decision on the closed panel for what now needs JavaScript.
+None. See the decision on the filter rail for what needs JavaScript.
 
 ---
 
@@ -129,31 +140,31 @@ They work without JavaScript, with middle-click and with the back button (ADR 00
 No `Checkbox` or `ToggleGroup` in the rail; see
 [shadcn-foundation.md](shadcn-foundation.md).
 
-### Decision: the facets sit in a dropdown panel the width of the grid
+### Decision: the facets sit in a left rail, and in a sheet on small screens
 
 **Decision**
 
-Categories are in the always-visible band; every other facet is in a Filter and sort
-`Popover` that drops over the grid at the grid's width. It is closed on arrival,
-including when a filter is applied; the trigger carries the applied count.
+Categories are in the always-visible band; every other facet is in a rail on the left
+of the grid from `lg`, always open. Below `lg` the same panel opens in a left `Sheet`
+from a "Filters" button carrying the applied count. Sort sits above the grid, on the
+right of the count.
 
 **Reason**
 
-The design has no filter rail: a full-width four-column grid under a category band.
-An overlay replaced the earlier in-flow `Accordion` (2026-09-29) so opening the
-filters no longer pushes the grid down. Being an overlay, it does not open itself when
-something is applied, or it would cover the results on every filtered page.
+Requested on 2026-10-13: the layout most shops use. It replaces the Filter and sort
+`Popover` that dropped over the grid (2026-09-29), which itself replaced an in-flow
+`Accordion`. The design has no rail; the deviation is recorded in
+`design-alignment.md`.
 
 **Consequence**
 
-The filters are still links, but **opening the panel needs JavaScript**: Radix does
-not render closed content, and a popover never renders on the server. Without it a
-shopper can still browse by category, search, paginate, and follow any filtered link.
-This relaxes the old "the whole rail works without JavaScript" property and is
-recorded as a deviation in `design-alignment.md`. The popover's open state survives a
-filter click (same route, soft navigation), so several filters can be applied in a row.
-It is not `modal` and pins to the bottom side (`avoidCollisions={false}`), so it never
-flips up over the hero.
+From `lg` the filters are server-rendered links again and **work without
+JavaScript**, which the popover had given up. Below `lg`, **opening the sheet needs
+JavaScript**: Radix does not render a closed dialog. Without it a shopper can still
+browse by category, search, sort, paginate, and follow any filtered link. The sheet's
+open state survives a filter click (same route, soft navigation), so several filters
+can be applied in a row before "Show results". The grid loses a column at `lg` to the
+rail and gets it back at `xl`.
 
 ### Decision: pagination is numbered links, price is fixed bands
 
@@ -185,6 +196,13 @@ Price bands are Under Rs 2,000, Rs 2,000 to 5,000, and Over Rs 5,000.
   on this.
 - **The shade, size and skin-type facets list only values in use**, so a value can
   disappear from the panel while a link still carries it.
+- **The listing's `h1` is `sr-only` on purpose.** The header was removed from view
+  by request, but the page still needs a level-one heading for screen readers and
+  search; do not delete it.
+- **The rail is a scroll box, so it clips what overflows it, focus outlines
+  included.** Its `-ml-1 pl-1` keeps the left-hand links' outlines inside; do not
+  "tidy" them away. The rail only sticks while the listing is on screen: on a short
+  listing it leaves with the grid, as a sticky element does.
 - `toggleVariants()` is called without `cn` on filter links, so a variant's radius
   must not fight the base class: the radius lives in each variant.
 - **The API's `next` and `previous` carry the server's own host.** Pagination never
@@ -230,7 +248,7 @@ GET /api/v1/skin-types/      server, revalidate 3600
 
 URL only: `category`, `brand` (repeated), `size`, `shade`, `skin_type` (repeated),
 `min_price`, `max_price`, `in_stock`, `on_sale`, `search`, `ordering`, `offset`. React state:
-only the panel's open state.
+only the sheet's open state, inside Radix.
 
 ---
 
@@ -249,9 +267,12 @@ only the panel's open state.
   `appliedFilterCount`, idempotent canonicalisation, `hrefWith`, `on_sale` and
   `isSaleOnly`.
 - `lib/catalog/listing.test.ts`, `lib/catalog/navigation.test.ts` (`findCategory`).
-- `components/catalog/FilterPanel.test.tsx` — closed on arrival with the applied count, skin-type and
-  brand toggles, shade and size links, the On sale link, clear filters, hidden inputs,
-  the brand page.
+- `components/catalog/FilterPanel.test.tsx` — skin-type and brand toggles, shade and
+  size links, the On sale link, clear filters, the brand page, empty groups.
+- `components/catalog/FilterSheet.test.tsx` — closed on arrival with the applied
+  count; opens as a dialog and closes from Show results.
+- `components/catalog/SortForm.test.tsx` — the selected sort, the action path, every
+  filter carried as hidden inputs.
 - `components/catalog/CategoryBand.test.tsx` — roots, a root's children, the applied
   child, nothing on failure. `components/catalog/ProductCard.test.tsx` — including a
   sale and its accessible "Was".

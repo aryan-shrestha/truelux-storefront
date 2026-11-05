@@ -82,7 +82,7 @@ unset.
   variant's price and, when that variant is on sale, its struck compare-at and the
   API's percent; before a choice, the product's sale as on the card. On-sale size
   and shade options carry a "Sale" marker ([sale-prices.md](sale-prices.md)).
-- `components/catalog/ProductDetails.tsx` — a `dl` under a charcoal rule at the foot
+- `components/catalog/ProductDetails.tsx` — a `dl` under a foreground rule at the foot
   of the panel: Suited to (the skin-type names joined), Skin feel, Key ingredients. Blank values are
   dropped, and nothing renders when all three are blank.
 - `components/catalog/SkinRoutine.tsx` — static: Cleanse, Treat, Protect, as an
@@ -195,9 +195,7 @@ The panel's length varies by product.
   gallery. Do not cap it with a `max-w-*`: a cap left-aligns it and leaves an empty
   band before the right gutter.
 - **`5rem` in the gallery's height is the header's `md:h-20`**, not `--header-offset`,
-  which drops to 0 when the header hides and would resize the row on scroll. The
-  announcement bar is not subtracted: the row fills the screen once it has scrolled
-  away.
+  which drops to 0 when the header hides and would resize the row on scroll.
 - **A landscape phone is `md`** (844×390): it gets the side-by-side layout, with a
   310px gallery and a panel that makes the row taller (390–620px).
 

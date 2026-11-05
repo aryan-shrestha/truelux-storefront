@@ -81,7 +81,7 @@ unknown or inactive brand returns 404, which renders `not-found.tsx`.
 - `app/products/[slug]/page.tsx` — the brand below the title, linking to the brand
   page; the page title is "{product} by {brand}".
 - `components/catalog/ProductListing.tsx` — the listing shared by `/products` and
-  the brand page: hero, category band, count, Filter and sort panel, grid,
+  the brand page: hero, category band, filter rail, count, sort, grid,
   pagination and empty states.
 - `app/brands/page.tsx` — every active brand as a `Card` (`components/brands/BrandCard.tsx`)
   with the logo or a wordmark fallback, the name and the product count.

@@ -116,14 +116,13 @@ describe("/", () => {
     );
   });
 
-  it("gives the header's Journal and About links something to land on", async () => {
+  it("gives the footer's About link something to land on", async () => {
     listProducts.mockResolvedValue(pageOf([]));
     listCategories.mockResolvedValue([]);
     listBrands.mockResolvedValue([]);
 
     await renderHome();
 
-    expect(section(/Our journal/)).toHaveAttribute("id", "journal");
     const about = screen.getByRole("list", { name: "Why shop with us" });
     expect(about.closest("section")).toHaveAttribute("id", "about");
     expect(about).toHaveTextContent("Cash on delivery");

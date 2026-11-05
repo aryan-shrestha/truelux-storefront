@@ -3,9 +3,11 @@ import { Suspense, type ReactNode } from "react";
 
 import { CategoryBand } from "@/components/catalog/CategoryBand";
 import { FilterPanel } from "@/components/catalog/FilterPanel";
+import { FilterSheet } from "@/components/catalog/FilterSheet";
 import { Pagination } from "@/components/catalog/Pagination";
 import { ProductGrid } from "@/components/catalog/ProductGrid";
 import { ProductGridSkeleton } from "@/components/catalog/ProductGridSkeleton";
+import { SortForm } from "@/components/catalog/SortForm";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -18,7 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { ProductQuery } from "@/lib/api/types";
 import { listingPage } from "@/lib/catalog/listing";
 import type { ListingFacets } from "@/lib/catalog/navigation";
-import { hasFilters, isSaleOnly, toCanonicalSearch } from "@/lib/catalog/query";
+import { appliedFilterCount, hasFilters, isSaleOnly, toCanonicalSearch } from "@/lib/catalog/query";
 
 type ProductListingProps = {
   hero: ReactNode;
@@ -40,36 +42,56 @@ export function ProductListing({
   // Keyed on the canonical query, so every filter change shows the skeleton
   // instead of leaving the previous results on screen.
   const boundaryKey = toCanonicalSearch(apiQuery);
+  const filters = (
+    <FilterPanel
+      facets={facets}
+      query={query}
+      pathname={pathname}
+      showBrands={lockedBrand === undefined}
+    />
+  );
 
   return (
     <div>
       {hero}
       <CategoryBand categories={facets.categories} query={query} pathname={pathname} />
 
-      <div className="max-w-page mx-auto px-4 pt-10 md:px-8 md:pt-14">
-        <div className="relative">
-          {/* Stays mounted across filters, so the new count is announced. */}
-          <div
-            aria-live="polite"
-            className="text-muted-foreground pointer-events-none absolute top-3 right-12 text-sm"
-          >
-            <Suspense key={boundaryKey} fallback={<Skeleton className="inline-block h-4 w-16" />}>
-              <ProductCount query={apiQuery} />
+      <div className="max-w-page mx-auto px-4 pt-10 md:px-8 md:pt-14 lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-12">
+        {/* The padding keeps the links' focus outlines inside the scroll box, which clips them. */}
+        <aside
+          aria-labelledby="filters-heading"
+          className="top-[calc(var(--header-offset)+1.5rem)] -ml-1 hidden max-h-[calc(100dvh-var(--header-offset)-3rem)] scrollbar-thin self-start overflow-y-auto overscroll-contain pr-4 pb-1 pl-1 transition-[top,max-height] duration-500 ease-(--ease-settle) lg:sticky lg:block"
+        >
+          <h2 id="filters-heading" className="mb-6 text-base font-semibold">
+            Filters
+          </h2>
+          {filters}
+        </aside>
+
+        <div>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="lg:hidden">
+                <FilterSheet applied={appliedFilterCount(query)}>{filters}</FilterSheet>
+              </div>
+              {/* Stays mounted across filters, so the new count is announced. */}
+              <div aria-live="polite" className="text-muted-foreground text-sm">
+                <Suspense
+                  key={boundaryKey}
+                  fallback={<Skeleton className="inline-block h-4 w-16" />}
+                >
+                  <ProductCount query={apiQuery} />
+                </Suspense>
+              </div>
+            </div>
+            <SortForm query={query} pathname={pathname} />
+          </div>
+
+          <div className="mt-8">
+            <Suspense key={boundaryKey} fallback={<ProductGridSkeleton />}>
+              <Results query={query} apiQuery={apiQuery} pathname={pathname} />
             </Suspense>
           </div>
-          <h2 className="sr-only">Filters</h2>
-          <FilterPanel
-            facets={facets}
-            query={query}
-            pathname={pathname}
-            showBrands={lockedBrand === undefined}
-          />
-        </div>
-
-        <div className="mt-12">
-          <Suspense key={boundaryKey} fallback={<ProductGridSkeleton />}>
-            <Results query={query} apiQuery={apiQuery} pathname={pathname} />
-          </Suspense>
         </div>
       </div>
     </div>

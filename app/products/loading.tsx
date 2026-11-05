@@ -7,7 +7,6 @@ export default function Loading() {
       <span className="sr-only" role="status">
         Loading products
       </span>
-      <Skeleton className="h-64 w-full rounded-none md:h-[26rem]" />
       <div className="bg-muted">
         <div className="max-w-page mx-auto flex gap-6 px-4 py-10 md:px-10">
           {[16, 20, 24, 16, 20].map((width, index) => (
@@ -15,9 +14,12 @@ export default function Loading() {
           ))}
         </div>
       </div>
-      <div className="max-w-page mx-auto px-4 pt-14 md:px-8">
-        <Skeleton className="mb-12 h-12 w-full" />
-        <ProductGridSkeleton />
+      <div className="max-w-page mx-auto px-4 pt-14 md:px-8 lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-12">
+        <Skeleton className="hidden h-96 lg:block" />
+        <div>
+          <Skeleton className="mb-8 h-11 w-full" />
+          <ProductGridSkeleton />
+        </div>
       </div>
     </div>
   );
