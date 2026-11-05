@@ -74,8 +74,10 @@ Page by page, with where it matches the render and where it deliberately does no
 
 ### Theme and primitives
 
-Near-white `#fdfdfb` ground, charcoal `#333` text and primary, greige `#f3f2ee` and
-stone `#e8e6dd` bands, `#333` ink for the announcement bar and footer. Noto Sans for
+The mockups' palette (near-white ground, charcoal text and primary, greige and stone
+bands, charcoal ink) was replaced on 2026-10-14 by the logo's (ADR 0013): green-black
+text on a warm ivory ground, bottle-green primary and ink, sage bands, and honey
+gold only on the green. Noto Sans for
 the interface (the mockup's UI face) and Belleza for section titles (closest Google
 match to the mockup's flared humanist). Square buttons, inputs and toggles; the
 outlined 64px "Discover more" with the arrow at the far end; an on-image variant;
@@ -85,7 +87,7 @@ rule. All inside `components/ui/*` and `app/globals.css`.
 ### Shell
 
 - Announcement bar: the dark strip, carrying the shipping copy from `GET /shipping/` (checkout-quote.md).
-- Header (80px, charcoal bottom rule): Shop, Brands, Journal, About on the left;
+- Header (80px, foreground bottom rule): Shop, Brands, Journal, About on the left;
   the wordmark centred; search and the bag with its count on the right. Matches
   `Landing-desktop-1.png` and `Menu dropdown- desktop.png` in height, spacing and
   alignment.
@@ -137,6 +139,8 @@ controls. The bag line no longer overflows at 375px.
 
 | Where | Mockup | Implementation | Why |
 | --- | --- | --- | --- |
+| Everywhere | Charcoal, greige and stone | The logo's bottle green and honey gold, with sage neutrals | The client supplied a logo on 2026-10-14 (ADR 0013) |
+| Hero, image band | Outlined white "Discover more" | Filled bottle green, white focus ring | Requested on 2026-10-14 with the logo palette; gold was tried and read as a sale sticker on the beige photos |
 | Everywhere | Photographs | Generated SVG placeholders in `public/art/` | The photos are another brand's assets |
 | Header | Language, wishlist, account icons | Left out | No such features (ADR 0011) |
 | Header, mobile | Search beside the menu icon | Search beside the bag | One search control serves both widths |

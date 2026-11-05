@@ -1,6 +1,6 @@
 # ADR 0011: The storefront follows the supplied design
 
-Status: Accepted
+Status: Accepted; its palette is superseded by [ADR 0013](0013-the-palette-follows-the-logo.md)
 
 Date: 2026-09-26
 

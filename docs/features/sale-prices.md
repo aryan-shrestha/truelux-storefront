@@ -74,8 +74,8 @@ What is explicitly outside the scope?
   visually hidden "Was ", and a `Badge variant="sale"` whose visible "−15%" is
   `aria-hidden` beside a visually hidden "15% off". It wraps onto a second line
   on a narrow card.
-- `components/ui/badge.tsx` — `sale`: a hairline charcoal outline on the page
-  colour with charcoal tabular figures. No red, matching the mockups' quiet
+- `components/ui/badge.tsx` — `sale`: a hairline foreground outline on the page
+  colour with foreground tabular figures. No red, matching the mockups' quiet
   "BESTSELLER" label.
 - `components/catalog/ProductCard.tsx` — `ProductPrice` with `sale.price`, or
   `basePrice` when not on sale.
@@ -134,7 +134,7 @@ not on sale is not available to the UI, which has no use for it.
 
 **Decision**
 
-Struck price in the muted colour, a hairline outline badge in charcoal, no red,
+Struck price in the muted colour, a hairline outline badge in the foreground colour, no red,
 and no badge over the photograph.
 
 **Reason**

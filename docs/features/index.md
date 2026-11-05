@@ -10,7 +10,7 @@ only, and there is no authentication anywhere.
 
 | #   | Feature            | Status      | Documentation                    | Depends on | Last updated |
 | --- | ------------------ | ----------- | -------------------------------- | ---------- | ------------ |
-| 1   | design-system      | Implemented | `features/design-system.md`      | 11         | 2026-09-26   |
+| 1   | design-system      | Implemented | `features/design-system.md`      | 11         | 2026-10-14   |
 | 2   | api-client         | Implemented | `features/api-client.md`         | —          | 2026-09-26   |
 | 3   | site-shell         | Implemented | `features/site-shell.md`         | 1, 2, 12   | 2026-10-12   |
 | 4   | catalog-browsing   | Implemented | `features/catalog-browsing.md`   | 2, 3       | 2026-10-13   |
@@ -59,6 +59,8 @@ Things worth knowing, each recorded in its feature document:
   and related products: the listing now revalidates every 10 minutes, related
   products hourly, and the budget holds to roughly 145 products (`architecture.md`,
   506/600 after the sale listing and rail).
+- **The palette is the client's logo** (ADR 0013): bottle green and honey gold, with
+  gold only ever on the green, and the logo as the site icon (#1).
 - **The listing's facets are in a left rail from `lg`**, and below it in a sheet
   that needs JavaScript to open; categories stay in the band (#4, #14).
 - **The product page needs the backend's skin-types fields**; deploy the backend

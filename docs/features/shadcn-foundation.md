@@ -72,10 +72,10 @@ existing `globals.css`, which was then rewritten around the TrueLux tokens (see
 - Edits made inside the generated files (restyled 2026-09-26 for
   [design-alignment.md](design-alignment.md)): square `button`s with 44px sizes, a
   56px `lg`, a 64px outlined `cta` size, an `inline` size and an `overlay` variant
-  for text on imagery;
+  for buttons on imagery, filled bottle green;
   44px `input`, `native-select` and `toggle`; a `swatch` toggle variant and size;
   outline toggles that mark `data-state=on` and `aria-current` with a foreground
-  border and strike through when disabled, filled charcoal when applied, and keep
+  border and strike through when disabled, filled in the foreground colour when applied, and keep
   `text-background` under hover (the base `hover:text-foreground` otherwise wins);
   `button-group`'s last child squared; square `input`, `input-group` (44px),
   `native-select` and `textarea`; a `label` `badge` variant; plus/minus
