@@ -2,7 +2,7 @@
 
 Status: Implemented
 
-Last updated: 2026-09-27
+Last updated: 2026-11-05
 
 ---
 
@@ -35,8 +35,7 @@ What is included in this implementation?
   flight.
 - **Quote errors** (`variant_unavailable`, `insufficient_stock`) are shown against
   the affected line.
-- **`NEXT_PUBLIC_SHIPPING_NOTE` is removed.** The announcement bar, the product
-  page's Delivery row and the bag's shipping copy come from `getShipping()`.
+- **`NEXT_PUBLIC_SHIPPING_NOTE` is removed.** The product page's Delivery row and the bag's shipping copy come from `getShipping()`.
 
 What is explicitly outside the scope?
 
@@ -94,7 +93,6 @@ Every component is shadcn (ADR 0009); the storefront is light only (ADR 0012).
   on any other failure.
 - `components/checkout/DistrictPicker.tsx` — now controlled (`value`, `onChange`);
   `CheckoutForm` owns the district and passes it to `useQuote`.
-- `components/layout/AnnouncementBar.tsx` — the bar, from `shippingNote()`.
 - `components/catalog/ProductCare.tsx` — the Delivery row from `shippingNote()`.
 - `lib/env.ts`, `.env.example`, `README.md`, `../DEPLOY.md`, `vitest.config.mts` —
   `NEXT_PUBLIC_SHIPPING_NOTE` removed (and from the local `.env.local`).
@@ -266,7 +264,7 @@ lib/format/money.ts
 lib/shipping/note.ts
 components/cart/{use-quote.ts,BagSummary.tsx,FreeShippingLine.tsx,CartLine.tsx,CartContents.tsx,CartDrawer.tsx}
 components/checkout/{OrderSummary,DistrictPicker,CheckoutForm}.tsx
-components/layout/{AnnouncementBar,Header,CartButton}.tsx
+components/layout/{Header,CartButton}.tsx
 components/catalog/ProductCare.tsx
 tests/fixtures/quote.ts
 ```

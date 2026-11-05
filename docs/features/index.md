@@ -12,7 +12,7 @@ only, and there is no authentication anywhere.
 | --- | ------------------ | ----------- | -------------------------------- | ---------- | ------------ |
 | 1   | design-system      | Implemented | `features/design-system.md`      | 11         | 2026-10-14   |
 | 2   | api-client         | Implemented | `features/api-client.md`         | —          | 2026-09-26   |
-| 3   | site-shell         | Implemented | `features/site-shell.md`         | 1, 2, 12   | 2026-10-12   |
+| 3   | site-shell         | Implemented | `features/site-shell.md`         | 1, 2, 12   | 2026-11-05   |
 | 4   | catalog-browsing   | Implemented | `features/catalog-browsing.md`   | 2, 3       | 2026-10-13   |
 | 5   | product-detail     | Implemented | `features/product-detail.md`     | 4          | 2026-09-29   |
 | 6   | cart               | Implemented | `features/cart.md`               | 5          | 2026-09-27   |
@@ -24,7 +24,7 @@ only, and there is no authentication anywhere.
 | 12  | brands             | Implemented | `features/brands.md`             | 2, 4, 11   | 2026-09-26   |
 | 13  | shades-and-sizes   | Implemented | `features/shades-and-sizes.md`   | 2, 4, 5, 11 | 2026-09-26  |
 | 14  | design-alignment   | Implemented | `features/design-alignment.md`   | 1, 3, 4, 5, 9, 11 | 2026-09-27 |
-| 15  | checkout-quote     | Implemented | `features/checkout-quote.md`     | 2, 3, 6, 7 | 2026-09-27   |
+| 15  | checkout-quote     | Implemented | `features/checkout-quote.md`     | 2, 3, 6, 7 | 2026-11-05   |
 | 16  | sale-prices        | Implemented | `features/sale-prices.md`        | 2, 3, 4, 5, 9 | 2026-09-29 |
 
 `Depends on` refers to the `#` column of this table.

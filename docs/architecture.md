@@ -252,7 +252,7 @@ policy is incomplete.
 | `GET /brands/{slug}/` | 3600 | The brand page header |
 | `GET /products/` | 600 | The listing and the home rails. Ten minutes is still prompt for a new product, and every menu destination is now a hot key |
 | `GET /products/?category=…&limit=9` (related) | 3600 | The product page's "Combine with" rail; a suggestion an hour stale is harmless |
-| `GET /shipping/` | 3600 | The announcement bar, the product page's Delivery row and the bag's shipping copy. One key; the fees change when the merchant edits them |
+| `GET /shipping/` | 3600 | The product page's Delivery row and the bag's shipping copy. One key; the fees change when the merchant edits them |
 | `GET /products/{slug}/` | 1800 | Detail. `in_stock` can be up to thirty minutes stale, which is acceptable because it is not authoritative anyway |
 
 **The revalidation numbers are a throttle budget, not a taste.** The catalogue scope

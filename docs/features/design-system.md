@@ -70,9 +70,9 @@ Defined once in `app/globals.css` and mapped to Tailwind colours under
 | `--border` | `#d4dbcf` | Hairlines, the rail's scrollbar |
 | `--input` | `#7a8984` | Control borders and the outlined CTA, 3:1 against the page |
 | `--ring` | `#143532` | Focus |
-| `--ink`, `--ink-foreground` | `#143532`, `#f5efe2` | The logo's green: the announcement bar, the About band, the footer |
+| `--ink`, `--ink-foreground` | `#143532`, `#f5efe2` | The logo's green: the About band, the footer |
 | `--ink-muted` | `#a9bcb5` | Secondary text on ink |
-| `--gold` | `#ebba65` | The logo's gold, **only on ink**: the announcement text, the About statement, the footer wordmark |
+| `--gold` | `#ebba65` | The logo's gold, **only on ink**: the About statement, the footer wordmark |
 | `--on-image` | `#ffffff` | Text and outlined buttons over imagery |
 | `--scrim` | `rgb(20 53 50 / 0.5)` | The green gradient behind text on the hero and brand images |
 | `--chart-1`…`5` | green to sage | Reserved for the admin's charts |
