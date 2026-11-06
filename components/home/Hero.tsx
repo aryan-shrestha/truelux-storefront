@@ -39,7 +39,9 @@ export function Hero() {
             <CarouselItem
               key={slide.href}
               aria-label={`${index + 1} of ${SLIDES.length}`}
-              className="relative h-[34rem] pl-0 md:h-[46rem]"
+              // The header's fixed h-16/md:h-20, not --header-offset, which drops to 0
+              // when the header hides and would resize the hero on scroll.
+              className="relative flex min-h-[calc(100svh-4rem)] pl-0 md:min-h-[calc(100svh-5rem)]"
             >
               <Image
                 src={slide.art}
@@ -50,7 +52,7 @@ export function Hero() {
                 className="object-cover"
               />
               <div className="from-scrim via-scrim/40 absolute inset-0 bg-linear-to-r to-transparent" />
-              <div className="max-w-page relative mx-auto flex h-full flex-col justify-center px-4 md:px-15">
+              <div className="max-w-page relative mx-auto flex w-full flex-col justify-center px-4 py-16 md:px-15">
                 <div className="flex max-w-md flex-col items-start gap-5">
                   <p className="text-sm">{slide.eyebrow}</p>
                   <Title className="text-display">{slide.title}</Title>

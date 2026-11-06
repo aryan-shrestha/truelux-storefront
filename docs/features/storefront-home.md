@@ -2,7 +2,7 @@
 
 Status: Implemented
 
-Last updated: 2026-09-29
+Last updated: 2026-11-06
 
 ---
 
@@ -58,7 +58,9 @@ and the filter panel make.
 - `components/home/Hero.tsx` — shadcn `Carousel` (looping, no autoplay) with
   `CarouselDots`; the first slide's title is the page's `h1`. Slides link to
   `/products`, new arrivals and `/brands`. A left-to-right scrim keeps the white
-  text legible on any image.
+  text legible on any image. Each slide is at least the screen height less the
+  header (`100svh` − 4rem, − 5rem from `md`), so the hero fills the first screen at
+  every size; on a screen too short for the copy it grows instead of clipping.
 - `components/home/Editorial.tsx` — `public/art/editorial.svg` in the left 45%, the
   copy and an outlined "Discover more" to the first root category (or `/products`).
 - `components/catalog/ProductRail.tsx` — a section heading, a `Carousel` of product
@@ -142,6 +144,10 @@ Nothing on the page claims something the shop does not have.
 
 - The About section's `id` is the target of the footer's About link.
 - The category read is the header's, deduplicated within the render.
+- The hero subtracts the header's fixed height, not `--header-offset`: the offset
+  drops to 0 when the header hides, which would resize the hero on scroll. It uses
+  `svh`, not `dvh`, so a mobile browser's toolbar showing and hiding does not
+  resize it either. A change to the header's height must be made here too.
 
 ---
 
