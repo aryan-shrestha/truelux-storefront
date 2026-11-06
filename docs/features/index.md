@@ -18,7 +18,7 @@ only, and there is no authentication anywhere.
 | 6   | cart               | Implemented | `features/cart.md`               | 5          | 2026-09-27   |
 | 7   | checkout           | Implemented | `features/checkout.md`           | 6          | 2026-09-27   |
 | 8   | order-status       | Implemented | `features/order-status.md`       | 7          | 2026-09-25   |
-| 9   | storefront-home    | Implemented | `features/storefront-home.md`    | 4, 12      | 2026-10-12   |
+| 9   | storefront-home    | Implemented | `features/storefront-home.md`    | 4, 12      | 2026-11-06   |
 | 10  | seo-and-metadata   | In progress | `features/seo-and-metadata.md`   | 4, 5, 9    | 2026-09-26   |
 | 11  | shadcn-foundation  | Implemented | `features/shadcn-foundation.md`  | —          | 2026-09-26   |
 | 12  | brands             | Implemented | `features/brands.md`             | 2, 4, 11   | 2026-09-26   |
